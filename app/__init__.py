@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
-from flask import Flask,render_template,send_from_directory,redirect,url_for
-from flask_login import LoginManager
+from flask import Flask,render_template
+from flask_login import LoginManager, current_user
 from flask_wtf import CSRFProtect
 from .extensions import db
 
@@ -13,6 +13,10 @@ def create_app(test_config=None):
     app.config.update(SECRET_KEY=os.getenv('SECRET_KEY','dev-change-me'),SQLALCHEMY_DATABASE_URI=dburl,SQLALCHEMY_TRACK_MODIFICATIONS=False,UPLOAD_FOLDER=str(Path(app.root_path).parent/'uploads'),MAX_CONTENT_LENGTH=25*1024*1024,SESSION_COOKIE_HTTPONLY=True,SESSION_COOKIE_SAMESITE='Lax',SESSION_COOKIE_SECURE=os.getenv('SESSION_COOKIE_SECURE','false').lower()=='true')
     if test_config: app.config.update(test_config)
     db.init_app(app); login=LoginManager(app); login.login_view='auth.login'; CSRFProtect(app)
+    # Garante que current_user esteja disponível em todos os templates.
+    @app.context_processor
+    def inject_current_user():
+        return {'current_user': current_user}
     from .models import User
     @login.user_loader
     def load_user(uid): return db.session.get(User,int(uid))
@@ -21,16 +25,7 @@ def create_app(test_config=None):
     from .admin.routes import admin_bp
     app.register_blueprint(auth_bp); app.register_blueprint(student_bp); app.register_blueprint(admin_bp)
     @app.get('/')
-    def home():
-        if current_user.is_authenticated:
-            return redirect(url_for('admin.dashboard' if current_user.is_admin else 'student.dashboard'))
-        return render_template('index.html')
-    @app.get('/service-worker.js')
-    def service_worker():
-        return send_from_directory(app.static_folder, 'service-worker.js', mimetype='application/javascript')
-    @app.get('/sw.js')
-    def pwa_service_worker_alias():
-        return send_from_directory(app.static_folder, 'service-worker.js', mimetype='application/javascript')
+    def home(): return render_template('index.html')
     @app.errorhandler(403)
     def forbidden(e): return render_template('error.html',message='Acesso negado.'),403
     @app.errorhandler(404)

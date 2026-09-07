@@ -19,14 +19,3 @@ class Subject(db.Model):
 class Content(db.Model):
     __tablename__='contents'
     id=db.Column(db.Integer,primary_key=True); title=db.Column(db.String(200),nullable=False); description=db.Column(db.Text); kind=db.Column(db.String(30),nullable=False); body=db.Column(db.Text); external_url=db.Column(db.String(1000)); file_name=db.Column(db.String(255)); series_id=db.Column(db.Integer,db.ForeignKey('series.id'),nullable=False); subject_id=db.Column(db.Integer,db.ForeignKey('subjects.id'),nullable=False); created_at=db.Column(db.DateTime,default=datetime.utcnow,nullable=False); updated_at=db.Column(db.DateTime,default=datetime.utcnow,onupdate=datetime.utcnow,nullable=False)
-
-
-class StudyProgress(db.Model):
-    __tablename__ = 'study_progress'
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    content_id = db.Column(db.Integer, db.ForeignKey('contents.id'), nullable=False)
-    completed_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    user = db.relationship('User', backref=db.backref('study_progress', cascade='all, delete-orphan'))
-    content = db.relationship('Content', backref=db.backref('study_progress', cascade='all, delete-orphan'))
-    __table_args__ = (db.UniqueConstraint('user_id', 'content_id', name='uq_study_progress_user_content'),)

@@ -1,6 +1,6 @@
 /* =========================================================
-   PORTAL PYTHON
-   Identidade visual única: tema escuro, átomo, ciência.
+   PORTAL JM – PYTHON
+   Identidade visual única: tema escuro, Python e programação.
    Aplicada ao site inteiro (antes só existia na tela de login).
 ========================================================= */
 :root{
@@ -18,7 +18,7 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:va
 
 header{background:rgba(5,13,24,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--border-soft);color:var(--text);padding:14px 5%;display:flex;align-items:center;justify-content:space-between;gap:20px;position:sticky;top:0;z-index:50}
 .brand{color:var(--text);text-decoration:none;font-weight:800;font-size:1.1rem;display:flex;align-items:center;gap:9px;letter-spacing:-.01em}
-.brand:before{content:"⚛";color:var(--accent);font-size:1.3rem;text-shadow:0 0 14px rgba(37,183,255,.7)}
+.brand:before{content:"🐍";color:var(--accent);font-size:1.3rem;text-shadow:0 0 14px rgba(37,183,255,.7)}
 nav{display:flex;gap:18px;align-items:center}
 nav a,.linkbtn{color:var(--text-muted);text-decoration:none;background:none;border:0;font:inherit;cursor:pointer;font-weight:650;transition:.15s}
 nav a:hover,.linkbtn:hover{color:var(--text)}
@@ -67,7 +67,7 @@ footer{text-align:center;padding:35px;color:var(--text-dim)}
 
 /* =========================
    PAINEL DO PROFESSOR
-   Identidade visual do Portal Python
+   Mesma identidade escura do Portal Python
 ========================= */
 .admin-shell{max-width:1120px;margin:0 auto;padding:28px 20px 50px}
 .admin-hero,.admin-page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin:10px 0 28px}
@@ -141,8 +141,8 @@ footer{text-align:center;padding:35px;color:var(--text-dim)}
 .login-page{min-height:calc(100vh - 74px);position:relative;overflow:hidden;display:grid;place-items:center;padding:40px 20px;color:#fff}
 .login-page:before,.login-page:after{content:"";position:absolute;border-radius:50%;filter:blur(1px);pointer-events:none}.login-page:before{width:420px;height:420px;border:1px solid rgba(90,190,255,.16);box-shadow:0 0 80px rgba(38,151,255,.08)}.login-page:after{width:720px;height:720px;border:1px solid rgba(90,190,255,.07)}
 .login-card{position:relative;z-index:3;width:min(100%,440px);padding:38px 34px;border:1px solid rgba(121,194,255,.25);border-radius:28px;background:rgba(7,20,36,.88);backdrop-filter:blur(18px);box-shadow:0 25px 80px rgba(0,0,0,.45),0 0 45px rgba(24,139,255,.08)}
-.login-brand{text-align:center}.login-brand .eyebrow{color:#63c5ff;letter-spacing:.28em}.login-brand h1{margin:5px 0 8px;font-size:2.5rem;letter-spacing:-.05em}.login-brand p{margin:0 0 28px;color:#9fb3ca}.atom-logo{width:92px;height:92px;position:relative;margin:0 auto 15px;display:grid;place-items:center}.atom-logo .nucleus{font-size:3.2rem;color:#70d6ff;text-shadow:0 0 22px rgba(76,201,255,.7);position:relative;z-index:2}.atom-logo i{position:absolute;inset:11px;border:2px solid rgba(102,209,255,.62);border-radius:50%;transform:rotate(0deg)}.atom-logo i:nth-child(2){transform:rotate(60deg)}.atom-logo i:nth-child(3){transform:rotate(120deg)}
-.login-form{display:grid;gap:17px}.login-form label{display:grid;gap:7px;font-weight:700;color:#dce9f7}.login-form input{background:rgba(255,255,255,.06);border:1px solid rgba(153,195,230,.2);color:#fff;padding:14px 15px;border-radius:13px;outline:none}.login-form input::placeholder{color:#7890a9}.login-form input:focus{border-color:#55c8ff;box-shadow:0 0 0 3px rgba(85,200,255,.1)}.login-btn{width:100%;padding:14px;border-radius:13px;background:linear-gradient(135deg,#25b7ff,#1677ff);box-shadow:0 12px 28px rgba(22,119,255,.28);font-size:1rem}.login-google{color:#dce9f7;background:rgba(255,255,255,.05);border-color:rgba(153,195,230,.2);margin:17px 0 14px}.login-divider{display:flex;align-items:center;gap:10px;color:#6f849c;font-size:.85rem}.login-divider:before,.login-divider:after{content:"";height:1px;background:rgba(153,195,230,.15);flex:1}.login-register{text-align:center;color:#8fa5bc;margin:17px 0 0}.login-register a{color:#63c5ff;font-weight:800}.atom-orbit{position:absolute;border:1px solid rgba(73,190,255,.1);border-radius:50%;pointer-events:none}.orbit-one{width:650px;height:230px;transform:rotate(-22deg)}.orbit-two{width:780px;height:300px;transform:rotate(28deg)}.chem-bubble{position:absolute;z-index:1;color:rgba(121,211,255,.35);font-weight:900;font-size:1.2rem;letter-spacing:.1em}.bubble-a{left:12%;top:25%}.bubble-b{right:13%;top:31%}.bubble-c{right:17%;bottom:19%}
+.login-brand{text-align:center}.login-brand .eyebrow{color:#63c5ff;letter-spacing:.28em}.login-brand h1{margin:5px 0 8px;font-size:2.5rem;letter-spacing:-.05em}.login-brand p{margin:0 0 28px;color:#9fb3ca}.python-logo{width:92px;height:92px;position:relative;margin:0 auto 15px;display:grid;place-items:center}.python-logo .nucleus{font-size:3.2rem;color:#70d6ff;text-shadow:0 0 22px rgba(76,201,255,.7);position:relative;z-index:2}.python-logo i{position:absolute;inset:11px;border:2px solid rgba(102,209,255,.62);border-radius:50%;transform:rotate(0deg)}.python-logo i:nth-child(2){transform:rotate(60deg)}.python-logo i:nth-child(3){transform:rotate(120deg)}
+.login-form{display:grid;gap:17px}.login-form label{display:grid;gap:7px;font-weight:700;color:#dce9f7}.login-form input{background:rgba(255,255,255,.06);border:1px solid rgba(153,195,230,.2);color:#fff;padding:14px 15px;border-radius:13px;outline:none}.login-form input::placeholder{color:#7890a9}.login-form input:focus{border-color:#55c8ff;box-shadow:0 0 0 3px rgba(85,200,255,.1)}.login-btn{width:100%;padding:14px;border-radius:13px;background:linear-gradient(135deg,#25b7ff,#1677ff);box-shadow:0 12px 28px rgba(22,119,255,.28);font-size:1rem}.login-google{color:#dce9f7;background:rgba(255,255,255,.05);border-color:rgba(153,195,230,.2);margin:17px 0 14px}.login-divider{display:flex;align-items:center;gap:10px;color:#6f849c;font-size:.85rem}.login-divider:before,.login-divider:after{content:"";height:1px;background:rgba(153,195,230,.15);flex:1}.login-register{text-align:center;color:#8fa5bc;margin:17px 0 0}.login-register a{color:#63c5ff;font-weight:800}.python-orbit{position:absolute;border:1px solid rgba(73,190,255,.1);border-radius:50%;pointer-events:none}.orbit-one{width:650px;height:230px;transform:rotate(-22deg)}.orbit-two{width:780px;height:300px;transform:rotate(28deg)}.python-bubble{position:absolute;z-index:1;color:rgba(121,211,255,.35);font-weight:900;font-size:1.2rem;letter-spacing:.1em}.bubble-a{left:12%;top:25%}.bubble-b{right:13%;top:31%}.bubble-c{right:17%;bottom:19%}
 @media(max-width:650px){.login-page{min-height:calc(100vh - 115px)}.login-card{padding:30px 22px;border-radius:22px}.bubble-a,.bubble-b,.bubble-c{display:none}}
 
 /* Navegação contextual, mantendo a identidade escura/Python do Portal Python. */
@@ -323,351 +323,7 @@ a.btn:focus-visible{
   }
 }
 
-
-/* =========================================================
-   PORTAL JM 2.0 — laboratório digital
-   Redesign visual sem alterar rotas, banco ou funcionalidades.
-========================================================= */
-:root{
-  --accent:#39d5ff;
-  --accent-2:#5b5cff;
-  --cyan:#39d5ff;
-  --violet:#7b61ff;
-  --glass:rgba(9,18,34,.72);
-  --glass-strong:rgba(11,22,42,.9);
-  --line:rgba(122,205,255,.16);
-}
-html{scroll-behavior:smooth}
-body{
-  background:
-    radial-gradient(circle at 8% 5%,rgba(57,213,255,.14),transparent 28%),
-    radial-gradient(circle at 92% 12%,rgba(91,92,255,.16),transparent 30%),
-    radial-gradient(circle at 50% 100%,rgba(38,113,255,.10),transparent 35%),
-    linear-gradient(180deg,#040914 0%,#07111f 48%,#03070e 100%);
-  overflow-x:hidden;
-}
-body:before,body:after{content:"";position:fixed;pointer-events:none;z-index:-1;border-radius:50%;}
-body:before{width:380px;height:380px;right:-180px;top:35%;border:1px solid rgba(57,213,255,.08);box-shadow:0 0 90px rgba(57,213,255,.05)}
-body:after{width:520px;height:520px;left:-290px;bottom:-220px;border:1px solid rgba(123,97,255,.08);box-shadow:0 0 120px rgba(123,97,255,.06)}
-
-header{
-  min-height:72px;padding:13px clamp(18px,5vw,70px);
-  background:rgba(3,9,18,.76);
-  border-bottom:1px solid rgba(126,207,255,.12);
-  box-shadow:0 8px 30px rgba(0,0,0,.18);
-}
-.brand{font-size:1.02rem;letter-spacing:.01em;gap:11px}
-.brand:before{content:"✦";width:34px;height:34px;border:1px solid rgba(57,213,255,.32);border-radius:11px;display:grid;place-items:center;background:linear-gradient(145deg,rgba(57,213,255,.14),rgba(91,92,255,.14));font-size:1rem;color:var(--cyan);text-shadow:0 0 15px rgba(57,213,255,.8)}
-nav{gap:7px}
-nav a,.linkbtn{padding:9px 11px;border-radius:10px}
-nav a:hover,.linkbtn:hover{background:rgba(255,255,255,.045);color:#fff}
-.area-pill{box-shadow:inset 0 0 18px rgba(57,213,255,.05)}
-
-.hero{min-height:calc(100vh - 145px);padding:34px 20px;position:relative;overflow:hidden}
-.hero:before{content:"";position:absolute;width:620px;height:620px;border:1px solid rgba(57,213,255,.07);border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%);box-shadow:0 0 80px rgba(57,213,255,.05),inset 0 0 80px rgba(91,92,255,.035)}
-.hero:after{content:"H₂O   •   NaCl   •   CO₂   •   NH₃";position:absolute;left:50%;bottom:7%;transform:translateX(-50%);color:rgba(130,211,255,.12);font-weight:800;letter-spacing:.28em;font-size:.72rem;white-space:nowrap}
-.hero .card{position:relative;z-index:2;max-width:720px;padding:48px 40px;border-radius:32px;background:linear-gradient(145deg,rgba(12,28,50,.86),rgba(6,15,28,.78));border:1px solid rgba(94,211,255,.2);box-shadow:0 35px 90px rgba(0,0,0,.45),0 0 50px rgba(39,168,255,.07);backdrop-filter:blur(22px)}
-.hero .card:before{content:"";position:absolute;inset:1px;border-radius:31px;pointer-events:none;background:linear-gradient(135deg,rgba(57,213,255,.08),transparent 35%,rgba(123,97,255,.06));}
-.hero h1{font-size:clamp(2.35rem,7vw,4.5rem);line-height:.98;letter-spacing:-.065em;margin:12px 0 14px;background:linear-gradient(110deg,#fff 25%,#7de5ff 60%,#9d91ff);-webkit-background-clip:text;background-clip:text;color:transparent}
-.hero p{max-width:570px;margin:0 auto 25px;color:#a9bfd6;line-height:1.7;font-size:1.02rem}
-.hero h2{font-size:1rem;color:#dceafa;margin:28px 0 14px}
-.atom{width:104px;height:104px;margin:0 auto;display:grid;place-items:center;font-size:4rem;border-radius:30px;background:radial-gradient(circle,rgba(57,213,255,.18),rgba(57,213,255,.03) 55%,transparent 70%);color:#73e3ff;text-shadow:0 0 35px rgba(57,213,255,.75);position:relative}
-.atom:before,.atom:after{content:"";position:absolute;inset:12px;border:1px solid rgba(93,217,255,.35);border-radius:50%;transform:rotate(55deg)}
-.atom:after{transform:rotate(-55deg);border-color:rgba(123,97,255,.32)}
-.actions{position:relative;z-index:2;gap:10px}
-.btn{border-radius:13px;padding:13px 19px;min-height:46px}
-.btn:not(.secondary):not(.danger),.admin-primary{background:linear-gradient(135deg,#27d4ff,#5267ff);box-shadow:0 12px 30px rgba(54,132,255,.24)}
-.btn.secondary{background:rgba(255,255,255,.045);border-color:rgba(150,206,238,.16)}
-
-.card{border-radius:20px;background:linear-gradient(145deg,rgba(12,28,50,.74),rgba(7,17,31,.74));border-color:rgba(121,205,255,.14);box-shadow:0 18px 45px rgba(0,0,0,.25);backdrop-filter:blur(16px)}
-.grid{gap:16px}
-.tile{position:relative;overflow:hidden;min-height:150px;border-color:rgba(121,205,255,.13)}
-.tile:before{content:"";position:absolute;width:110px;height:110px;border:1px solid rgba(57,213,255,.08);border-radius:50%;right:-45px;bottom:-45px}
-.tile:hover{transform:translateY(-5px);border-color:rgba(57,213,255,.42);box-shadow:0 20px 45px rgba(0,0,0,.35),0 0 25px rgba(57,213,255,.06)}
-.tile span{filter:drop-shadow(0 0 9px rgba(57,213,255,.25))}
-.badge{background:rgba(57,213,255,.09);border:1px solid rgba(57,213,255,.15);color:#82dcff}
-.student-shell{padding-top:38px}
-.student-shell>h1,.admin-shell h1{font-size:clamp(2rem,5vw,3.4rem);letter-spacing:-.055em}
-.student-shell>p{color:var(--text-muted)}
-
-/* Login / cadastro */
-.login-page{min-height:calc(100vh - 72px)}
-.login-card{background:linear-gradient(145deg,rgba(9,23,41,.92),rgba(5,12,24,.9));border-color:rgba(90,211,255,.2);box-shadow:0 35px 100px rgba(0,0,0,.52),0 0 55px rgba(57,213,255,.06)}
-.auth{background:linear-gradient(145deg,rgba(12,28,50,.84),rgba(7,16,30,.84));border-radius:28px}
-.auth h1{font-size:2.2rem;letter-spacing:-.045em}
-.auth a,.login-register a{color:#6edcff}
-input,select,textarea{border-radius:12px;background:rgba(255,255,255,.045);border-color:rgba(150,206,238,.14);padding:12px 13px}
-input:focus,select:focus,textarea:focus{border-color:#4ed9ff;box-shadow:0 0 0 3px rgba(57,213,255,.1),0 0 20px rgba(57,213,255,.05)}
-
-/* Professor */
-.admin-shell{max-width:1180px;padding-top:36px}
-.admin-hero,.admin-page-head{padding:25px 27px;border-radius:26px;background:linear-gradient(135deg,rgba(13,31,54,.82),rgba(8,18,34,.68));border:1px solid rgba(104,205,255,.12);box-shadow:0 20px 50px rgba(0,0,0,.2)}
-.admin-stats{gap:12px}
-.admin-stat{background:linear-gradient(145deg,rgba(18,39,66,.72),rgba(9,21,38,.72));border-color:rgba(121,205,255,.12);border-radius:19px}
-.admin-stat span{filter:drop-shadow(0 0 8px rgba(57,213,255,.2))}
-.admin-action-card{background:linear-gradient(145deg,rgba(13,29,50,.78),rgba(7,17,31,.75));border-color:rgba(121,205,255,.12)}
-.admin-action-card.featured{background:linear-gradient(135deg,rgba(18,52,77,.8),rgba(26,20,62,.72));border-color:rgba(57,213,255,.28)}
-.action-icon{border:1px solid rgba(57,213,255,.13);box-shadow:inset 0 0 18px rgba(57,213,255,.04)}
-.teacher-tip{background:rgba(10,23,41,.66);border-color:rgba(121,205,255,.11)}
-
-/* Listas e materiais */
-.list{gap:11px}
-.list .row{padding:21px 22px}
-.list .row h2{letter-spacing:-.02em}
-.back-link{padding:7px 0}
-.material-row,.material-actions,.publisher-card,.source-card,.external-box,.dropzone{border-radius:18px}
-.publisher-card{background:linear-gradient(145deg,rgba(12,28,50,.8),rgba(7,16,30,.78));border-color:rgba(121,205,255,.12)}
-.source-card{background:rgba(255,255,255,.025)}
-.source-card.active{border-color:#46d9ff;background:rgba(57,213,255,.09)}
-.dropzone{background:rgba(255,255,255,.02);border-color:rgba(121,205,255,.18)}
-
-footer{padding:42px 20px;color:#60758e;font-size:.84rem}
-
-@media(max-width:850px){
-  header{padding:11px 15px}
-  nav{width:100%;justify-content:flex-start}
-  .hero .card{padding:36px 23px;border-radius:25px}
-  .hero:before{width:430px;height:430px}
-  .hero:after{font-size:.58rem;letter-spacing:.12em}
-  .admin-hero,.admin-page-head{align-items:flex-start;flex-direction:column;padding:21px}
-  .admin-stats{grid-template-columns:repeat(2,1fr)}
-  .admin-actions-grid{grid-template-columns:1fr}
-}
-@media(max-width:560px){
-  header{align-items:flex-start}
-  .brand{font-size:.95rem}
-  nav a,.linkbtn{padding:8px 9px;font-size:.86rem}
-  .hero{padding:22px 13px}
-  .hero .card{padding:32px 18px}
-  .hero h1{font-size:2.55rem}
-  .actions{flex-direction:column}
-  .actions .btn{width:100%}
-  .admin-stats{grid-template-columns:1fr 1fr;gap:9px}
-  .admin-stat{padding:15px}
-  .admin-stat strong{font-size:1.35rem}
-  .student-shell{padding-left:15px;padding-right:15px}
-}
-
-/* =========================================================
-   LAYOUT PORTAL — inspirado em portais acadêmicos modernos
-   Sidebar escura + conteúdo claro + navegação inferior mobile.
-========================================================= */
-.portal-body{background:#eef0f2;color:#30363b;min-height:100vh}
-.portal-app{min-height:100vh;display:flex;background:#eef0f2}
-.portal-sidebar{width:305px;flex:0 0 305px;background:#24272a;color:#f5f7f8;min-height:100vh;display:flex;flex-direction:column;padding:24px 22px 18px;position:fixed;inset:0 auto 0 0;z-index:100;box-shadow:8px 0 24px rgba(0,0,0,.08)}
-.sidebar-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
-.sidebar-brand{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;font-size:1.55rem;font-weight:800;letter-spacing:-.03em}
-.sidebar-brand-mark{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:#00594f;color:#64d4c4;font-size:1.15rem}
-.sidebar-close{display:none;border:0;background:none;color:#cbd0d3;font-size:2rem;line-height:1;cursor:pointer}
-.sidebar-search{display:flex;align-items:center;gap:9px;border-bottom:1px solid #4b4e51;padding:0 0 10px;color:#9ba1a5;margin-bottom:23px}
-.sidebar-search span{font-size:1.55rem;line-height:1;transform:rotate(-15deg)}
-.sidebar-search input{border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important;color:#fff!important;padding:4px 0!important;font-size:.98rem}
-.sidebar-search input::placeholder{color:#81878b}
-.sidebar-label{font-size:.68rem;letter-spacing:.15em;font-weight:800;color:#777e82;margin:0 8px 10px}
-.sidebar-nav{display:grid;gap:4px}
-.side-link{display:flex;align-items:center;gap:14px;color:#e4e7e8;text-decoration:none;padding:11px 9px;border-radius:7px;font-size:1rem;transition:.15s}
-.side-link span{width:21px;text-align:center;color:#00a393;font-size:1.16rem}
-.side-link b{font-weight:500}
-.side-link:hover{background:#303437;color:#fff}
-.side-link.active{background:#303437;color:#fff}
-.side-link.active span{color:#23c2b1}
-.sidebar-spacer{flex:1}
-.sidebar-user{display:flex;align-items:center;gap:11px;border-top:1px solid #3e4245;padding:16px 5px 13px;margin-top:18px}
-.avatar,.top-avatar{display:grid;place-items:center;border-radius:50%;font-weight:800}
-.avatar{width:40px;height:40px;background:#0b796e;color:#fff}
-.user-meta{display:grid;gap:2px;min-width:0}.user-meta strong{font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.user-meta small{color:#9ba1a5}
-.sidebar-logout button{width:100%;display:flex;align-items:center;gap:13px;border:0;background:transparent;color:#e84d4d;padding:11px 9px;border-radius:7px;font:inherit;cursor:pointer;text-align:left}
-.sidebar-logout button:hover{background:#303437}
-.portal-main{margin-left:305px;min-width:0;width:calc(100% - 305px);display:flex;flex-direction:column;min-height:100vh}
-.portal-topbar{height:68px;background:#fff;border-bottom:1px solid #dfe2e4;display:flex;align-items:center;padding:0 30px;position:sticky;top:0;z-index:40}
-.menu-toggle{display:none;border:0;background:none;color:#555d62;font-size:1.5rem;cursor:pointer;margin-right:14px}
-.topbar-title{font-size:1.18rem;font-weight:800;color:#252a2d;text-decoration:none}.topbar-title span{font-weight:500;color:#777f84}
-.topbar-right{margin-left:auto;display:flex;align-items:center;gap:14px}.area-pill{background:#e8f5f3;color:#08786d;border:1px solid #c8e7e2;padding:6px 10px;border-radius:999px;font-size:.68rem;font-weight:800;letter-spacing:.05em}.top-avatar{width:36px;height:36px;background:#08786d;color:#fff}
-.portal-content{width:min(1180px,100%);margin:0 auto;padding:26px 30px 90px;flex:1}
-.portal-content .student-shell,.portal-content .admin-shell,.portal-content .wide{max-width:none;margin:0;padding:0}
-.portal-footer{padding:18px 30px 28px;text-align:center;color:#90979b;font-size:.88rem}
-.portal-content .card,.portal-content .publisher-card,.portal-content .admin-stat,.portal-content .admin-action-card,.portal-content .material-row{background:#fff;color:#34393d;border-color:#e1e4e6;box-shadow:0 2px 10px rgba(25,35,40,.05);backdrop-filter:none}
-.portal-content h1,.portal-content h2,.portal-content h3,.portal-content .admin-hero h1,.portal-content .admin-page-head h1{color:#2f3539}
-.portal-content p,.portal-content .admin-hero p,.portal-content .admin-page-head p,.portal-content .material-main p{color:#737c82}
-.portal-content .eyebrow{color:#008b7d}
-.portal-content .badge{background:#e5f5f2;color:#08786d}
-.portal-content .teacher-nav-item{background:#fff;color:#687177;border-color:#dfe3e5}
-.portal-content .teacher-nav-item:hover,.portal-content .teacher-nav-item.active{color:#08786d;border-color:#8dd3ca;background:#edf8f6}
-.portal-content input,.portal-content select,.portal-content textarea{background:#fff;color:#333;border-color:#d8dde0}.portal-content select option{background:#fff;color:#333}
-.portal-content .muted{color:#7b8388}
-.portal-content .back-link{color:#697277}
-.portal-content .material-icon,.portal-content .action-icon{background:#e8f5f3;color:#08786d}
-.mobile-bottom-nav{display:none}
-.sidebar-overlay{display:none}
-
-/* Ajuste visual do dashboard para se aproximar de um portal institucional. */
-.portal-content .admin-hero{padding:4px 0 22px;margin-bottom:8px;border-bottom:1px solid #e1e4e6}
-.portal-content .admin-stats{margin-top:20px}
-.portal-content .admin-stat strong{color:#30363a}
-.portal-content .admin-action-card h3{color:#30363a}
-.portal-content .admin-action-card p{color:#7a8287}
-.portal-content .grid{gap:15px}
-.portal-content .tile:hover{transform:translateY(-2px);border-color:#9bd6cf;box-shadow:0 8px 20px rgba(25,50,55,.08)}
-
-@media(max-width:899px){
-  .portal-sidebar{transform:translateX(-102%);transition:transform .22s ease;width:min(315px,86vw);box-shadow:16px 0 40px rgba(0,0,0,.28)}
-  .portal-sidebar.open{transform:translateX(0)}
-  .sidebar-close{display:block}
-  .sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:90;display:block;opacity:0;visibility:hidden;transition:.2s}
-  .sidebar-overlay.show{opacity:1;visibility:visible}
-  .portal-main{margin-left:0;width:100%}
-  .portal-topbar{height:62px;padding:0 16px}
-  .menu-toggle{display:block}
-  .topbar-title{font-size:1.03rem}
-  .topbar-right .area-pill{display:none}
-  .portal-content{padding:20px 16px 92px}
-  .mobile-bottom-nav{position:fixed;display:flex;align-items:center;justify-content:space-around;left:16px;right:16px;bottom:max(12px,env(safe-area-inset-bottom));height:64px;background:#003b35;border-radius:32px;z-index:80;box-shadow:0 10px 28px rgba(0,0,0,.25);padding:0 8px}
-  .bottom-item{min-width:58px;height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:none;border:0;color:#f3f7f7;text-decoration:none;cursor:pointer}
-  .bottom-item span{font-size:1.38rem;line-height:1}.bottom-item small{font-size:.64rem}.bottom-item.active{color:#63d9ca}.bottom-item:hover{color:#63d9ca}
-  .portal-footer{padding-bottom:95px}
-  .portal-content .admin-hero,.portal-content .admin-page-head{align-items:flex-start;flex-direction:column}
-}
-@media(max-width:560px){
-  .portal-content .admin-stats{grid-template-columns:1fr 1fr}
-  .portal-content .admin-actions-grid{grid-template-columns:1fr}
-  .portal-content .formgrid{grid-template-columns:1fr}
-  .portal-content .row{align-items:flex-start;flex-direction:column}
-}
-
-
-/* PWA — botão de instalação integrado ao cabeçalho existente. */
-.pwa-install-btn{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:6px;
-  min-height:36px;
-  padding:7px 11px;
-  border:1px solid #c8e7e2;
-  border-radius:10px;
-  background:#edf8f6;
-  color:#08786d;
-  font:inherit;
-  font-size:.78rem;
-  font-weight:800;
-  cursor:pointer;
-  transition:transform .16s ease, background .16s ease, box-shadow .16s ease;
-}
-.pwa-install-btn:hover{transform:translateY(-1px);background:#e2f5f1;box-shadow:0 5px 14px rgba(8,120,109,.12)}
-.pwa-install-btn:focus-visible{outline:3px solid rgba(8,120,109,.2);outline-offset:2px}
-.pwa-install-btn[hidden]{display:none}
-@media(max-width:560px){
-  .pwa-install-btn span:last-child{display:none}
-  .pwa-install-btn{width:38px;min-width:38px;padding:7px;font-size:1.15rem}
-}
-
-
-/* =========================================================
-   RESPONSIVIDADE — ajustes visuais sem alterar a estrutura
-   ========================================================= */
-.portal-content{
-  width:min(1220px,100%);
-  padding:clamp(18px,2.6vw,34px) clamp(16px,3vw,38px) 96px;
-}
-.portal-content .grid{
-  grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));
-  gap:clamp(12px,1.6vw,20px);
-}
-.portal-content .card{
-  padding:clamp(16px,2vw,26px);
-  border-radius:clamp(12px,1.4vw,18px);
-}
-.portal-content .admin-shell{
-  padding:clamp(4px,1vw,12px) 0 30px;
-}
-.portal-content .admin-stats{
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:clamp(10px,1.4vw,16px);
-}
-.portal-content .admin-stat{
-  padding:clamp(15px,1.8vw,22px);
-  border-radius:clamp(13px,1.4vw,18px);
-}
-.portal-content .admin-actions-grid{
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:clamp(12px,1.5vw,18px);
-}
-.portal-content .admin-action-card{
-  padding:clamp(15px,1.8vw,21px);
-  border-radius:clamp(14px,1.5vw,20px);
-}
-.portal-content .publisher-card{
-  padding:clamp(17px,2vw,25px);
-  border-radius:clamp(15px,1.6vw,22px);
-}
-.sidebar-install{
-  margin-top:18px;
-  padding-top:16px;
-  border-top:1px solid #3e4245;
-}
-.sidebar-install-btn{
-  width:100%;
-  min-height:44px;
-  padding:10px 12px;
-  border:1px solid rgba(99,217,202,.35);
-  border-radius:10px;
-  background:#08786d;
-  color:#fff;
-  font-size:.86rem;
-  box-shadow:0 5px 16px rgba(0,0,0,.16);
-}
-.sidebar-install-btn:hover{
-  background:#0b9487;
-  transform:translateY(-1px);
-}
-.sidebar-install-btn[hidden]{display:none}
-
-@media(max-width:1100px){
-  .portal-sidebar{width:270px;flex-basis:270px}
-  .portal-main{margin-left:270px;width:calc(100% - 270px)}
-  .portal-content .admin-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
-}
-@media(max-width:899px){
-  .portal-sidebar{width:min(320px,88vw)}
-  .portal-main{margin-left:0;width:100%}
-  .portal-content{padding:18px 15px 94px}
-  .portal-content .admin-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .portal-content .admin-actions-grid{grid-template-columns:1fr}
-  .portal-content .source-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .portal-content .formgrid{grid-template-columns:1fr}
-  .portal-content .row{align-items:flex-start;flex-direction:column}
-}
-@media(max-width:560px){
-  .portal-topbar{padding:0 13px}
-  .topbar-title{font-size:1rem}
-  .portal-content{padding:15px 12px 94px}
-  .portal-content .admin-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-  .portal-content .admin-stat{padding:13px 12px;min-height:82px}
-  .portal-content .admin-stat strong{font-size:1.35rem}
-  .portal-content .admin-stat span{font-size:1.45rem}
-  .portal-content .admin-action-card{grid-template-columns:auto 1fr auto;gap:11px;padding:14px}
-  .portal-content .action-icon{width:44px;height:44px}
-  .portal-content .source-grid{grid-template-columns:1fr 1fr;gap:9px}
-  .portal-content .source-card{padding:13px;border-radius:13px}
-  .portal-content .publisher-card{padding:15px}
-  .portal-content .admin-hero h1,.portal-content .admin-page-head h1{font-size:clamp(1.75rem,8vw,2.3rem)}
-  .portal-content .wide{padding:0}
-  .mobile-bottom-nav{left:10px;right:10px;bottom:max(10px,env(safe-area-inset-bottom));height:62px}
-}
-@media(max-width:380px){
-  .portal-content .admin-stats{grid-template-columns:1fr}
-  .portal-content .source-grid{grid-template-columns:1fr}
-  .portal-content .admin-action-card{grid-template-columns:auto 1fr}
-  .portal-content .admin-action-card .arrow{display:none}
-  .mobile-bottom-nav{left:7px;right:7px}
-}
-
-/* Portal Python — identidade visual */
-.python-logo{font-size:3.2rem;line-height:1}
-.python-orbit{border-color:rgba(55,118,171,.28)!important}
-.python-bubble{position:absolute;font-weight:800;opacity:.75;pointer-events:none}
-.code-preview{margin:18px auto;padding:14px 18px;border-radius:12px;background:#0b1420;color:#d8f3ff;max-width:430px;text-align:left;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-.content-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
-.video-frame{position:relative;width:100%;aspect-ratio:16/9;margin:18px 0;border-radius:14px;overflow:hidden;background:#101820}
-.video-frame iframe{width:100%;height:100%;border:0}
-.pdf-viewer{width:100%;height:min(75vh,900px);border:1px solid #dce2e7;border-radius:10px;margin-top:18px;background:#fff}
+.code-preview{margin:22px auto;padding:16px 20px;max-width:420px;text-align:left;border:1px solid var(--border-soft);border-radius:12px;background:#02060b;box-shadow:inset 0 0 25px rgba(37,183,255,.05)}
+.code-preview code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--accent);font-size:.95rem}
+.python-logo{font-size:4rem;line-height:1;filter:drop-shadow(0 0 16px rgba(37,183,255,.45))}
+.python-bubble{position:absolute;padding:12px 18px;border:1px solid var(--border-glow);border-radius:14px;background:rgba(11,25,44,.7);color:var(--accent);font-family:ui-monospace,monospace;font-weight:800;box-shadow:0 10px 30px rgba(0,0,0,.25);backdrop-filter:blur(8px)}

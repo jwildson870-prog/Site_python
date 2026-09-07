@@ -1,81 +1,24 @@
 <!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#20252a">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Portal Python">
-  <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
-  <link rel="icon" href="{{ url_for('static', filename='icons/python.svg') }}" type="image/svg+xml">
-  <title>{% block title %}Portal Python{% endblock %}</title>
-  <link rel="stylesheet" href="{{ url_for('static',filename='css/style.css') }}">
-  <script src="{{ url_for('static', filename='js/pwa.js') }}" defer></script>
-</head>
-<body class="portal-body">
-{% if current_user.is_authenticated %}
-  <div class="portal-app">
-    <aside class="portal-sidebar" id="portalSidebar" aria-label="Menu principal">
-      <div class="sidebar-head">
-        <a class="sidebar-brand" href="{{ url_for('admin.dashboard') if current_user.is_admin else url_for('student.dashboard') }}"><span class="sidebar-brand-mark">🐍</span><span>Portal Python</span></a>
-        <button class="sidebar-close" id="sidebarClose" type="button" aria-label="Fechar menu">×</button>
-      </div>
-      <div class="sidebar-search"><span>⌕</span><input id="menuSearch" type="search" placeholder="Buscar menu" aria-label="Buscar menu"></div>
-      <div class="sidebar-label">MENU</div>
-      <nav class="sidebar-nav" id="sidebarNav">
-        {% if current_user.is_admin %}
-          <a class="side-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}" href="{{ url_for('admin.dashboard') }}"><span>⌂</span><b>Início</b></a>
-          <a class="side-link {% if request.endpoint == 'admin.content_new' %}active{% endif %}" href="{{ url_for('admin.content_new') }}"><span>✎</span><b>Adicionar material</b></a>
-          <a class="side-link {% if request.endpoint == 'admin.contents' %}active{% endif %}" href="{{ url_for('admin.contents') }}"><span>▣</span><b>Meus materiais</b></a>
-          <a class="side-link {% if request.endpoint in ['admin.subjects_list','admin.subject_edit'] %}active{% endif %}" href="{{ url_for('admin.subjects_list') }}"><span>▤</span><b>Módulos</b></a>
-          <a class="side-link {% if request.endpoint in ['admin.series_list','admin.series_edit','admin.series_detail'] %}active{% endif %}" href="{{ url_for('admin.series_list') }}"><span>🎓</span><b>Níveis</b></a>
-          <a class="side-link {% if request.endpoint == 'admin.users' %}active{% endif %}" href="{{ url_for('admin.users') }}"><span>♙</span><b>Usuários</b></a>
-          <a class="side-link {% if request.endpoint == 'admin.settings' %}active{% endif %}" href="{{ url_for('admin.settings') }}"><span>⚙</span><b>Configurações</b></a>
-        {% else %}
-          <a class="side-link {% if request.endpoint == 'student.dashboard' %}active{% endif %}" href="{{ url_for('student.dashboard') }}"><span>⌂</span><b>Início</b></a>
-          <a class="side-link {% if request.endpoint in ['student.series','student.subject','student.content'] %}active{% endif %}" href="{{ url_for('student.dashboard') }}"><span>▣</span><b>Materiais</b></a>
-          <a class="side-link {% if request.endpoint == 'student.search' %}active{% endif %}" href="{{ url_for('student.search') }}"><span>⌕</span><b>Buscar materiais</b></a>
-        {% endif %}
-        <button class="pwa-install-btn sidebar-install-btn" id="pwaInstallButton" type="button" hidden aria-label="Instalar Portal Python como aplicativo"><span aria-hidden="true">＋</span><span>Baixar / instalar app</span></button>
-      </nav>
-      <div class="sidebar-spacer"></div>
-      <div class="sidebar-user"><div class="avatar">{{ (current_user.name or 'U')[:1]|upper }}</div><div class="user-meta"><strong>{{ current_user.name }}</strong><small>{{ 'Professor' if current_user.is_admin else 'Aluno' }}</small></div></div>
-      <form method="post" action="{{ url_for('auth.logout') }}" class="sidebar-logout"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit"><span>↪</span> Sair</button></form>
-    </aside>
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-    <div class="portal-main">
-      <header class="portal-topbar"><button class="menu-toggle" id="menuToggle" type="button" aria-label="Abrir menu">☰</button><a class="topbar-title" href="{{ url_for('admin.dashboard') if current_user.is_admin else url_for('student.dashboard') }}">Portal Python <span>– Aprendizado</span></a><div class="topbar-right"><span class="area-pill">{{ 'PROFESSOR' if current_user.is_admin else 'ALUNO' }}</span><div class="top-avatar">{{ (current_user.name or 'U')[:1]|upper }}</div></div></header>
-{% else %}
-  <header class="public-header"><a class="brand" href="{{ url_for('home') }}">Portal Python</a></header>
-{% endif %}
-  <main class="{{ 'portal-content' if current_user.is_authenticated else 'public-main' }}">
-    {% with messages=get_flashed_messages(with_categories=true) %}{% for category,msg in messages %}<div class="flash {{category}}">{{msg}}</div>{% endfor %}{% endwith %}
-    {% block content %}{% endblock %}
-  </main>
-{% if current_user.is_authenticated %}
-      <footer class="portal-footer">Portal Python · Educação e programação</footer>
-      <nav class="mobile-bottom-nav" aria-label="Navegação rápida">
-        <button class="bottom-item" id="bottomMenu" type="button"><span>☰</span><small>Menu</small></button>
-        <a class="bottom-item {% if request.endpoint in ['student.dashboard','admin.dashboard'] %}active{% endif %}" href="{{ url_for('admin.dashboard') if current_user.is_admin else url_for('student.dashboard') }}"><span>⌂</span><small>Início</small></a>
-        {% if current_user.is_admin %}<a class="bottom-item {% if request.endpoint == 'admin.content_new' %}active{% endif %}" href="{{ url_for('admin.content_new') }}"><span>＋</span><small>Adicionar</small></a>{% else %}<a class="bottom-item {% if request.endpoint in ['student.series','student.subject','student.content','student.search'] %}active{% endif %}" href="{{ url_for('student.search') }}"><span>▣</span><small>Materiais</small></a>{% endif %}
-        <button class="bottom-item" type="button" onclick="document.getElementById('portalSidebar').classList.toggle('open');document.getElementById('sidebarOverlay').classList.toggle('show')"><span>●</span><small>Perfil</small></button>
-      </nav>
-    </div>
-{% else %}
-  <footer>Portal Python · Educação e programação</footer>
-{% endif %}
-<script>
-(function(){
-  const sidebar=document.getElementById('portalSidebar'), overlay=document.getElementById('sidebarOverlay'), toggle=document.getElementById('menuToggle'), close=document.getElementById('sidebarClose'), bottom=document.getElementById('bottomMenu');
-  function openMenu(){sidebar?.classList.add('open');overlay?.classList.add('show');document.body.classList.add('menu-open')}
-  function closeMenu(){sidebar?.classList.remove('open');overlay?.classList.remove('show');document.body.classList.remove('menu-open')}
-  toggle?.addEventListener('click',openMenu); bottom?.addEventListener('click',openMenu); close?.addEventListener('click',closeMenu); overlay?.addEventListener('click',closeMenu);
-  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu()});
-  document.querySelectorAll('.side-link').forEach(a=>a.addEventListener('click',()=>{if(window.innerWidth<900)closeMenu()}));
-  const search=document.getElementById('menuSearch'); search?.addEventListener('input',function(){const q=this.value.toLowerCase().trim();document.querySelectorAll('#sidebarNav .side-link').forEach(a=>{a.style.display=(!q||a.innerText.toLowerCase().includes(q))?'flex':'none'})});
-  if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/service-worker.js').catch(()=>{}))}
-})();
-</script>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{% block title %}Portal Python · Aprenda Python{% endblock %}</title><link rel="stylesheet" href="{{ url_for('static',filename='css/style.css') }}"></head>
+<body>
+<header>
+  <a class="brand" href="{{ url_for('admin.dashboard') if current_user.is_authenticated and current_user.is_admin else url_for('student.dashboard') if current_user.is_authenticated else url_for('home') }}">Portal Python 🐍</a>
+  {% if current_user.is_authenticated %}
+  <nav>
+    {% if current_user.is_admin %}
+      <span class="area-pill">🐍 ÁREA DO PROFESSOR</span>
+      <a href="{{ url_for('admin.dashboard') }}">Início</a>
+      <a href="{{ url_for('admin.content_new') }}">Adicionar</a>
+      <a href="{{ url_for('admin.contents') }}">Meus materiais</a>
+    {% else %}
+      <span class="area-pill student-pill">🐍 ÁREA DO ALUNO</span>
+      <a href="{{ url_for('student.dashboard') }}">Materiais</a>
+    {% endif %}
+    <form method="post" action="{{ url_for('auth.logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="linkbtn">Sair</button></form>
+  </nav>
+  {% endif %}
+</header>
+<main>{% with messages=get_flashed_messages(with_categories=true) %}{% for category,msg in messages %}<div class="flash {{category}}">{{msg}}</div>{% endfor %}{% endwith %}{% block content %}{% endblock %}</main>
+<footer>Portal Python · Aprendizado de Python</footer>
 </body></html>
