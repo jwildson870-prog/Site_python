@@ -87,10 +87,10 @@
         <div class="publisher-card">
             <div class="card-heading"><span class="step">02</span><div><h2>Organize o material</h2><p>Diga aos alunos onde ele deve aparecer.</p></div></div>
             <div class="formgrid modern-form">
-                <label>Título do material<input name="title" value="{{ content.title if content else '' }}" placeholder="Ex.: Ligações Pythons — resumo" required></label>
+                <label>Título do material<input name="title" value="{{ content.title if content else '' }}" placeholder="Ex.: Variáveis e estruturas — resumo" required></label>
                 <label>Descrição<input name="description" value="{{ content.description if content else '' }}" placeholder="Uma frase explicando o material"></label>
-                <label>Nível<select name="series_id" required>{% for s in series %}<option value="{{ s.id }}" {% if content and content.series_id == s.id %}selected{% endif %}>{{ s.name }}</option>{% endfor %}</select></label>
-                <label>Módulo<select name="subject_id" required>{% for s in subjects %}<option value="{{ s.id }}" {% if content and content.subject_id == s.id %}selected{% endif %}>{{ s.series.name }} · {{ s.name }}</option>{% endfor %}</select></label>
+                <label>Série<select name="series_id" required>{% for s in series %}<option value="{{ s.id }}" {% if content and content.series_id == s.id %}selected{% endif %}>{{ s.name }}</option>{% endfor %}</select></label>
+                <label>Matéria<select name="subject_id" required>{% for s in subjects %}<option value="{{ s.id }}" {% if content and content.subject_id == s.id %}selected{% endif %}>{{ s.series.name }} · {{ s.name }}</option>{% endfor %}</select></label>
             </div>
         </div>
 

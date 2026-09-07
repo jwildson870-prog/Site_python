@@ -1,0 +1,3 @@
+Portal JM — camada visual inspirada em sistemas acadêmicos como o SUAP.
+Foi adicionado portal-jm-suap-theme.css e seu carregamento nos templates HTML.
+A camada foi feita para preservar a lógica, rotas e banco existentes.

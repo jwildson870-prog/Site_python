@@ -1,0 +1,18 @@
+{
+  "name": "Portal Python",
+  "short_name": "Portal Python",
+  "description": "Portal Python: materiais, videoaulas e área do aluno e professor.",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#050b14",
+  "theme_color": "#0a1628",
+  "icons": [
+    {"src":"/static/icons/python.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ],
+  "id": "/",
+  "prefer_related_applications": false,
+  "categories": ["education", "productivity"]
+}

@@ -292,6 +292,26 @@ def users():
     return render_template('admin/users.html', users=User.query.order_by(User.id).all())
 
 
+@admin_bp.post('/users/<int:id>/toggle')
+def user_toggle(id):
+    user = User.query.get_or_404(id)
+    if user.id == current_user.id:
+        flash('A conta do professor atual não pode ser rebaixada.', 'error')
+        return redirect(url_for('admin.users'))
+    user.role = 'admin' if user.role != 'admin' else 'student'
+    db.session.commit()
+    flash('Permissão do usuário atualizada.', 'success')
+    return redirect(url_for('admin.users'))
+
+@admin_bp.post('/users/<int:id>/delete')
+def user_delete(id):
+    user = User.query.get_or_404(id)
+    if user.id == current_user.id:
+        flash('Você não pode excluir a própria conta.', 'error')
+    else:
+        db.session.delete(user); db.session.commit(); flash('Usuário excluído.', 'success')
+    return redirect(url_for('admin.users'))
+
 @admin_bp.get('/settings')
 def settings():
     return render_template('admin/settings.html')

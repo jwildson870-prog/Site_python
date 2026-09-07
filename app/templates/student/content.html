@@ -1,20 +1,29 @@
 {% extends 'base.html' %}
+{% block title %}{{ content.title }} · Portal Python{% endblock %}
 {% block content %}
 <p><a href="{{ url_for('student.subject', id=content.subject.id) }}">← {{ content.subject.name }}</a></p>
 <article class="card content">
-    <span class="badge">{{ {'file':'Material','pdf':'PDF','slide':'Slides','video':'Vídeo','link':'Link','explanation':'Explicação'}[content.kind] }}</span>
-    <h1>{{ content.title }}</h1>
-    <p>{{ content.description }}</p>
-    {% if content.kind == 'explanation' %}
-        <div class="prose">{{ content.body|safe }}</div>
-    {% elif content.kind in ['file', 'pdf'] %}
-        <a class="btn" href="{{ url_for('student.arquivo', id=content.id) }}" target="_blank" rel="noopener">ABRIR MATERIAL</a>
-    {% elif content.kind == 'slide' %}
-        <a class="btn" href="{{ content.external_url }}" target="_blank" rel="noopener noreferrer">ABRIR SLIDES</a>
-    {% elif content.kind == 'video' %}
-        <a class="btn" href="{{ content.external_url }}" target="_blank" rel="noopener noreferrer">ASSISTIR À VÍDEO-AULA</a>
-    {% elif content.kind == 'link' %}
-        <a class="btn" href="{{ content.external_url }}" target="_blank" rel="noopener noreferrer">ABRIR MATERIAL ↗</a>
-    {% endif %}
+  <span class="badge">{{ {'file':'Material','pdf':'PDF','slide':'Slides','video':'Vídeo','link':'Link','explanation':'Explicação'}[content.kind] }}</span>
+  <h1>{{ content.title }}</h1><p>{{ content.description }}</p>
+  {% if content.kind == 'explanation' %}
+    <div class="prose">{{ content.body|safe }}</div>
+  {% elif content.kind in ['file', 'pdf'] %}
+    <div class="content-actions">
+      <a class="btn" href="{{ url_for('student.arquivo', id=content.id) }}" target="_blank" rel="noopener">📖 Abrir material</a>
+      <a class="btn secondary" href="{{ url_for('student.download', id=content.id) }}">⬇️ Baixar material</a>
+    </div>
+    {% if content.kind == 'pdf' %}<iframe class="pdf-viewer" src="{{ url_for('student.pdf', id=content.id) }}" title="{{ content.title }}"></iframe>{% endif %}
+  {% elif content.kind == 'video' %}
+    {% if video_embed %}<div class="video-frame"><iframe src="{{ video_embed }}" title="{{ content.title }}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>{% endif %}
+    <a class="btn" href="{{ content.external_url }}" target="_blank" rel="noopener noreferrer">▶️ Assistir videoaula</a>
+  {% elif content.kind in ['slide','link'] %}
+    <a class="btn" href="{{ content.external_url }}" target="_blank" rel="noopener noreferrer">🔗 Abrir material ↗</a>
+  {% endif %}
+
+  <form method="post" action="{{ url_for('student.toggle_complete', id=content.id) }}" class="completion-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn {{ 'secondary' if completed else '' }}" type="submit">{{ '✓ Marcar como pendente' if completed else '✓ Marcar como concluído' }}</button>
+  </form>
+
 </article>
 {% endblock %}

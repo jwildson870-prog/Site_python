@@ -1,1 +1,9 @@
-{% extends 'base.html' %}{% block content %}<p><a href="{{url_for('student.dashboard')}}">← Níveis</a></p><h1>{{series.name}}</h1><div class="grid">{% for s in series.subjects %}<a class="card tile" href="{{url_for('student.subject',id=s.id)}}"><h2>{{s.name}}</h2><p>{{s.contents|length}} conteúdo(s)</p></a>{% else %}<div class="card">Nenhuma módulo cadastrada.</div>{% endfor %}</div>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}{{series.name}} · Portal Python{% endblock %}
+{% block content %}
+<section class="student-shell">
+<p><a class="back-link" href="{{url_for('student.dashboard')}}">← Voltar para nívels</a></p>
+<div class="admin-page-head"><div><span class="eyebrow">TRILHA DE ESTUDOS</span><h1>{{series.name}}</h1><p>Escolha uma módulo para continuar seus estudos.</p></div><span class="badge">🐍 Python</span></div>
+<div class="grid">{% for s in series.subjects %}<a class="card tile" href="{{url_for('student.subject',id=s.id)}}"><span>🐍</span><h2>{{s.name}}</h2><p>{{s.contents|length}} conteúdo(s)</p><span class="arrow">→</span></a>{% else %}<div class="card">Nenhuma módulo cadastrada.</div>{% endfor %}</div>
+</section>
+{% endblock %}
