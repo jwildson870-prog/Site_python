@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<p><a href="{{ url_for('student.subject', id=content.subject.id) }}">← {{ content.subject.name }}</a></p>
+<article class="card content">
+    <span class="badge">{{ {'file':'Material','pdf':'PDF','slide':'Slides','video':'Vídeo','link':'Link','explanation':'Explicação'}[content.kind] }}</span>
+    <h1>{{ content.title }}</h1>
+    <p>{{ content.description }}</p>
+    {% if content.kind == 'explanation' %}
+        <div class="prose">{{ content.body|safe }}</div>
+    {% elif content.kind in ['file', 'pdf'] %}
+        <a class="btn" href="{{ url_for('student.arquivo', id=content.id) }}" target="_blank" rel="noopener">ABRIR MATERIAL</a>
+    {% elif content.kind == 'slide' %}
+        <a class="btn" href="{{ content.external_url }}" target="_blank" rel="noopener noreferrer">ABRIR SLIDES</a>
+    {% elif content.kind == 'video' %}
+        <a class="btn" href="{{ content.external_url }}" target="_blank" rel="noopener noreferrer">ASSISTIR À VÍDEO-AULA</a>
+    {% elif content.kind == 'link' %}
+        <a class="btn" href="{{ content.external_url }}" target="_blank" rel="noopener noreferrer">ABRIR MATERIAL ↗</a>
+    {% endif %}
+</article>
+{% endblock %}

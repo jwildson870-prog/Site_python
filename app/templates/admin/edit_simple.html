@@ -1,0 +1,1 @@
+{% extends 'base.html' %}{% block content %}<div class="auth card"><h1>{{title}}</h1><form method="post"><input type="hidden" name="csrf_token" value="{{csrf_token()}}"><label>Nome<input name="name" value="{{value}}" required></label><button class="btn">Salvar</button></form></div>{% endblock %}

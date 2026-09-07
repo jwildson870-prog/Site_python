@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{% block title %}Portal Python · Aprenda Python{% endblock %}</title><link rel="stylesheet" href="{{ url_for('static',filename='css/style.css') }}"></head>
+<body>
+<header>
+  <a class="brand" href="{{ url_for('admin.dashboard') if current_user.is_authenticated and current_user.is_admin else url_for('student.dashboard') if current_user.is_authenticated else url_for('home') }}">Portal Python 🐍</a>
+  {% if current_user.is_authenticated %}
+  <nav>
+    {% if current_user.is_admin %}
+      <span class="area-pill">🐍 ÁREA DO PROFESSOR</span>
+      <a href="{{ url_for('admin.dashboard') }}">Início</a>
+      <a href="{{ url_for('admin.content_new') }}">Adicionar</a>
+      <a href="{{ url_for('admin.contents') }}">Meus materiais</a>
+    {% else %}
+      <span class="area-pill student-pill">🐍 ÁREA DO ALUNO</span>
+      <a href="{{ url_for('student.dashboard') }}">Materiais</a>
+    {% endif %}
+    <form method="post" action="{{ url_for('auth.logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="linkbtn">Sair</button></form>
+  </nav>
+  {% endif %}
+</header>
+<main>{% with messages=get_flashed_messages(with_categories=true) %}{% for category,msg in messages %}<div class="flash {{category}}">{{msg}}</div>{% endfor %}{% endwith %}{% block content %}{% endblock %}</main>
+<footer>Portal Python · Aprendizado de Python</footer>
+</body></html>

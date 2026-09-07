@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Login · Portal Python{% endblock %}
+{% block content %}
+<section class="login-page">
+    <div class="login-atmosphere python-orbit orbit-one"></div>
+    <div class="login-atmosphere python-orbit orbit-two"></div>
+    <div class="login-card">
+        <div class="login-brand">
+            <div class="python-logo" aria-hidden="true">🐍</div>
+            <span class="eyebrow">PORTAL PYTHON</span>
+            <h1>Aprenda Python</h1>
+            <p>Entre para acessar sua trilha de aprendizagem.</p>
+        </div>
+        <form method="post" class="login-form">
+            <input type="hidden" name="csrf_token" value="{{csrf_token()}}">
+            <label>E-mail<input name="email" type="email" placeholder="seu@email.com" required autocomplete="email"></label>
+            <label>Senha<input name="password" type="password" placeholder="Digite sua senha" required autocomplete="current-password"></label>
+            <button class="btn login-btn" type="submit">Entrar</button>
+        </form>
+        <a class="google login-google" href="{{url_for('auth.google_login')}}">Continuar com Google</a>
+        <div class="login-divider"><span>ou</span></div>
+        <p class="login-register">Ainda não tem conta? <a href="{{url_for('auth.register')}}">Criar uma conta</a></p>
+    </div>
+    <div class="python-bubble bubble-a">print()</div>
+    <div class="python-bubble bubble-b">def</div>
+    <div class="python-bubble bubble-c">if</div>
+</section>
+{% endblock %}

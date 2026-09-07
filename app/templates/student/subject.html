@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}{{ subject.name }} · Portal Python{% endblock %}
+{% block content %}
+<section class="student-shell">
+<p><a class="back-link" href="{{url_for('student.series',id=subject.series.id)}}">← {{subject.series.name}}</a></p>
+<span class="eyebrow">ÁREA DO ALUNO · MATÉRIA</span><h1>{{subject.name}}</h1>
+<div class="list">
+{% for c in subject.contents %}
+<a class="card row" href="{{url_for('student.content',id=c.id)}}">
+  <div><h2>{{c.title}}</h2><p>{{c.description or 'Material de estudo'}}</p></div>
+  <span class="badge">{{ {'explanation':'Explicação','file':'Arquivo','pdf':'PDF','slide':'Slides','video':'Vídeo','link':'Link'}.get(c.kind,'Material') }}</span>
+</a>
+{% else %}<div class="card">Nenhum conteúdo cadastrado.</div>{% endfor %}
+</div>
+</section>
+{% endblock %}

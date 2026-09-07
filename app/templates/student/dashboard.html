@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Área do Aluno · Portal Python{% endblock %}
+{% block content %}
+<section class="student-shell">
+<span class="eyebrow">ÁREA DO ALUNO</span>
+<h1>Olá, {{current_user.name}} 👋</h1><p>Escolha o nível de Python que deseja estudar.</p>
+<div class="grid">{% for s in series %}<a class="card tile" href="{{url_for('student.series',id=s.id)}}"><span>📚</span><h2>{{s.name}}</h2><p>{{s.subjects|length}} módulo(s)</p></a>{% else %}<div class="card">Nenhum nível cadastrado.</div>{% endfor %}</div>
+</section>
+{% endblock %}

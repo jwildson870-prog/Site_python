@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if content else 'Adicionar' }} material · Portal Python{% endblock %}
+{% block content %}
+<section class="admin-shell">
+    <div class="admin-page-head">
+        <div>
+            <a class="back-link" href="{{ url_for('admin.dashboard') }}">← Painel do professor</a>
+            <span class="eyebrow">NOVA PUBLICAÇÃO</span>
+            <h1>{{ 'Editar material' if content else 'Adicionar material' }}</h1>
+            <p>Publique de um jeito simples e escolha de onde o material vem.</p>
+        </div>
+    </div>
+
+    <form class="publisher" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="publisher-card">
+            <div class="card-heading"><span class="step">01</span><div><h2>Onde está o material?</h2><p>Escolha uma fonte abaixo.</p></div></div>
+
+            <div class="source-grid">
+                <button type="button" class="source-card active" data-source="device" onclick="selectSource('device')">
+                    <span class="source-icon">📁</span><strong>Meu dispositivo</strong><small>Computador ou celular</small>
+                </button>
+                <button type="button" class="source-card" data-source="drive" onclick="selectSource('drive')">
+                    <span class="source-icon">☁️</span><strong>Google Drive</strong><small>Usar um arquivo do Drive</small>
+                </button>
+                <button type="button" class="source-card" data-source="link" onclick="selectSource('link')">
+                    <span class="source-icon">🔗</span><strong>Outro lugar</strong><small>Link externo</small>
+                </button>
+                <button type="button" class="source-card" data-source="text" onclick="selectSource('text')">
+                    <span class="source-icon">✍️</span><strong>Escrever aqui</strong><small>Explicação no portal</small>
+                </button>
+            </div>
+
+            <div id="deviceSource" class="source-panel visible">
+                <label class="formgrid" style="margin-bottom:14px">Tipo de material
+                    <select id="deviceKind" onchange="document.getElementById('kind').value=this.value; updateAcceptedTypes();">
+                        <option value="file">Arquivo</option>
+                        <option value="pdf">PDF</option>
+                    </select>
+                </label>
+                <label class="dropzone" id="dropzone">
+                    <input id="fileInput" name="file" type="file" hidden accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.ppt,.pptx,.doc,.docx,.txt">
+                    <span class="drop-icon">☁️</span>
+                    <strong>Toque para escolher um arquivo</strong>
+                    <span>ou arraste o arquivo para esta área</span>
+                    <small>PDF, imagens, PowerPoint, Word e TXT · até 25 MB</small>
+                    <b id="fileName">Nenhum arquivo escolhido</b>
+                </label>
+            </div>
+
+            <div id="driveSource" class="source-panel">
+                <div class="external-box">
+                    <div><strong>📁 Abra seu Google Drive</strong><p>Escolha o arquivo no Drive e copie o link de compartilhamento.</p></div>
+                    <a class="btn secondary" href="https://drive.google.com/drive/my-drive" target="_blank" rel="noopener noreferrer">Abrir Google Drive ↗</a>
+                </div>
+                <label>Tipo de material
+                    <select id="driveKind" onchange="document.getElementById('kind').value=this.value">
+                        <option value="link">Link externo</option>
+                        <option value="slide">Slides</option>
+                        <option value="video">Vídeo</option>
+                    </select>
+                </label>
+                <label>Link do arquivo no Drive<input id="driveUrl" type="url" placeholder="https://drive.google.com/..." oninput="syncExternal(this.value)"></label>
+            </div>
+
+            <div id="linkSource" class="source-panel">
+                <div class="link-services"><span>🔗 Link externo</span><span>☁️ OneDrive</span><span>📦 Dropbox</span><span>🌐 Qualquer site</span></div>
+                <label>Tipo de material
+                    <select id="linkKind" onchange="document.getElementById('kind').value=this.value">
+                        <option value="link">Link externo</option>
+                        <option value="video">Vídeo</option>
+                        <option value="slide">Slides</option>
+                    </select>
+                </label>
+                <label>URL do material<input id="linkUrl" type="url" placeholder="https://..." oninput="syncExternal(this.value)"></label>
+            </div>
+
+            <div id="textSource" class="source-panel">
+                <p class="source-note">Use esta opção para criar uma explicação diretamente dentro do Portal Python.</p>
+            </div>
+
+            <input type="hidden" id="kind" name="kind" value="file">
+            <input type="hidden" id="externalUrl" name="external_url" value="{{ content.external_url if content else '' }}">
+        </div>
+
+        <div class="publisher-card">
+            <div class="card-heading"><span class="step">02</span><div><h2>Organize o material</h2><p>Diga aos alunos onde ele deve aparecer.</p></div></div>
+            <div class="formgrid modern-form">
+                <label>Título do material<input name="title" value="{{ content.title if content else '' }}" placeholder="Ex.: Ligações Pythons — resumo" required></label>
+                <label>Descrição<input name="description" value="{{ content.description if content else '' }}" placeholder="Uma frase explicando o material"></label>
+                <label>Nível<select name="series_id" required>{% for s in series %}<option value="{{ s.id }}" {% if content and content.series_id == s.id %}selected{% endif %}>{{ s.name }}</option>{% endfor %}</select></label>
+                <label>Módulo<select name="subject_id" required>{% for s in subjects %}<option value="{{ s.id }}" {% if content and content.subject_id == s.id %}selected{% endif %}>{{ s.series.name }} · {{ s.name }}</option>{% endfor %}</select></label>
+            </div>
+        </div>
+
+        <div class="publisher-card" id="textEditorCard" style="display:none">
+            <div class="card-heading"><span class="step">03</span><div><h2>Conteúdo da explicação</h2><p>Escreva o texto que o aluno verá no portal.</p></div></div>
+            <textarea id="body" name="body" rows="14" placeholder="Escreva a explicação aqui...">{{ content.body if content else '' }}</textarea>
+        </div>
+
+        <div class="publish-bar">
+            <a class="btn secondary" href="{{ url_for('admin.dashboard') }}">Cancelar</a>
+            <button class="btn admin-primary" type="submit">🚀 {{ 'Salvar alterações' if content else 'Publicar material' }}</button>
+        </div>
+    </form>
+</section>
+
+<script>
+const sourceMap = { device: 'file', drive: 'link', link: 'link', text: 'explanation' };
+const kindSelectByPanel = { device: 'deviceKind', drive: 'driveKind', link: 'linkKind' };
+function selectSource(source) {
+    document.querySelectorAll('.source-card').forEach(card => card.classList.toggle('active', card.dataset.source === source));
+    document.querySelectorAll('.source-panel').forEach(panel => panel.classList.remove('visible'));
+    document.getElementById(source + 'Source').classList.add('visible');
+    const selectId = kindSelectByPanel[source];
+    document.getElementById('kind').value = selectId ? document.getElementById(selectId).value : sourceMap[source];
+    document.getElementById('textEditorCard').style.display = source === 'text' ? 'block' : 'none';
+    if (source === 'device') document.getElementById('externalUrl').value = '';
+}
+function syncExternal(value) { document.getElementById('externalUrl').value = value; }
+function updateAcceptedTypes() {
+    const isPdf = document.getElementById('deviceKind').value === 'pdf';
+    input.accept = isPdf ? '.pdf' : '.pdf,.png,.jpg,.jpeg,.webp,.gif,.ppt,.pptx,.doc,.docx,.txt';
+}
+const input = document.getElementById('fileInput');
+const fileName = document.getElementById('fileName');
+const dropzone = document.getElementById('dropzone');
+input.addEventListener('change', () => { fileName.textContent = input.files[0] ? '✓ ' + input.files[0].name : 'Nenhum arquivo escolhido'; });
+['dragenter','dragover'].forEach(e => dropzone.addEventListener(e, ev => { ev.preventDefault(); dropzone.classList.add('dragging'); }));
+['dragleave','drop'].forEach(e => dropzone.addEventListener(e, ev => { ev.preventDefault(); dropzone.classList.remove('dragging'); }));
+dropzone.addEventListener('drop', ev => { if (ev.dataTransfer.files.length) { input.files = ev.dataTransfer.files; fileName.textContent = '✓ ' + input.files[0].name; } });
+
+{% if content %}
+(function initEditMode(){
+    const existingKind = {{ content.kind|tojson }};
+    const existingUrl = {{ (content.external_url or '')|tojson }};
+    const existingFile = {{ (content.file_name or '')|tojson }};
+    let source = 'device';
+    if (existingKind === 'explanation') source = 'text';
+    else if (existingKind === 'link') source = 'link';
+    else if (existingKind === 'slide' || existingKind === 'video') source = existingUrl.indexOf('drive.google.com') !== -1 ? 'drive' : 'link';
+    else if (existingKind === 'file' || existingKind === 'pdf') source = 'device';
+    const selectId = kindSelectByPanel[source];
+    if (selectId) { const sel = document.getElementById(selectId); if ([...sel.options].some(o => o.value === existingKind)) sel.value = existingKind; }
+    selectSource(source);
+    if (existingUrl) { const urlField = source === 'drive' ? 'driveUrl' : 'linkUrl'; document.getElementById(urlField).value = existingUrl; }
+    if (existingFile) fileName.textContent = '✓ Arquivo já enviado (envie um novo para substituir)';
+})();
+{% endif %}
+</script>
+{% endblock %}

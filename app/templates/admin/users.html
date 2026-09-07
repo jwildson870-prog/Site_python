@@ -1,0 +1,1 @@
+{% extends 'base.html' %}{% block content %}<h1>Usuários</h1><div class="list">{% for u in users %}<div class="card row"><div><b>{{u.name}}</b><p>{{u.email}}</p></div><span class="badge">{{'ADMINISTRADOR' if u.is_admin else 'ALUNO'}}</span></div>{% endfor %}</div>{% endblock %}
