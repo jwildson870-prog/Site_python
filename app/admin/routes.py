@@ -1,8 +1,8 @@
 import os, uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from urllib.parse import urlparse
-from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, current_app, send_from_directory, Response
+from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, current_app, send_from_directory, Response, make_response
 from flask_login import login_required, current_user
 from sqlalchemy import or_
 from werkzeug.utils import secure_filename
@@ -664,13 +664,135 @@ def announcements():
     recent = Notification.query.order_by(Notification.id.desc()).limit(30).all()
     return render_template('admin/announcements.html', students=students, recent=recent)
 
+def _report_dataset():
+    q = request.args.get('q', '').strip()
+    activity_id = request.args.get('activity_id', '').strip()
+    student_id = request.args.get('student_id', '').strip()
+    period = request.args.get('period', '30').strip()
+    try:
+        days = int(period)
+    except ValueError:
+        days = 30
+    days = days if days in {7, 30, 90, 365} else 30
+    since = datetime.utcnow() - timedelta(days=days)
+
+    students_q = User.query.filter_by(role='student')
+    if q:
+        like = f'%{q}%'
+        students_q = students_q.filter(or_(User.name.ilike(like), User.email.ilike(like)))
+    if student_id.isdigit():
+        students_q = students_q.filter(User.id == int(student_id))
+    students = students_q.order_by(User.name.asc()).all()
+
+    activities_q = Activity.query.order_by(Activity.title.asc())
+    if activity_id.isdigit():
+        activities_q = activities_q.filter(Activity.id == int(activity_id))
+    activities = activities_q.all()
+    activity_ids = {a.id for a in activities}
+    student_ids = {u.id for u in students}
+    attempts = ActivityAttempt.query.filter(ActivityAttempt.created_at >= since)
+    if activity_id.isdigit():
+        attempts = attempts.filter(ActivityAttempt.activity_id.in_(activity_ids or {-1}))
+    if student_ids:
+        attempts = attempts.filter(ActivityAttempt.user_id.in_(student_ids))
+    else:
+        attempts = attempts.filter(db.false())
+    attempts = attempts.order_by(ActivityAttempt.created_at.asc()).all()
+
+    scores = [float(a.score) for a in attempts]
+    average = round(sum(scores) / len(scores), 1) if scores else 0
+    completion_pairs = {(a.user_id, a.activity_id) for a in attempts}
+    total_possible = len(students) * len(activities)
+    completion = round(len(completion_pairs) / total_possible * 100) if total_possible else 0
+    below = sum(1 for score in scores if score < 6)
+
+    activity_rows = []
+    for activity in activities:
+        aa = [a for a in attempts if a.activity_id == activity.id]
+        vals = [float(a.score) for a in aa]
+        unique = len({a.user_id for a in aa})
+        activity_rows.append({
+            'activity': activity, 'attempts': len(aa), 'students': unique,
+            'average': round(sum(vals)/len(vals), 1) if vals else None,
+            'completion': round(unique/len(students)*100) if students else 0,
+            'best': max(vals) if vals else None,
+        })
+    activity_rows.sort(key=lambda r: (r['average'] is None, -(r['average'] or 0)))
+
+    student_rows = []
+    for student in students:
+        aa = [a for a in attempts if a.user_id == student.id]
+        vals = [float(a.score) for a in aa]
+        unique = len({a.activity_id for a in aa})
+        student_rows.append({
+            'student': student, 'attempts': len(aa), 'completed': unique,
+            'completion': round(unique/len(activities)*100) if activities else 0,
+            'average': round(sum(vals)/len(vals), 1) if vals else None,
+            'best': max(vals) if vals else None,
+        })
+    student_rows.sort(key=lambda r: (r['average'] is None, r['average'] if r['average'] is not None else 0, r['student'].name.lower()))
+
+    buckets = []
+    bucket_count = 7
+    step = max(days // bucket_count, 1)
+    for i in range(bucket_count - 1, -1, -1):
+        start = datetime.utcnow() - timedelta(days=(i+1)*step)
+        end = datetime.utcnow() - timedelta(days=i*step)
+        vals = [float(a.score) for a in attempts if start <= a.created_at < end]
+        buckets.append({'label': start.strftime('%d/%m'), 'average': round(sum(vals)/len(vals), 1) if vals else None, 'count': len(vals)})
+    max_chart = max([b['average'] or 0 for b in buckets] + [10])
+    return locals()
+
 @admin_bp.get('/relatorios')
 def reports():
-    students = User.query.filter_by(role='student').count()
-    attempts = ActivityAttempt.query.count()
-    average = db.session.query(db.func.avg(ActivityAttempt.score)).scalar()
-    best = ActivityAttempt.query.order_by(ActivityAttempt.score.desc()).first()
-    return render_template('admin/reports.html', students=students, attempts=attempts, average=round(float(average),1) if average is not None else 0, best=best)
+    data = _report_dataset()
+    return render_template('admin/reports.html', **data, activity_options=Activity.query.order_by(Activity.title.asc()).all(), student_options=User.query.filter_by(role='student').order_by(User.name.asc()).all())
+
+@admin_bp.get('/relatorios/export.csv')
+def reports_csv():
+    import csv, io
+    data = _report_dataset()
+    out = io.StringIO()
+    writer = csv.writer(out)
+    writer.writerow(['Aluno', 'E-mail', 'Atividades concluídas', 'Conclusão %', 'Tentativas', 'Média', 'Melhor nota'])
+    for row in data['student_rows']:
+        writer.writerow([row['student'].name, row['student'].email, row['completed'], row['completion'], row['attempts'], row['average'] if row['average'] is not None else '', row['best'] if row['best'] is not None else ''])
+    resp = make_response('\ufeff' + out.getvalue())
+    resp.headers['Content-Type'] = 'text/csv; charset=utf-8'
+    resp.headers['Content-Disposition'] = 'attachment; filename=portal-python-relatorio.csv'
+    return resp
+
+@admin_bp.get('/relatorios/export.xlsx')
+def reports_xlsx():
+    try:
+        from openpyxl import Workbook
+    except ImportError:
+        flash('A exportação Excel requer a dependência openpyxl.', 'error')
+        return redirect(url_for('admin.reports'))
+    data = _report_dataset()
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Alunos'
+    ws.append(['Aluno', 'E-mail', 'Concluídas', 'Conclusão %', 'Tentativas', 'Média', 'Melhor nota'])
+    for row in data['student_rows']:
+        ws.append([row['student'].name, row['student'].email, row['completed'], row['completion'], row['attempts'], row['average'], row['best']])
+    wa = wb.create_sheet('Atividades')
+    wa.append(['Atividade', 'Tentativas', 'Alunos', 'Conclusão %', 'Média', 'Melhor nota'])
+    for row in data['activity_rows']:
+        wa.append([row['activity'].title, row['attempts'], row['students'], row['completion'], row['average'], row['best']])
+    for sheet in wb.worksheets:
+        sheet.freeze_panes = 'A2'
+        sheet.auto_filter.ref = sheet.dimensions
+        for col in sheet.columns:
+            width = min(max(len(str(cell.value or '')) for cell in col) + 2, 42)
+            sheet.column_dimensions[col[0].column_letter].width = width
+    import io
+    out = io.BytesIO()
+    wb.save(out)
+    resp = make_response(out.getvalue())
+    resp.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    resp.headers['Content-Disposition'] = 'attachment; filename=portal-python-relatorio.xlsx'
+    return resp
 
 @admin_bp.get('/settings')
 def settings(): return render_template('admin/settings.html')
