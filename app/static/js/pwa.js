@@ -64,42 +64,6 @@
       showInstallButton();
     }
   });
-  // Feedback visual imediato nas navegações internas.
-  // A tela do Render, quando o serviço está suspenso, acontece antes do Flask responder
-  // e não pode ser substituída pelo código do site. Este loader assume a navegação
-  // assim que o navegador recebe a aplicação.
-  const portalLoader = document.getElementById('portalLoader');
-
-  function hidePortalLoader() {
-    portalLoader?.classList.add('is-hidden');
-  }
-
-  function showPortalLoader() {
-    if (portalLoader) portalLoader.classList.remove('is-hidden');
-  }
-
-  if (portalLoader) {
-    hidePortalLoader();
-    window.addEventListener('pageshow', hidePortalLoader);
-
-    document.addEventListener('click', function (event) {
-      const link = event.target.closest('a[href]');
-      if (!link || event.defaultPrevented) return;
-      if (link.target === '_blank' || link.hasAttribute('download')) return;
-      if (link.origin !== window.location.origin) return;
-      const url = new URL(link.href);
-      if (url.pathname === window.location.pathname && url.search === window.location.search && url.hash) return;
-      if (link.href.startsWith('javascript:')) return;
-      showPortalLoader();
-    });
-
-    document.addEventListener('submit', function (event) {
-      const form = event.target;
-      if (!(form instanceof HTMLFormElement)) return;
-      if (form.target === '_blank') return;
-      showPortalLoader();
-    });
-  }
 })();
 
 

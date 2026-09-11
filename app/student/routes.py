@@ -56,10 +56,6 @@ def dashboard():
         recent_attempts=recent_attempts, attempted_ids=attempted_ids, recent_notifications=recent_notifications
     )
 
-@student_bp.get('/estudo-inteligente')
-def study_tools():
-    return render_template('student/study_tools.html')
-
 @student_bp.get('/materiais')
 def materials():
     q = request.args.get('q', '').strip()
