@@ -12,7 +12,7 @@ def create_app(test_config=None):
     upload_folder=Path(configured_uploads) if configured_uploads else local_uploads
     upload_folder.mkdir(parents=True,exist_ok=True)
     Path(app.instance_path).mkdir(parents=True,exist_ok=True)
-    dburl=os.getenv('DATABASE_URL','sqlite:///portal_jm.db')
+    dburl=os.getenv('DATABASE_URL','sqlite:///portal_python.db')
     if dburl.startswith('postgres://'): dburl='postgresql+psycopg2://'+dburl[11:]
     elif dburl.startswith('postgresql://'): dburl='postgresql+psycopg2://'+dburl[13:]
     app.config.update(SECRET_KEY=os.getenv('SECRET_KEY','dev-change-me'),SQLALCHEMY_DATABASE_URI=dburl,SQLALCHEMY_TRACK_MODIFICATIONS=False,UPLOAD_FOLDER=str(upload_folder),MAX_CONTENT_LENGTH=25*1024*1024,SESSION_COOKIE_HTTPONLY=True,SESSION_COOKIE_SAMESITE='Lax',SESSION_COOKIE_SECURE=os.getenv('SESSION_COOKIE_SECURE','false').lower()=='true')

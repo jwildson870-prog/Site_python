@@ -25,9 +25,9 @@ Acesse `http://127.0.0.1:5000`.
 
 Por padrão, a conta pré-definida é:
 
-- E-mail: `professor@portaljm.com`
-- Senha: `PortalJM@2026`
-- Nome: `Professor JM`
+- E-mail: `professor@portalpython.local`
+- Senha: `PortalPython@2026`
+- Nome: `Professor Python`
 
 As variáveis `ADMIN_EMAIL`, `ADMIN_PASSWORD` e `ADMIN_NAME` podem ser configuradas no Render para trocar as credenciais sem alterar o código. O cadastro público nunca cria administrador: contas cadastradas pela tela pública são sempre ALUNO.
 
@@ -88,7 +88,7 @@ A remoção de materiais permanece disponível no backend, mas foi retirada da i
 
 
 ## Acesso de demonstração
-Por padrão, o sistema usa `professor@portaljm.com` / `PortalJM@2026` como administrador. Em produção, recomenda-se alterar essas variáveis no Render.
+Por padrão, o sistema usa `professor@portalpython.local` / `PortalPython@2026` como administrador. Em produção, recomenda-se alterar essas variáveis no Render. Em produção, recomenda-se alterar essas variáveis no Render.
 
 
 ## Quatro anos e compatibilidade com dados existentes
@@ -124,12 +124,31 @@ O Render informa que o filesystem normal do serviço é efêmero; somente os arq
 
 ## Arquitetura simplificada
 
-Esta versão não usa JavaScript no site. A interface é feita com HTML e CSS e as regras, formulários, autenticação, uploads, atividades e banco de dados são processados no Flask/Python. O menu lateral no celular usa apenas HTML + CSS. O mecanismo de instalação PWA/service worker foi removido porque ele depende de JavaScript.
+A interface principal é feita com HTML e CSS; Flask/Python processa as regras, formulários, autenticação, uploads, atividades e banco. Há JavaScript mínimo para recursos de interface/PWA. O menu lateral no celular usa HTML + CSS.
 
 ## Backblaze B2
 
-Em produção, os uploads podem ser armazenados no Backblaze B2. Configure no Render as variáveis `B2_APPLICATION_KEY_ID`, `B2_APPLICATION_KEY`, `B2_BUCKET_NAME`, `B2_ENDPOINT` e opcionalmente `B2_REGION`.
+Em produção, os uploads podem ser armazenados no Backblaze B2. Configure no Render as variáveis `B2_KEY_ID`, `B2_APPLICATION_KEY`, `B2_BUCKET_NAME`, `B2_ENDPOINT` e `B2_REGION`.
 
-Quando as quatro primeiras estiverem preenchidas, novos arquivos enviados pelo painel do professor são gravados no B2. O banco continua guardando a referência do arquivo e o Portal Python gera URLs temporárias assinadas para abrir os arquivos com segurança, sem expor a Application Key ao navegador.
+Quando as quatro primeiras estiverem preenchidas, novos arquivos enviados pelo painel do professor são gravados no B2. O banco continua guardando a referência do arquivo e o backend entrega os arquivos pelo servidor, sem expor a Application Key ao navegador.
 
 Se as variáveis B2 não estiverem configuradas, o sistema continua usando `UPLOAD_FOLDER` como armazenamento local, mantendo compatibilidade com desenvolvimento e com instalações que usam Persistent Disk.
+
+
+## Armazenamento de arquivos
+
+O Portal Python usa Backblaze B2 para novos uploads quando as variáveis abaixo estão configuradas no ambiente de produção:
+
+```env
+B2_KEY_ID=...
+B2_APPLICATION_KEY=...
+B2_BUCKET_NAME=SitPython
+B2_ENDPOINT=https://s3.us-east-005.backblazeb2.com
+B2_REGION=us-east-005
+```
+
+O backend envia e entrega os arquivos pelo próprio servidor. Registros antigos podem tentar o bucket legado `PortalJm` como fallback de leitura.
+
+## Produção no Render
+
+Defina também uma `SECRET_KEY` aleatória e, em HTTPS, use `SESSION_COOKIE_SECURE=true`. Se o login Google estiver habilitado, configure `GOOGLE_REDIRECT_URI` com a URL pública do serviço no Render.
