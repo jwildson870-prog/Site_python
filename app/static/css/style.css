@@ -1821,3 +1821,97 @@ body.app-authenticated .site-footer{
   .hero-python-art{right:-55px;bottom:0;width:220px;opacity:.16}
   .hero-cta{width:100%;justify-content:center}
 }
+
+
+/* =========================================================
+   AJUSTE FINAL — RESPONSIVIDADE MOBILE
+   Somente redimensionamento/reorganização visual.
+   Nenhuma funcionalidade ou item do portal é removido.
+========================================================= */
+@media (max-width: 760px){
+  html, body{width:100%;max-width:100%;overflow-x:hidden}
+  .topbar{position:sticky;top:0;z-index:1000;width:100%;height:64px;padding:0 12px;gap:10px}
+  .topbar-brand{min-width:0;gap:8px}
+  .topbar-brand img{width:36px;height:36px;flex:0 0 36px}
+  .topbar-brand strong{font-size:1.02rem;white-space:nowrap}
+  .topbar-avatar{flex:0 0 38px;width:38px;height:38px}
+
+  /* No celular o menu fica fechado por padrão e abre sobre o conteúdo. */
+  body.app-authenticated .side-menu{
+    position:fixed;
+    top:64px;
+    left:0;
+    bottom:0;
+    width:min(292px,82vw);
+    max-width:292px;
+    transform:translateX(-105%) !important;
+    z-index:1100;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+  body.app-authenticated .menu-check:checked ~ .side-menu{
+    transform:translateX(0) !important;
+  }
+  body.app-authenticated .menu-overlay{z-index:1050}
+
+  body.app-authenticated .site-main{
+    width:100%;
+    max-width:none;
+    margin-left:0 !important;
+    padding:76px 12px 24px !important;
+    box-sizing:border-box;
+  }
+  body.app-authenticated .site-footer{
+    width:100%;
+    margin-left:0 !important;
+    box-sizing:border-box;
+    padding:22px 12px 28px;
+  }
+
+  .student-shell,.admin-shell,.reference-dashboard,.workspace-shell,.portal-content,.portal-main{
+    width:100%;
+    max-width:none;
+    min-width:0;
+    box-sizing:border-box;
+  }
+  .student-shell .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .student-shell .tile{min-width:0;min-height:116px;padding:15px}
+  .student-shell .tile h2,.student-shell .tile h3{font-size:1rem;line-height:1.2;overflow-wrap:anywhere}
+  .student-shell .tile p{font-size:.78rem;line-height:1.35}
+
+  .admin-hero{width:100%;box-sizing:border-box}
+  .admin-hero .actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+  .admin-hero .actions .btn{min-width:0;margin-top:0;padding:10px 9px;font-size:.78rem;justify-content:center;text-align:center}
+  .admin-stats{width:100%;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .admin-stat{min-width:0;box-sizing:border-box}
+  .admin-stat small,.admin-stat strong{overflow-wrap:anywhere}
+
+  .card,.publisher-card,.material-row,.reference-section,.reference-stat,.reference-hero{max-width:100%;box-sizing:border-box}
+  .formgrid,.form-grid,.options{grid-template-columns:1fr !important}
+  .inlineform{width:100%;box-sizing:border-box}
+  .inlineform input{min-width:0;width:100%;box-sizing:border-box}
+  .btn{max-width:100%;box-sizing:border-box}
+  img,iframe,video{max-width:100%}
+  .preview-frame{width:100%;min-height:65vh}
+}
+
+@media (max-width:430px){
+  .topbar{padding:0 10px}
+  .topbar-brand strong{font-size:.98rem}
+  body.app-authenticated .site-main{padding-left:10px !important;padding-right:10px !important}
+  .student-shell .grid{gap:8px}
+  .student-shell .tile{min-height:108px;padding:13px}
+  .admin-hero{padding:18px 15px}
+  .admin-hero .actions{grid-template-columns:1fr 1fr}
+  .admin-stats{gap:8px}
+  .admin-stat{padding:11px 9px}
+}
+
+@media (max-width:360px){
+  .topbar-brand strong{font-size:.92rem}
+  .menu-toggle{width:42px;height:42px;flex-basis:42px}
+  .topbar-avatar{width:36px;height:36px;flex-basis:36px}
+  .student-shell .grid{grid-template-columns:1fr 1fr}
+  .admin-hero .actions{grid-template-columns:1fr}
+}

@@ -42,29 +42,59 @@ def test_unknown_client_error_contains_safe_b2_code(monkeypatch):
     assert err.code == 'storage_config'
 
 
-def test_upload_uses_put_object(monkeypatch):
+def test_native_upload_uses_b2_api(monkeypatch):
     import io
     import app.storage as storage
-    class FakeClient:
-        def __init__(self): self.calls = []
-        def put_object(self, **kwargs): self.calls.append(kwargs)
-    fake = FakeClient()
+    from flask import Flask
+
+    class Resp:
+        def __init__(self, status=200, data=None, text=''):
+            self.status_code = status
+            self._data = data or {}
+            self.text = text
+            self.ok = status < 400
+        def json(self):
+            return self._data
+
+    calls = []
+    responses = [
+        Resp(data={'accountId': 'acc', 'authorizationToken': 'auth', 'apiInfo': {'storageApi': {'apiUrl': 'https://api001.backblazeb2.com', 'allowed': {'buckets': [{'id': 'bucket-id', 'name': 'SitPython'}]}}}}),
+        Resp(data={'bucketId': 'bucket-id', 'uploadUrl': 'https://pod.backblaze.com/upload', 'authorizationToken': 'upload-token'}),
+        Resp(data={'fileId': 'file-id'}),
+    ]
+    def fake_get(url, **kwargs):
+        calls.append(('GET', url, kwargs)); return responses.pop(0)
+    def fake_post(url, **kwargs):
+        calls.append(('POST', url, kwargs)); return responses.pop(0)
+
+    monkeypatch.setattr(storage.requests, 'get', fake_get)
+    monkeypatch.setattr(storage.requests, 'post', fake_post)
     monkeypatch.setenv('B2_KEY_ID', 'key')
     monkeypatch.setenv('B2_APPLICATION_KEY', 'secret')
     monkeypatch.setenv('B2_BUCKET_NAME', 'SitPython')
-    monkeypatch.setenv('B2_ENDPOINT', 'https://s3.us-east-005.backblazeb2.com')
-    monkeypatch.setattr(storage, '_client', lambda: fake)
+
     class F:
         filename='teste.pdf'; mimetype='application/pdf'; stream=io.BytesIO(b'abc')
-    from flask import Flask
     with Flask(__name__).app_context():
         key = storage.upload(F(), 'teste.pdf', 'application/pdf')
     assert key.startswith('materials/')
-    assert fake.calls[0]['Bucket'] == 'sitpython'
-    assert fake.calls[0]['ContentType'] == 'application/pdf'
+    assert calls[0][0] == 'GET' and 'b2_authorize_account' in calls[0][1]
+    assert calls[1][0] == 'GET' and 'b2_get_upload_url' in calls[1][1]
+    assert calls[2][0] == 'POST' and calls[2][1].endswith('/upload')
+    assert calls[2][2]['headers']['Content-Length'] == '3'
 
 
-def test_b2_bucket_name_is_normalized_for_s3_compatibility(monkeypatch):
+def test_native_upload_bucket_keeps_real_name(monkeypatch):
     import app.storage as storage
     monkeypatch.setenv('B2_BUCKET_NAME', 'SitPython')
-    assert storage._bucket() == 'sitpython'
+    assert storage._bucket() == 'SitPython'
+
+
+def test_bucket_legacy_sitpython_aliases_to_real_sitepython(monkeypatch):
+    monkeypatch.setenv("B2_BUCKET_NAME", "SitPython")
+    assert storage._bucket() == "SitePython"
+
+
+def test_bucket_default_is_sitepython(monkeypatch):
+    monkeypatch.delenv("B2_BUCKET_NAME", raising=False)
+    assert storage._bucket() == "SitePython"
