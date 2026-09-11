@@ -16,9 +16,17 @@
   <link rel="manifest" href="{{ url_for('static',filename='manifest.json') }}">
   <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static',filename='icons/icon-192.png') }}">
   <title>{% block title %}Portal Python{% endblock %}</title>
-  <link rel="stylesheet" href="{{ url_for('static',filename='css/style.css', v='20260911-visual-polish-1') }}">
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/style.css', v='20260911-loading-1') }}">
 </head>
 <body class="{% if current_user.is_authenticated %}app-authenticated{% else %}public-page{% endif %}">
+<div class="portal-loader" id="portalLoader" aria-hidden="true">
+  <div class="portal-loader-card" role="status" aria-live="polite">
+    <div class="portal-loader-mark"><img src="{{ url_for('static',filename='icons/python.svg') }}" alt=""></div>
+    <div class="portal-loader-spinner" aria-hidden="true"></div>
+    <strong>Portal Python</strong>
+    <span>Carregando...</span>
+  </div>
+</div>
 <input class="menu-check" id="menuCheck" type="checkbox" aria-hidden="true">
 <header class="topbar">
   {% if current_user.is_authenticated %}<label class="menu-toggle" for="menuCheck" aria-label="Abrir menu" title="Abrir menu"><span></span><span></span><span></span></label>{% endif %}
