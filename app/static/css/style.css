@@ -2163,3 +2163,210 @@ tr:hover td{background:rgba(17,52,79,.34)}
   .login-page{padding-left:9px;padding-right:9px}
   .login-card{padding-left:15px;padding-right:15px}
 }
+
+/* =========================================================
+   UI UX PRO MAX — PORTAL PYTHON
+   Refino visual baseado na skill enviada pelo usuário.
+   Direção: Flat Design + dashboard educacional + acessibilidade.
+   Mantém identidade Python, rotas e funcionalidades.
+========================================================= */
+:root{
+  --ux-bg:#07111f;
+  --ux-surface:#0d1b2d;
+  --ux-surface-2:#12243a;
+  --ux-surface-3:#172d46;
+  --ux-text:#f8fafc;
+  --ux-muted:#a9bad0;
+  --ux-border:#28415d;
+  --ux-primary:#38bdf8;
+  --ux-primary-strong:#0ea5e9;
+  --ux-accent:#facc15;
+  --ux-success:#34d399;
+  --ux-danger:#fb7185;
+  --ux-radius:16px;
+  --ux-radius-sm:11px;
+  --ux-shadow:0 10px 28px rgba(0,0,0,.20);
+  --ux-focus:0 0 0 3px rgba(56,189,248,.30);
+}
+
+body{
+  color:var(--ux-text);
+  background:var(--ux-bg);
+  letter-spacing:-.01em;
+}
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:-1;
+  background:
+    linear-gradient(rgba(56,189,248,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(56,189,248,.025) 1px,transparent 1px);
+  background-size:32px 32px;
+  mask-image:linear-gradient(to bottom,black,transparent 72%);
+}
+
+.topbar{
+  height:68px;
+  background:rgba(7,17,31,.94);
+  border-bottom:1px solid var(--ux-border);
+  box-shadow:0 5px 20px rgba(0,0,0,.18);
+  backdrop-filter:blur(12px);
+}
+.topbar-brand strong{font-weight:750;letter-spacing:-.035em}
+.topbar-brand span{color:var(--ux-primary)}
+.topbar-search{
+  min-height:42px;
+  border:1px solid var(--ux-border);
+  background:var(--ux-surface);
+  border-radius:12px;
+  transition:border-color .18s ease,background .18s ease;
+}
+.topbar-search:hover{border-color:#3d6387;background:var(--ux-surface-2)}
+.topbar-bell,.topbar-avatar,.menu-toggle{transition:transform .18s ease,border-color .18s ease,background .18s ease}
+.topbar-bell:hover,.topbar-avatar:hover,.menu-toggle:hover{transform:translateY(-1px);border-color:#3d6387}
+
+.side-menu{
+  background:#091726;
+  border-right:1px solid var(--ux-border);
+  box-shadow:8px 0 30px rgba(0,0,0,.16);
+}
+.side-brand{border-bottom:1px solid var(--ux-border)}
+.side-area{
+  color:#7f9bb7;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.11em;
+}
+.side-link{
+  min-height:46px;
+  border:1px solid transparent;
+  border-radius:12px;
+  color:#b9c9da;
+  transition:background .18s ease,color .18s ease,border-color .18s ease,transform .18s ease;
+}
+.side-link:hover{background:#10243a;color:#fff;border-color:#24415d;transform:translateX(2px)}
+.side-link.active{
+  color:#fff;
+  background:#12314a;
+  border-color:#275678;
+  box-shadow:inset 3px 0 0 var(--ux-primary);
+}
+.side-link.active .nav-icon{color:var(--ux-primary)}
+.side-install{margin-top:10px;border-color:#31536e;background:#0e263a;color:#e7f6ff}
+.side-install:hover{background:#13334c;border-color:#3c6b8e}
+.side-bottom{border-top:1px solid var(--ux-border)}
+.side-logout{border-radius:10px;transition:background .18s ease,color .18s ease}
+.side-logout:hover{background:#251a22;color:#fff}
+
+.site-main{max-width:1600px}
+.admin-shell,.student-shell,.admin-page,.content,.hero,.card,.tile{
+  border-color:var(--ux-border);
+}
+.hero,.admin-hero{
+  border-radius:var(--ux-radius);
+  background:linear-gradient(135deg,#0d2135 0%,#102b44 100%);
+  box-shadow:var(--ux-shadow);
+}
+.hero-copy h1,.admin-hero h1{letter-spacing:-.045em;line-height:1.06}
+.hero-copy p,.admin-hero p{color:var(--ux-muted)}
+.hero-cta .btn,.admin-primary{box-shadow:none}
+
+.card,.admin-stat,.tile{
+  background:var(--ux-surface);
+  border:1px solid var(--ux-border);
+  border-radius:var(--ux-radius);
+  box-shadow:0 6px 20px rgba(0,0,0,.13);
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+}
+.card:hover,.admin-stat:hover,.tile:hover{
+  transform:translateY(-2px);
+  border-color:#355978;
+  box-shadow:var(--ux-shadow);
+}
+.admin-stat{background:var(--ux-surface-2)}
+.stat-icon{border-radius:12px}
+
+.btn{
+  min-height:44px;
+  border-radius:11px;
+  border:1px solid transparent;
+  font-weight:700;
+  letter-spacing:-.01em;
+  cursor:pointer;
+  transition:transform .16s ease,background .16s ease,border-color .16s ease,box-shadow .16s ease;
+}
+.btn:hover{transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn:focus-visible,.side-link:focus-visible,.topbar-search:focus-visible,.topbar-avatar:focus-visible{outline:none;box-shadow:var(--ux-focus)}
+.btn-primary{background:var(--ux-primary-strong);color:#fff;border-color:#38bdf8}
+.btn-primary:hover{background:#0284c7}
+.btn-secondary,.btn-outline{background:#12283d;color:#eaf5ff;border-color:#355673}
+.btn-secondary:hover,.btn-outline:hover{background:#17334d;border-color:#4b7496}
+
+input,select,textarea{
+  color:#f8fafc;
+  background:#0a1929;
+  border:1px solid #304a65;
+  border-radius:11px;
+  min-height:44px;
+}
+input::placeholder,textarea::placeholder{color:#7890a8}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ux-primary);box-shadow:var(--ux-focus)}
+label{color:#dbe7f3}
+
+.table-wrap,table{border-color:var(--ux-border)}
+th{background:#12283d;color:#eaf5ff}
+td{border-color:#213a54;color:#d4e0ec}
+tbody tr:hover{background:#10243a}
+
+.flash{border-radius:12px;border:1px solid var(--ux-border);box-shadow:none}
+.flash.success{border-color:rgba(52,211,153,.35);background:rgba(52,211,153,.10)}
+.flash.error,.flash.danger{border-color:rgba(251,113,133,.35);background:rgba(251,113,133,.10)}
+
+/* Login: foco limpo, institucional e sem elementos do app atrás do formulário. */
+.auth-page{background:#07111f}
+.auth-page .login-card{
+  border:1px solid #2c4965;
+  border-radius:20px;
+  background:#0d1b2d;
+  box-shadow:0 20px 55px rgba(0,0,0,.32);
+}
+.login-brand h1{letter-spacing:-.045em}
+.login-btn{min-height:48px;border-radius:12px}
+.login-divider{color:#7890a8}
+
+/* Área de ações: nunca deixar botões espremidos em telas pequenas. */
+.actions,.content-tools,.material-actions,.organized-actions,.manage-actions{gap:10px}
+.actions .btn,.content-tools .btn,.material-actions .btn,.organized-actions .btn,.manage-actions .btn{width:100%}
+
+@media (min-width:900px){
+  .actions,.content-tools,.material-actions,.organized-actions,.manage-actions{display:flex;flex-wrap:wrap}
+  .actions .btn,.content-tools .btn,.material-actions .btn,.organized-actions .btn,.manage-actions .btn{width:auto}
+}
+@media (max-width:899px){
+  .site-main{padding-left:16px;padding-right:16px}
+  .hero,.admin-hero{padding:24px}
+  .hero-copy h1,.admin-hero h1{font-size:clamp(28px,7vw,42px)}
+  .topbar-search{display:none}
+}
+@media (max-width:560px){
+  .topbar{height:62px;padding:0 12px}
+  .topbar-brand strong{font-size:15px}
+  .topbar-brand img{width:30px;height:30px}
+  .topbar-avatar,.topbar-bell,.menu-toggle{width:40px;height:40px}
+  .site-main{padding:78px 12px 28px}
+  .hero,.admin-hero,.card,.admin-stat,.tile{border-radius:14px}
+  .hero,.admin-hero{padding:20px}
+  .actions,.content-tools,.material-actions,.organized-actions,.manage-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .actions .btn,.content-tools .btn,.material-actions .btn,.organized-actions .btn,.manage-actions .btn{min-width:0}
+}
+@media (max-width:360px){
+  .actions,.content-tools,.material-actions,.organized-actions,.manage-actions{grid-template-columns:1fr}
+  .site-main{padding-left:10px;padding-right:10px}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}
+}
