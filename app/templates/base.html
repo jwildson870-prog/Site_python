@@ -10,12 +10,12 @@
   <link rel="manifest" href="{{ url_for('static',filename='manifest.json') }}">
   <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static',filename='icons/icon-192.png') }}">
   <title>{% block title %}Portal Python{% endblock %}</title>
-  <link rel="stylesheet" href="{{ url_for('static',filename='css/style.css', v='20260911-python-3') }}">
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/style.css', v='20260911-python-4') }}">
 </head>
-<body class="{% if current_user.is_authenticated %}
+<body class="{% if current_user.is_authenticated %}app-authenticated{% else %}public-page{% endif %}">
 <input class="menu-check" id="menuCheck" type="checkbox" aria-hidden="true">
 <header class="topbar">
-  <label class="menu-toggle" for="menuCheck" aria-label="Abrir menu" title="Abrir menu">☰</label>
+  <label class="menu-toggle" for="menuCheck" aria-label="Abrir menu" title="Abrir menu"><span></span><span></span><span></span></label>
   <div class="topbar-brand"><img src="{{ url_for('static',filename='icons/python.svg') }}" alt="Python"><strong>Portal <span>Python</span></strong></div>
   <div class="topbar-spacer"></div>
   <div class="topbar-search" aria-label="Buscar no portal"><img src="{{ url_for('static',filename='icons/ui/search.svg') }}" alt=""><span>Buscar no portal...</span></div>

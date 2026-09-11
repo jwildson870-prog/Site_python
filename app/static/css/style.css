@@ -1715,3 +1715,109 @@ body.app-authenticated{
   .reference-section{padding:15px;border-radius:14px}.reference-section-head{align-items:flex-start}.reference-section-head .btn{font-size:.7rem;padding:8px 11px}.publish-types{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.publish-types a{min-height:78px}.publish-types b{font-size:.68rem}.type-icon img{width:23px;height:23px}
   .material-preview-row{grid-template-columns:28px minmax(0,1fr) 24px;gap:8px}.material-preview-row .badge,.preview-series,.preview-date{display:none}.material-preview-row strong{font-size:.78rem}.quick-link{font-size:.76rem}
 }
+
+
+/* =========================================================
+   PORTAL PYTHON — MODELO VISUAL SOLICITADO
+   Somente visual: sidebar + cards + acabamento da referência.
+========================================================= */
+body.app-authenticated{
+  color:#f3f7ff;
+  background:
+    radial-gradient(circle at 76% -8%,rgba(24,125,235,.13),transparent 28%),
+    linear-gradient(135deg,#031225 0%,#06182d 50%,#041326 100%);
+}
+body.app-authenticated .topbar{
+  height:78px;
+  padding:0 24px;
+  background:#031326;
+  border-bottom:1px solid rgba(64,143,224,.25);
+}
+body.app-authenticated .side-menu{
+  top:78px;
+  width:202px;
+  background:linear-gradient(180deg,#06182d 0%,#031426 100%);
+  border-right:1px solid rgba(53,128,202,.23);
+}
+body.app-authenticated .app-authenticated .site-main{margin-left:0}
+body.app-authenticated .site-main{
+  margin-left:202px;
+  min-height:calc(100vh - 78px);
+  padding:24px 24px 0;
+}
+body.app-authenticated .site-footer{
+  margin-left:202px!important;
+  background:rgba(3,14,27,.42);
+}
+.reference-dashboard{
+  width:min(100%,1040px);
+  margin:0 auto;
+}
+.reference-hero{
+  position:relative;
+  overflow:hidden;
+  min-height:258px;
+  padding:28px 27px;
+  border-radius:16px;
+  border:1px solid #145b95;
+  background:
+    radial-gradient(circle at 84% 40%,rgba(28,139,255,.27),transparent 31%),
+    linear-gradient(135deg,#0b3b69 0%,#082a4d 48%,#061b34 100%);
+}
+.reference-hero::after{
+  content:"";
+  position:absolute;
+  right:-100px;
+  bottom:-235px;
+  width:430px;
+  height:430px;
+  border-radius:50%;
+  border:1px solid rgba(49,139,224,.13);
+  box-shadow:-90px -35px 0 -30px rgba(49,139,224,.06);
+  pointer-events:none;
+}
+.reference-hero .hero-copy{position:relative;z-index:2}
+.reference-hero h1{font-size:clamp(2rem,4vw,2.65rem);letter-spacing:-.045em}
+.reference-hero p{max-width:590px;color:#e3edf8}
+.hero-python-art{z-index:1;right:18px;bottom:9px;width:335px;height:240px}
+.hero-python-art .python-art-logo{width:138px;height:138px}
+.hero-code{transform:rotate(-7deg);width:276px}
+.reference-stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:0 0 27px}
+.reference-stat{
+  min-height:130px;
+  padding:17px 16px;
+  border-radius:15px;
+  border-color:#15588e;
+  background:linear-gradient(180deg,#08243f,#061b32);
+  box-shadow:0 9px 22px rgba(0,0,0,.16);
+}
+.reference-stat:hover{transform:translateY(-2px);border-color:#258ddd}
+.reference-section{
+  margin-bottom:20px;
+  padding:20px;
+  border-radius:15px;
+  border-color:#15588e;
+  background:linear-gradient(180deg,#08243f,#061b31);
+}
+.publish-types{grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
+.publish-types a{min-height:94px;border-color:#174d78;background:rgba(4,21,38,.48)}
+.publish-types a:hover{border-color:#268fd8;background:rgba(21,96,153,.18)}
+.material-preview-row{min-height:54px}
+.quick-link{border-color:#245b88;background:rgba(3,19,35,.46)}
+.menu-toggle span{display:block;width:22px;height:2px;border-radius:2px;background:#edf6ff;margin:3px 0}
+.menu-toggle{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+
+@media(max-width:900px){
+  body.app-authenticated .side-menu{width:min(300px,88vw);top:64px;transform:translateX(-105%)}
+  body.app-authenticated .app-authenticated .side-menu{transform:translateX(-105%)}
+  body.app-authenticated .site-main{margin-left:0;padding:80px 14px 26px}
+  .menu-check:checked ~ .side-menu{transform:translateX(0)!important}
+  .reference-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:600px){
+  .reference-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .publish-types{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+  .reference-hero{padding:22px 18px;min-height:270px}
+  .hero-python-art{right:-55px;bottom:0;width:220px;opacity:.16}
+  .hero-cta{width:100%;justify-content:center}
+}
