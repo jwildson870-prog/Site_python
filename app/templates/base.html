@@ -42,13 +42,15 @@
     <a class="side-link" href="{{url_for('admin.dashboard')}}#relatorios"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/chart.svg') }}" alt=""></span><b>Relatórios</b></a>
   {% else %}
     <a class="side-link {% if request.endpoint == 'student.dashboard' %}active{% endif %}" href="{{url_for('student.dashboard')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/home.svg') }}" alt=""></span><b>Início</b></a>
-    <a class="side-link {% if request.endpoint in ['student.series','student.subject','student.content'] %}active{% endif %}" href="{{url_for('student.dashboard')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/file.svg') }}" alt=""></span><b>Materiais</b></a>
+    <a class="side-link {% if request.endpoint in ['student.materials','student.series','student.subject','student.content'] %}active{% endif %}" href="{{url_for('student.materials')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/file.svg') }}" alt=""></span><b>Materiais</b></a>
     <a class="side-link {% if request.endpoint in ['student.activities','student.activity'] %}active{% endif %}" href="{{url_for('student.activities')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/check.svg') }}" alt=""></span><b>Atividades</b></a>
     <a class="side-link {% if request.endpoint in ['student.experiments','student.experiment'] %}active{% endif %}" href="{{url_for('student.experiments')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/terminal.svg') }}" alt=""></span><b>Projetos Python</b></a>
     <a class="side-link {% if request.endpoint == 'student.favorites' %}active{% endif %}" href="{{url_for('student.favorites')}}"><span class="nav-icon">★</span><b>Favoritos</b></a>
     <a class="side-link {% if request.endpoint == 'student.progress' %}active{% endif %}" href="{{url_for('student.progress')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/chart.svg') }}" alt=""></span><b>Progresso</b></a>
+    <a class="side-link {% if request.endpoint == 'student.grades' %}active{% endif %}" href="{{url_for('student.grades')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/check.svg') }}" alt=""></span><b>Notas</b></a>
     <a class="side-link {% if request.endpoint == 'student.notifications' %}active{% endif %}" href="{{url_for('student.notifications')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/bell.svg') }}" alt=""></span><b>Notificações</b></a>
     <a class="side-link {% if request.endpoint == 'student.search' %}active{% endif %}" href="{{url_for('student.search')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/search.svg') }}" alt=""></span><b>Buscar</b></a>
+    <a class="side-link {% if request.endpoint == 'student.profile' %}active{% endif %}" href="{{url_for('student.profile')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/users.svg') }}" alt=""></span><b>Meu perfil</b></a>
   {% endif %}
   </nav>
   <button class="side-link side-install" id="pwaInstallButton" type="button" hidden><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/plus.svg') }}" alt=""></span><b>Baixar aplicativo</b></button>

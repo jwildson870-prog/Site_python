@@ -30,8 +30,71 @@ def safe_file_response(obj, filename, fallback_type='application/octet-stream'):
 def guard():
     if not current_user.is_authenticated:return redirect(url_for('auth.login',next='/aluno/'))
     if current_user.is_admin:abort(403)
-@student_bp.get('/')
-def dashboard(): return render_template('student/dashboard.html',series=Series.query.order_by(Series.id).all(),favorites=Favorite.query.filter_by(user_id=current_user.id).count(),completed=Progress.query.filter_by(user_id=current_user.id).count(),notifications=Notification.query.filter_by(user_id=current_user.id,read=False).count())
+@student_bp.route('/', methods=['GET'])
+def dashboard():
+    series = Series.query.order_by(Series.id).all()
+    total_contents = Content.query.count()
+    completed = Progress.query.filter_by(user_id=current_user.id).count()
+    percent = round(completed / total_contents * 100) if total_contents else 0
+    favorite_count = Favorite.query.filter_by(user_id=current_user.id).count()
+    unread_count = Notification.query.filter_by(user_id=current_user.id, read=False).count()
+    activities = Activity.query.order_by(Activity.id.desc()).all()
+    attempts = ActivityAttempt.query.filter_by(user_id=current_user.id).order_by(ActivityAttempt.id.desc()).all()
+    attempted_ids = {a.activity_id for a in attempts}
+    pending_activities = sum(1 for a in activities if a.id not in attempted_ids)
+    average = round(sum(a.score for a in attempts) / len(attempts), 1) if attempts else None
+    recent_contents = Content.query.order_by(Content.id.desc()).limit(5).all()
+    recent_activities = activities[:5]
+    recent_attempts = attempts[:5]
+    recent_notifications = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.id.desc()).limit(4).all()
+    return render_template(
+        'student/dashboard.html', series=series, favorites=favorite_count, completed=completed,
+        notifications=unread_count, total_contents=total_contents, percent=percent,
+        activities_count=len(activities), pending_activities=pending_activities, average=average,
+        recent_contents=recent_contents, recent_activities=recent_activities,
+        recent_attempts=recent_attempts, attempted_ids=attempted_ids, recent_notifications=recent_notifications
+    )
+
+@student_bp.get('/materiais')
+def materials():
+    q = request.args.get('q', '').strip()
+    kind = request.args.get('kind', '').strip().lower()
+    query = Content.query
+    if q:
+        like = f'%{q}%'
+        query = query.filter(or_(Content.title.ilike(like), Content.description.ilike(like), Content.body.ilike(like)))
+    if kind in {'file','pdf','slide','video','link','explanation'}:
+        query = query.filter_by(kind=kind)
+    contents = query.order_by(Content.id.desc()).all()
+    return render_template('student/materials.html', contents=contents, q=q, kind=kind)
+
+@student_bp.route('/perfil', methods=['GET', 'POST'])
+def profile():
+    if request.method == 'POST':
+        name = ' '.join(request.form.get('name', '').split())
+        if len(name) < 2 or len(name) > 120:
+            flash('Informe um nome entre 2 e 120 caracteres.', 'error')
+        else:
+            current_user.name = name
+            db.session.commit()
+            flash('Perfil atualizado com sucesso.', 'success')
+            return redirect(url_for('student.profile'))
+    return render_template('student/profile.html')
+
+@student_bp.get('/notas')
+def grades():
+    activities = Activity.query.order_by(Activity.id.desc()).all()
+    attempts = ActivityAttempt.query.filter_by(user_id=current_user.id).order_by(ActivityAttempt.id.desc()).all()
+    by_activity = {}
+    for attempt in attempts:
+        item = by_activity.setdefault(attempt.activity_id, {'latest': attempt, 'best': attempt})
+        if attempt.id > item['latest'].id:
+            item['latest'] = attempt
+        if attempt.score > item['best'].score:
+            item['best'] = attempt
+    graded = [item['latest'].score for item in by_activity.values()]
+    average = round(sum(graded) / len(graded), 1) if graded else None
+    return render_template('student/grades.html', activities=activities, by_activity=by_activity, average=average, graded_count=len(by_activity))
 @student_bp.get('/serie/<int:id>')
 def series(id): return render_template('student/series.html',series=Series.query.get_or_404(id))
 @student_bp.get('/materia/<int:id>')

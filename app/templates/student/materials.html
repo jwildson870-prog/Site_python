@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Materiais · Portal Python{% endblock %}
+{% block content %}
+<section class="student-shell">
+  <div class="student-page-head"><div><span class="eyebrow">BIBLIOTECA DE ESTUDOS</span><h1>Materiais</h1><p>Encontre conteúdos, arquivos, vídeos e explicações publicados pelo professor.</p></div><a class="btn secondary" href="{{ url_for('student.favorites') }}">Meus favoritos</a></div>
+  <form class="student-filter" method="get" action="{{ url_for('student.materials') }}">
+    <label><span>Buscar</span><input name="q" value="{{ q }}" placeholder="Digite o título ou assunto..."></label>
+    <label><span>Tipo</span><select name="kind"><option value="">Todos os tipos</option>{% for value,label in [('pdf','PDF'),('file','Arquivo'),('slide','Slides'),('video','Vídeo'),('link','Link'),('explanation','Explicação')] %}<option value="{{ value }}" {% if kind==value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+    <button class="btn" type="submit">Filtrar</button>
+  </form>
+  <div class="student-results-head"><strong>{{ contents|length }} material(is)</strong>{% if q or kind %}<a class="text-link" href="{{ url_for('student.materials') }}">Limpar filtros</a>{% endif %}</div>
+  <div class="student-material-grid">
+    {% for c in contents %}
+    <a class="student-material-card" href="{{ url_for('student.content',id=c.id) }}">
+      <span class="material-icon"><img src="{{ url_for('static',filename='icons/ui/file.svg') }}" alt=""></span>
+      <div><span class="badge">{{ {'file':'Material','pdf':'PDF','slide':'Slides','video':'Vídeo','link':'Link','explanation':'Explicação'}.get(c.kind,c.kind) }}</span><h2>{{ c.title }}</h2><p>{{ c.description or 'Material de estudo' }}</p><small>{{ c.series.name }} · {{ c.subject.name }}</small></div>
+      <span class="material-arrow">→</span>
+    </a>
+    {% else %}<div class="student-empty student-empty-box">Nenhum material encontrado com esses filtros.</div>{% endfor %}
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}Notas · Portal Python{% endblock %}
+{% block content %}
+<section class="student-shell">
+  <div class="student-page-head"><div><span class="eyebrow">DESEMPENHO</span><h1>Minhas notas</h1><p>Acompanhe suas atividades e a nota mais recente de cada uma.</p></div></div>
+  <div class="grade-summary-grid">
+    <div class="student-summary-card"><span class="student-stat-icon"><img src="{{ url_for('static',filename='icons/ui/chart.svg') }}" alt=""></span><strong>{{ '%.1f'|format(average) if average is not none else '—' }}</strong><small>Média atual</small></div>
+    <div class="student-summary-card"><span class="student-stat-icon"><img src="{{ url_for('static',filename='icons/ui/check.svg') }}" alt=""></span><strong>{{ graded_count }}</strong><small>Atividades realizadas</small></div>
+    <div class="student-summary-card"><span class="student-stat-icon"><img src="{{ url_for('static',filename='icons/ui/layers.svg') }}" alt=""></span><strong>{{ activities|length }}</strong><small>Atividades disponíveis</small></div>
+  </div>
+  <div class="student-panel">
+    <div class="student-panel-head"><div><span class="eyebrow">BOLETIM</span><h2>Resultados</h2></div></div>
+    <div class="grades-table-wrap"><table class="student-grades-table"><thead><tr><th>Atividade</th><th>Disciplina</th><th>Última nota</th><th>Status</th></tr></thead><tbody>
+    {% for a in activities %}{% set item = by_activity.get(a.id) %}<tr><td><strong>{{ a.title }}</strong></td><td>{{ a.subject.name }}</td><td>{% if item %}<strong>{{ '%.1f'|format(item.latest.score) }} / 10</strong>{% else %}—{% endif %}</td><td>{% if item %}<span class="badge badge-success">Realizada</span>{% else %}<span class="badge">Pendente</span>{% endif %}</td></tr>{% else %}<tr><td colspan="4">Nenhuma atividade disponível.</td></tr>{% endfor %}
+    </tbody></table></div>
+  </div>
+</section>
+{% endblock %}

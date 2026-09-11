@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Meu perfil · Portal Python{% endblock %}
+{% block content %}
+<section class="student-shell">
+  <div class="student-page-head"><div><span class="eyebrow">MINHA CONTA</span><h1>Meu perfil</h1><p>Confira seus dados e mantenha seu nome atualizado no portal.</p></div></div>
+  <div class="profile-layout">
+    <div class="student-profile-card">
+      <div class="profile-avatar">{{ current_user.name[:1]|upper }}</div>
+      <h2>{{ current_user.name }}</h2><p>{{ 'Professor' if current_user.is_admin else 'Aluno' }}</p>
+      <span class="badge">Conta ativa</span>
+    </div>
+    <div class="student-panel profile-form-panel">
+      <div class="student-panel-head"><div><span class="eyebrow">DADOS PESSOAIS</span><h2>Informações da conta</h2></div></div>
+      <form class="profile-form" method="post" action="{{ url_for('student.profile') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label>Nome completo<input name="name" value="{{ current_user.name }}" maxlength="120" autocomplete="name" required></label>
+        <label>E-mail<input value="{{ current_user.email }}" readonly aria-readonly="true"></label>
+        <p class="muted">O e-mail é usado para acesso à conta e não pode ser alterado por esta tela.</p>
+        <button class="btn" type="submit">Salvar alterações</button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}
