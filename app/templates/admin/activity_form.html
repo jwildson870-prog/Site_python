@@ -1,12 +1,21 @@
 {% extends 'base.html' %}
 {% block title %}{{activity.title}} · Atividade{% endblock %}
 {% block content %}
-<section class="admin-shell"><a class="back-link" href="{{url_for('admin.activities')}}">← Atividades</a><span class="eyebrow">EDITOR DE ATIVIDADE</span><h1>{{activity.title}}</h1>
-<form method="post" class="publisher"><input type="hidden" name="csrf_token" value="{{csrf_token()}}">
-<div class="publisher-card form-grid"><label>Título<input name="title" value="{{activity.title}}" required></label><label>Descrição<textarea name="description">{{activity.description or ''}}</textarea></label></div>
+<section class="admin-shell activity-editor-shell"><a class="back-link" href="{{url_for('admin.activities')}}">← Atividades</a>
+<div class="workspace-head"><div><span class="eyebrow">EDITOR DE ATIVIDADE</span><h1>{{activity.title}}</h1><p>Monte as questões, escolha as respostas corretas e defina o prazo.</p></div></div>
+<form method="post" class="publisher">
+<input type="hidden" name="csrf_token" value="{{csrf_token()}}">
+<div class="publisher-card activity-settings-card"><div class="form-grid tidy-grid">
+<label class="field-block full">Título<input name="title" maxlength="200" value="{{activity.title}}" required></label>
+<label class="field-block">Prazo de entrega<input type="datetime-local" name="due_at" value="{{due_raw or ''}}"><small>Deixe vazio para remover o prazo.</small></label>
+<label class="field-block full">Descrição<textarea name="description" maxlength="5000">{{activity.description or ''}}</textarea></label>
+</div></div>
 {% set qs = questions if questions else [{}] %}
 {% for i in range(20) %}{% set q = qs[i] if i < qs|length else {} %}{% set opts = q.get('options', []) %}
-<div class="question-editor publisher-card"><h2>Questão {{i+1}}</h2><label>Enunciado<input name="question_{{i}}" value="{{q.get('question','')}}"></label><div class="options"><label>A<input name="option_{{i}}_a" value="{{opts[0] if opts|length > 0 else ''}}"></label><label>B<input name="option_{{i}}_b" value="{{opts[1] if opts|length > 1 else ''}}"></label><label>C<input name="option_{{i}}_c" value="{{opts[2] if opts|length > 2 else ''}}"></label><label>D<input name="option_{{i}}_d" value="{{opts[3] if opts|length > 3 else ''}}"></label></div><label>Resposta correta<select name="correct_{{i}}"><option value="">Selecione</option>{% for letter,idx in [('A',0),('B',1),('C',2),('D',3)] %}{% if opts|length > idx %}<option value="{{idx}}" {% if q.get('correct','') == opts[idx] %}selected{% endif %}>{{letter}} — {{opts[idx]}}</option>{% endif %}{% endfor %}</select></label></div>
-{% endfor %}
-<p class="muted">Você pode usar de 1 a 10 questões. Questões deixadas vazias não serão salvas.</p><button class="btn admin-primary" type="submit">💾 Salvar atividade</button></form></section>
-{% endblock %}
+<div class="question-editor publisher-card"><div class="question-editor-head"><span class="question-number">{{i+1}}</span><div><span class="eyebrow">QUESTÃO {{i+1}}</span><h2>Enunciado e alternativas</h2></div></div>
+<label class="field-block">Enunciado<input name="question_{{i}}" maxlength="1000" value="{{q.get('question','')}}" placeholder="Digite a pergunta"></label>
+<div class="options"><label>A<input name="option_{{i}}_a" maxlength="500" value="{{opts[0] if opts|length > 0 else ''}}"></label><label>B<input name="option_{{i}}_b" maxlength="500" value="{{opts[1] if opts|length > 1 else ''}}"></label><label>C<input name="option_{{i}}_c" maxlength="500" value="{{opts[2] if opts|length > 2 else ''}}"></label><label>D<input name="option_{{i}}_d" maxlength="500" value="{{opts[3] if opts|length > 3 else ''}}"></label></div>
+<label class="field-block">Resposta correta<select name="correct_{{i}}"><option value="">Selecione</option>{% for letter,idx in [('A',0),('B',1),('C',2),('D',3)] %}{% if opts|length > idx %}<option value="{{idx}}" {% if q.get('correct','') == opts[idx] %}selected{% endif %}>{{letter}} — {{opts[idx]}}</option>{% endif %}{% endfor %}</select></label>
+</div>{% endfor %}
+<p class="muted">Você pode usar de 1 a 20 questões. Questões deixadas vazias não serão salvas.</p><button class="btn admin-primary" type="submit">Salvar atividade</button>
+</form></section>{% endblock %}

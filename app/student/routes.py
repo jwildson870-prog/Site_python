@@ -5,6 +5,7 @@ from ..extensions import db
 from ..models import Series,Subject,Content,Activity,ActivityAttempt,Experiment,Favorite,Progress,Notification
 from ..storage import get_file, b2_enabled, StorageError
 import json
+from datetime import datetime
 student_bp=Blueprint('student',__name__,url_prefix='/aluno')
 
 SAFE_INLINE_TYPES = {'pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp'}
@@ -116,14 +117,23 @@ def complete(id):
 @student_bp.get('/favoritos')
 def favorites(): return render_template('student/favorites.html',favorites=Favorite.query.filter_by(user_id=current_user.id).order_by(Favorite.id.desc()).all())
 @student_bp.get('/atividades')
-def activities(): return render_template('student/activities.html',activities=Activity.query.order_by(Activity.id.desc()).all())
+def activities():
+    items = Activity.query.order_by(Activity.id.desc()).all()
+    attempted_ids = {a.activity_id for a in ActivityAttempt.query.filter_by(user_id=current_user.id).all()}
+    now = datetime.utcnow()
+    return render_template('student/activities.html', activities=items, attempted_ids=attempted_ids, now=now)
+
 @student_bp.route('/atividade/<int:id>',methods=['GET','POST'])
 def activity(id):
-    a=Activity.query.get_or_404(id); questions=a.get_questions()
+    a=Activity.query.get_or_404(id); questions=a.get_questions(); now=datetime.utcnow()
+    expired = bool(a.due_at and now > a.due_at)
     if request.method=='POST':
+        if expired:
+            flash('O prazo desta atividade já terminou.', 'error')
+            return redirect(url_for('student.activity', id=a.id))
         answers={str(i):request.form.get(f'q{i}','') for i in range(len(questions))}; valid_answers={str(i): set(q.get('options') or []) for i,q in enumerate(questions)}; answers={k:v for k,v in answers.items() if v in valid_answers.get(k,set())}; correct=sum(1 for i,q in enumerate(questions) if answers.get(str(i))==q.get('correct')); total=len(questions); score=(correct/total*10) if total else 0
         attempt=ActivityAttempt(user_id=current_user.id,activity_id=a.id,answers_json=json.dumps(answers,ensure_ascii=False),score=score,total=total); db.session.add(attempt); db.session.commit(); return render_template('student/activity_result.html',activity=a,score=score,correct=correct,total=total)
-    return render_template('student/activity.html',activity=a,questions=questions)
+    return render_template('student/activity.html',activity=a,questions=questions,expired=expired,now=now)
 @student_bp.get('/experimentos')
 def experiments(): return render_template('student/experiments.html',experiments=Experiment.query.order_by(Experiment.id.desc()).all())
 @student_bp.get('/experimento/<int:id>')

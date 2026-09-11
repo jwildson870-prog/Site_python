@@ -67,6 +67,7 @@ class Activity(db.Model):
     questions_json = db.Column(db.Text, nullable=False, default='[]')
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    due_at = db.Column(db.DateTime, nullable=True, index=True)
     attempts = db.relationship('ActivityAttempt', back_populates='activity', cascade='all, delete-orphan')
     def get_questions(self):
         try: return json.loads(self.questions_json or '[]')

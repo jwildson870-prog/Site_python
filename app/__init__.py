@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from flask import Flask,render_template,redirect,url_for,request
+from sqlalchemy import inspect, text
 from flask_login import LoginManager,current_user
 from flask_wtf import CSRFProtect
 import bleach
@@ -94,6 +95,15 @@ def create_app(test_config=None):
         from .services import seed_initial_content; seed_initial_content(); print('Conteúdo inicial confirmado.')
     with app.app_context():
         db.create_all()
+        # Migração leve e retrocompatível para instalações existentes: adiciona
+        # o prazo das atividades sem apagar nem recriar tabelas do Neon.
+        inspector = inspect(db.engine)
+        if 'activities' in inspector.get_table_names() and 'due_at' not in {c['name'] for c in inspector.get_columns('activities')}:
+            with db.engine.begin() as conn:
+                if db.engine.dialect.name == 'postgresql':
+                    conn.execute(text('ALTER TABLE activities ADD COLUMN IF NOT EXISTS due_at TIMESTAMP'))
+                elif db.engine.dialect.name == 'sqlite':
+                    conn.execute(text('ALTER TABLE activities ADD COLUMN due_at DATETIME'))
         from .services import ensure_admin,seed_initial_content,migrate_legacy_python_subjects
         ensure_admin(); seed_initial_content(); migrate_legacy_python_subjects()
     return app

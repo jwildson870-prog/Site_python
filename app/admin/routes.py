@@ -1,4 +1,5 @@
 import os, uuid
+from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, current_app, send_from_directory, Response
@@ -332,18 +333,34 @@ def activities():
         description = request.form.get('description', '').strip()
         sid = request.form.get('series_id', '').strip()
         subid = request.form.get('subject_id', '').strip()
+        due_raw = request.form.get('due_at', '').strip()
         s = Series.query.get(int(sid)) if sid.isdigit() else None
         sub = Subject.query.get(int(subid)) if subid.isdigit() else None
-        if not title or not s or not sub or sub.series_id != s.id:
-            flash('Preencha título, série e matéria.', 'error')
+        due_at, due_error = parse_due_at(due_raw)
+        if not title or len(title) > 200 or not s or not sub or sub.series_id != s.id:
+            flash('Preencha título, série e matéria corretamente.', 'error')
+        elif due_error:
+            flash(due_error, 'error')
         else:
-            a = Activity(title=title, description=description, series_id=s.id, subject_id=sub.id)
+            a = Activity(title=title, description=description[:5000], series_id=s.id, subject_id=sub.id, due_at=due_at)
             a.set_questions([])
             db.session.add(a)
             db.session.commit()
             flash('Atividade criada. Agora adicione as questões.', 'success')
             return redirect(url_for('admin.activity_edit', id=a.id))
     return render_template('admin/activities.html', activities=Activity.query.order_by(Activity.id.desc()).all(), series=Series.query.all())
+
+
+def parse_due_at(value):
+    if not value:
+        return None, None
+    try:
+        due = datetime.fromisoformat(value)
+    except ValueError:
+        return None, 'O prazo informado é inválido.'
+    if due <= datetime.utcnow():
+        return None, 'O prazo precisa ser uma data e hora futuras.'
+    return due, None
 
 
 def read_activity_questions_from_form():
@@ -354,8 +371,10 @@ def read_activity_questions_from_form():
         correct_index = request.form.get(f'correct_{i}', '').strip()
         if not question and not any(options) and not correct_index:
             continue
-        if not question or sum(bool(option) for option in options) < 2 or correct_index not in {'0', '1', '2', '3'}:
+        if not question or len(question) > 1000 or sum(bool(option) for option in options) < 2 or correct_index not in {'0', '1', '2', '3'}:
             return None, 'Cada questão preenchida precisa de enunciado, pelo menos duas alternativas e uma resposta correta.'
+        if any(len(option) > 500 for option in options):
+            return None, 'Cada alternativa pode ter no máximo 500 caracteres.'
         filled = [bool(option) for option in options]
         if any(filled[i] and not filled[i - 1] for i in range(1, 4)):
             return None, 'Preencha as alternativas em sequência, sem deixar espaços vazios entre elas.'
@@ -373,16 +392,25 @@ def activity_edit(id):
     if request.method == 'POST':
         title = request.form.get('title', '').strip()
         desc = request.form.get('description', '').strip()
+        due_raw = request.form.get('due_at', '').strip()
+        due_at, due_error = parse_due_at(due_raw)
         questions, error = read_activity_questions_from_form()
-        if not title:
-            flash('Informe o título da atividade.', 'error')
+        if not title or len(title) > 200:
+            flash('Informe um título entre 1 e 200 caracteres.', 'error')
+        elif due_error:
+            flash(due_error, 'error')
         elif error:
             flash(error, 'error')
         else:
+            was_empty = len(a.get_questions()) == 0
             a.title = title
-            a.description = desc
+            a.description = desc[:5000]
+            a.due_at = due_at
             a.set_questions(questions)
             db.session.commit()
+            if was_empty:
+                notify_students(f'Nova atividade: {a.title}', url_for('student.activity', id=a.id))
+                db.session.commit()
             flash('Atividade salva.', 'success')
             return redirect(url_for('admin.activities'))
         questions = []
@@ -393,8 +421,9 @@ def activity_edit(id):
             questions.append({'question': q, 'options': opts, 'correct': opts[int(correct)] if correct.isdigit() and int(correct) < len(opts) else ''})
         while questions and not questions[-1].get('question') and not any(questions[-1].get('options', [])):
             questions.pop()
-        return render_template('admin/activity_form.html', activity=a, questions=questions)
-    return render_template('admin/activity_form.html', activity=a, questions=a.get_questions())
+        return render_template('admin/activity_form.html', activity=a, questions=questions, due_raw=due_raw)
+    due_raw = a.due_at.strftime('%Y-%m-%dT%H:%M') if a.due_at else ''
+    return render_template('admin/activity_form.html', activity=a, questions=a.get_questions(), due_raw=due_raw)
 
 @admin_bp.post('/activities/<int:id>/delete')
 def activity_delete(id):
@@ -451,8 +480,31 @@ def experiment_delete(id):
 @admin_bp.get('/activities/<int:id>/resultados')
 def activity_results(id):
     activity = Activity.query.get_or_404(id)
-    attempts = ActivityAttempt.query.filter_by(activity_id=id).order_by(ActivityAttempt.score.desc(), ActivityAttempt.id.desc()).all()
-    return render_template('admin/activity_results.html', activity=activity, attempts=attempts)
+    questions = activity.get_questions()
+    students = User.query.filter_by(role='student').order_by(User.name).all()
+    rows = []
+    for student in students:
+        attempt = ActivityAttempt.query.filter_by(activity_id=id, user_id=student.id).order_by(ActivityAttempt.id.desc()).first()
+        correct = None
+        if attempt:
+            answers = attempt.get_answers()
+            correct = sum(1 for i, question in enumerate(questions) if answers.get(str(i)) == question.get('correct'))
+        rows.append({'student': student, 'attempt': attempt, 'correct': correct, 'total': len(questions)})
+    submitted = sum(1 for row in rows if row['attempt'])
+    return render_template('admin/activity_results.html', activity=activity, attempts=rows, questions=questions, submitted=submitted, pending=len(rows)-submitted)
+
+@admin_bp.get('/activities/<int:activity_id>/tentativa/<int:attempt_id>')
+def activity_attempt_detail(activity_id, attempt_id):
+    activity = Activity.query.get_or_404(activity_id)
+    attempt = ActivityAttempt.query.filter_by(id=attempt_id, activity_id=activity.id).first_or_404()
+    questions = activity.get_questions()
+    answers = attempt.get_answers()
+    details = []
+    for i, question in enumerate(questions):
+        answer = answers.get(str(i))
+        correct = question.get('correct')
+        details.append({'number': i + 1, 'question': question.get('question', ''), 'answer': answer, 'correct': correct, 'is_correct': answer == correct})
+    return render_template('admin/activity_attempt_detail.html', activity=activity, attempt=attempt, details=details)
 
 @admin_bp.route('/avisos', methods=['GET', 'POST'])
 def announcements():
