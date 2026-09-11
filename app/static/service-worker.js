@@ -1,4 +1,4 @@
-const CACHE_NAME = 'portal-python-static-v5';
+const CACHE_NAME = 'portal-python-static-v6';
 const STATIC_ASSETS = [
   '/static/css/style.css',
   '/static/js/ui.js',
