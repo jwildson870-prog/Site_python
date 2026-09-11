@@ -54,7 +54,6 @@
   </div>
 </aside>
 <label class="menu-overlay" for="menuCheck" aria-label="Fechar menu"></label>
-{% endif %}
 <main class="site-main">
 {% with messages=get_flashed_messages(with_categories=true) %}{% for category,msg in messages %}<div class="flash {{category}}">{{msg}}</div>{% endfor %}{% endwith %}
 {% block content %}{% endblock %}
