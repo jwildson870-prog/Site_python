@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Desempenho da turma · Portal Python{% endblock %}
+{% block content %}
+<section class="admin-shell workspace-shell performance-page">
+  <div class="workspace-head"><div><span class="eyebrow">ACOMPANHAMENTO</span><h1>Desempenho da turma</h1><p>Veja rapidamente participação, médias e alunos que precisam de atenção.</p></div><a class="btn secondary" href="{{ url_for('admin.reports') }}">Relatórios</a></div>
+  <div class="performance-summary-grid">
+    <div class="performance-summary-card"><span class="performance-icon"><img src="{{url_for('static',filename='icons/ui/users.svg')}}" alt=""></span><strong>{{ rows|length }}</strong><small>Alunos exibidos</small></div>
+    <div class="performance-summary-card"><span class="performance-icon"><img src="{{url_for('static',filename='icons/ui/check.svg')}}" alt=""></span><strong>{{ activity_total }}</strong><small>Atividades disponíveis</small></div>
+    <div class="performance-summary-card"><span class="performance-icon"><img src="{{url_for('static',filename='icons/ui/chart.svg')}}" alt=""></span><strong>{{ '%.1f'|format(overall_average) if overall_average is not none else '—' }}</strong><small>Média atual da turma</small></div>
+    <div class="performance-summary-card"><span class="performance-icon"><img src="{{url_for('static',filename='icons/ui/bell.svg')}}" alt=""></span><strong>{{ at_risk }}</strong><small>Precisam de atenção</small></div>
+  </div>
+  <form class="admin-search performance-search" method="get"><input name="q" value="{{q or ''}}" placeholder="Buscar aluno por nome ou e-mail..." aria-label="Buscar aluno"><button class="btn admin-primary" type="submit">Buscar</button>{% if q %}<a class="btn secondary" href="{{url_for('admin.performance')}}">Limpar</a>{% endif %}</form>
+  <div class="professor-panel"><div class="professor-panel-head"><div><span class="eyebrow">TURMA</span><h2>Alunos</h2><p>Média considera a tentativa mais recente de cada atividade.</p></div></div>
+    <div class="performance-table-wrap"><table class="professor-table performance-table"><thead><tr><th>Aluno</th><th>Média</th><th>Concluídas</th><th>Progresso</th><th>Tentativas</th><th>Status</th><th></th></tr></thead><tbody>
+    {% for row in rows %}<tr><td><strong>{{row.student.name}}</strong><small class="table-subline">{{row.student.email}}</small></td><td class="professor-score">{{ '%.1f'|format(row.average) if row.average is not none else '—' }}</td><td>{{row.completed}} / {{activity_total}}</td><td><div class="performance-progress"><span style="width:{{row.completion}}%"></span></div><small>{{row.completion}}%</small></td><td>{{row.attempts}}</td><td>{% if row.average is none %}<span class="status status-pending">Sem tentativas</span>{% elif row.average < 6 %}<span class="status status-late">Atenção</span>{% elif row.pending == 0 %}<span class="status status-done">Completo</span>{% else %}<span class="status status-pending">Em andamento</span>{% endif %}</td><td><a class="btn secondary btn-small" href="{{url_for('admin.user_performance',id=row.student.id)}}">Detalhes</a></td></tr>{% else %}<tr><td colspan="7"><div class="professor-empty">Nenhum aluno encontrado.</div></td></tr>{% endfor %}
+    </tbody></table></div>
+  </div>
+</section>
+{% endblock %}

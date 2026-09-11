@@ -82,6 +82,26 @@ def profile():
             return redirect(url_for('student.profile'))
     return render_template('student/profile.html')
 
+@student_bp.get('/desempenho')
+def performance():
+    activities = Activity.query.order_by(Activity.id.desc()).all()
+    attempts = ActivityAttempt.query.filter_by(user_id=current_user.id).order_by(ActivityAttempt.id.desc()).all()
+    by_activity = {}
+    for attempt in attempts:
+        item = by_activity.setdefault(attempt.activity_id, {'latest': attempt, 'best': attempt, 'attempts': 0})
+        item['attempts'] += 1
+        if attempt.id > item['latest'].id:
+            item['latest'] = attempt
+        if attempt.score > item['best'].score:
+            item['best'] = attempt
+    latest_scores = [item['latest'].score for item in by_activity.values()]
+    average = round(sum(latest_scores) / len(latest_scores), 1) if latest_scores else None
+    completed = len(by_activity)
+    pending = max(len(activities) - completed, 0)
+    completion = round(completed / len(activities) * 100) if activities else 0
+    recent_attempts = attempts[:8]
+    return render_template('student/performance.html', activities=activities, by_activity=by_activity, attempts=attempts, recent_attempts=recent_attempts, average=average, completed=completed, pending=pending, completion=completion)
+
 @student_bp.get('/notas')
 def grades():
     activities = Activity.query.order_by(Activity.id.desc()).all()

@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Desempenho de {{student.name}} · Portal Python{% endblock %}
+{% block content %}
+<section class="admin-shell workspace-shell performance-page">
+  <div class="workspace-head"><div><span class="eyebrow">ALUNO</span><h1>{{student.name}}</h1><p>{{student.email}} · Acompanhamento individual de atividades.</p></div><a class="btn secondary" href="{{url_for('admin.performance')}}">← Voltar para turma</a></div>
+  <div class="performance-summary-grid">
+    <div class="performance-summary-card"><span class="performance-icon"><img src="{{url_for('static',filename='icons/ui/chart.svg')}}" alt=""></span><strong>{{ '%.1f'|format(average) if average is not none else '—' }}</strong><small>Média atual</small></div>
+    <div class="performance-summary-card"><span class="performance-icon"><img src="{{url_for('static',filename='icons/ui/check.svg')}}" alt=""></span><strong>{{completed}}</strong><small>Atividades concluídas</small></div>
+    <div class="performance-summary-card"><span class="performance-icon"><img src="{{url_for('static',filename='icons/ui/layers.svg')}}" alt=""></span><strong>{{pending}}</strong><small>Atividades pendentes</small></div>
+    <div class="performance-summary-card"><span class="performance-icon"><img src="{{url_for('static',filename='icons/ui/bolt.svg')}}" alt=""></span><strong>{{completion}}%</strong><small>Progresso</small></div>
+  </div>
+  <div class="professor-panel"><div class="professor-panel-head"><div><span class="eyebrow">ATIVIDADES</span><h2>Histórico por atividade</h2><p>Última nota e melhor nota registradas para este aluno.</p></div></div>
+    <div class="performance-table-wrap"><table class="professor-table performance-table"><thead><tr><th>Atividade</th><th>Última</th><th>Melhor</th><th>Tentativas</th><th>Status</th></tr></thead><tbody>
+    {% for a in activities %}{% set item=by_activity.get(a.id) %}<tr><td><strong>{{a.title}}</strong><small class="table-subline">{{a.subject.name}}</small></td><td class="professor-score">{{'%.1f'|format(item.latest.score) if item else '—'}}</td><td>{{'%.1f'|format(item.best.score) if item else '—'}}</td><td>{{item.attempts if item else 0}}</td><td>{% if item %}<span class="status status-done">Concluída</span>{% elif a.due_at and a.due_at < now %}<span class="status status-late">Atrasada</span>{% else %}<span class="status status-pending">Pendente</span>{% endif %}</td></tr>{% else %}<tr><td colspan="5"><div class="professor-empty">Nenhuma atividade cadastrada.</div></td></tr>{% endfor %}
+    </tbody></table></div>
+  </div>
+  <div class="professor-panel"><div class="professor-panel-head"><div><span class="eyebrow">HISTÓRICO</span><h2>Últimas tentativas</h2></div></div><div class="attempt-detail-list">{% for attempt in attempts[:10] %}<div class="performance-attempt-row"><span><strong>{{attempt.activity.title}}</strong><small>{{attempt.created_at.strftime('%d/%m/%Y %H:%M')}} · {{attempt.total}} questão(ões)</small></span><strong class="professor-score">{{'%.1f'|format(attempt.score)}} / 10</strong></div>{% else %}<div class="professor-empty">Este aluno ainda não respondeu atividades.</div>{% endfor %}</div></div>
+</section>
+{% endblock %}

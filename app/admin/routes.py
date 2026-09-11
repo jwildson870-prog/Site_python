@@ -304,6 +304,63 @@ def file(filename):
         return safe_file_response(obj, filename, obj.get('ContentType') or 'application/octet-stream')
     return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename, as_attachment=False)
 
+@admin_bp.get('/desempenho')
+def performance():
+    q = request.args.get('q', '').strip()
+    student_query = User.query.filter_by(role='student')
+    if q:
+        like = f'%{q}%'
+        student_query = student_query.filter(or_(User.name.ilike(like), User.email.ilike(like)))
+    students = student_query.order_by(User.name.asc()).all()
+    activities = Activity.query.order_by(Activity.id.desc()).all()
+    activity_total = len(activities)
+    rows = []
+    all_latest_scores = []
+    for student in students:
+        attempts = ActivityAttempt.query.filter_by(user_id=student.id).order_by(ActivityAttempt.id.desc()).all()
+        latest = {}
+        best = {}
+        for attempt in attempts:
+            latest.setdefault(attempt.activity_id, attempt)
+            if attempt.activity_id not in best or attempt.score > best[attempt.activity_id].score:
+                best[attempt.activity_id] = attempt
+        scores = [a.score for a in latest.values()]
+        average = round(sum(scores) / len(scores), 1) if scores else None
+        all_latest_scores.extend(scores)
+        completed = len(latest)
+        pending = max(activity_total - completed, 0)
+        completion = round(completed / activity_total * 100) if activity_total else 0
+        low_performance = average is not None and average < 6
+        rows.append({
+            'student': student, 'average': average, 'completed': completed,
+            'pending': pending, 'completion': completion, 'attempts': len(attempts),
+            'best': max(best.values(), key=lambda a: a.score, default=None),
+            'low_performance': low_performance,
+        })
+    overall_average = round(sum(all_latest_scores) / len(all_latest_scores), 1) if all_latest_scores else None
+    at_risk = sum(1 for row in rows if row['low_performance'] or (row['pending'] > 0 and activity_total > 0))
+    return render_template('admin/performance.html', rows=rows, q=q, activity_total=activity_total, overall_average=overall_average, at_risk=at_risk)
+
+@admin_bp.get('/users/<int:id>/desempenho')
+def user_performance(id):
+    student = User.query.filter_by(id=id, role='student').first_or_404()
+    activities = Activity.query.order_by(Activity.id.desc()).all()
+    attempts = ActivityAttempt.query.filter_by(user_id=student.id).order_by(ActivityAttempt.id.desc()).all()
+    by_activity = {}
+    for attempt in attempts:
+        item = by_activity.setdefault(attempt.activity_id, {'latest': attempt, 'best': attempt, 'attempts': 0})
+        item['attempts'] += 1
+        if attempt.id > item['latest'].id:
+            item['latest'] = attempt
+        if attempt.score > item['best'].score:
+            item['best'] = attempt
+    latest_scores = [item['latest'].score for item in by_activity.values()]
+    average = round(sum(latest_scores) / len(latest_scores), 1) if latest_scores else None
+    completed = len(by_activity)
+    pending = max(len(activities) - completed, 0)
+    completion = round(completed / len(activities) * 100) if activities else 0
+    return render_template('admin/user_performance.html', student=student, activities=activities, by_activity=by_activity, attempts=attempts, average=average, completed=completed, pending=pending, completion=completion, now=datetime.utcnow())
+
 @admin_bp.get('/users')
 def users():
     q = request.args.get('q', '').strip()
