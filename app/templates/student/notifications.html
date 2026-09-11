@@ -1,1 +1,16 @@
-{% extends 'base.html' %}{% block title %}Notificações · Portal Python{% endblock %}{% block content %}<section class="student-shell"><span class="eyebrow">AVISOS</span><h1>Notificações</h1><div class="list">{% for n in notifications %}<a class="card" href="{{n.link or '#'}}"><strong>{{n.message}}</strong><p class="muted">{{n.created_at.strftime('%d/%m/%Y %H:%M')}}</p></a>{% else %}<div class="card">Nenhuma notificação.</div>{% endfor %}</div></section>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Notificações · Portal Python{% endblock %}
+{% block content %}
+<section class="student-shell notification-page">
+  <div class="student-page-head"><div><span class="eyebrow">CENTRAL DE AVISOS</span><h1>Notificações</h1><p>Acompanhe novidades, atividades e comunicados do professor.</p></div><div class="notification-head-actions">{% if unread %}<span class="unread-counter">{{unread}} não lida(s)</span><form method="post"><input type="hidden" name="csrf_token" value="{{csrf_token()}}"><input type="hidden" name="action" value="read_all"><button class="btn secondary" type="submit">Marcar todas como lidas</button></form>{% endif %}</div></div>
+  <div class="notification-list">
+  {% for n in notifications %}
+    <article class="notification-card {% if not n.read %}is-unread{% endif %}">
+      <span class="notification-icon"><img src="{{url_for('static',filename='icons/ui/bell.svg')}}" alt=""></span>
+      <div class="notification-copy"><div class="notification-meta"><span>{{'NOVA' if not n.read else 'AVISO'}}</span><time>{{n.created_at.strftime('%d/%m/%Y %H:%M')}}</time></div><strong>{{n.message}}</strong></div>
+      <div class="notification-actions">{% if n.link %}<a class="btn secondary btn-small" href="{{n.link}}">Abrir</a>{% endif %}{% if not n.read %}<form method="post"><input type="hidden" name="csrf_token" value="{{csrf_token()}}"><input type="hidden" name="action" value="read_one"><input type="hidden" name="notification_id" value="{{n.id}}"><button class="text-button" type="submit">Marcar como lida</button></form>{% endif %}</div>
+    </article>
+  {% else %}<div class="student-empty student-empty-box">Nenhuma notificação por enquanto.</div>{% endfor %}
+  </div>
+</section>
+{% endblock %}

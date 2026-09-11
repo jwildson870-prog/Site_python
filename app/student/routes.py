@@ -60,14 +60,17 @@ def dashboard():
 def materials():
     q = request.args.get('q', '').strip()
     kind = request.args.get('kind', '').strip().lower()
+    series_id = request.args.get('series_id', '').strip()
+    subject_id = request.args.get('subject_id', '').strip()
     query = Content.query
     if q:
         like = f'%{q}%'
         query = query.filter(or_(Content.title.ilike(like), Content.description.ilike(like), Content.body.ilike(like)))
-    if kind in {'file','pdf','slide','video','link','explanation'}:
-        query = query.filter_by(kind=kind)
+    if kind in {'file','pdf','slide','video','link','explanation'}: query = query.filter_by(kind=kind)
+    if series_id.isdigit(): query = query.filter_by(series_id=int(series_id))
+    if subject_id.isdigit(): query = query.filter_by(subject_id=int(subject_id))
     contents = query.order_by(Content.id.desc()).all()
-    return render_template('student/materials.html', contents=contents, q=q, kind=kind)
+    return render_template('student/materials.html', contents=contents, q=q, kind=kind, series_id=series_id, subject_id=subject_id, series=Series.query.order_by(Series.id).all(), subjects=Subject.query.order_by(Subject.name).all())
 
 @student_bp.route('/perfil', methods=['GET', 'POST'])
 def profile():
@@ -138,10 +141,22 @@ def complete(id):
 def favorites(): return render_template('student/favorites.html',favorites=Favorite.query.filter_by(user_id=current_user.id).order_by(Favorite.id.desc()).all())
 @student_bp.get('/atividades')
 def activities():
-    items = Activity.query.order_by(Activity.id.desc()).all()
+    q = request.args.get('q', '').strip()
+    series_id = request.args.get('series_id', '').strip()
+    subject_id = request.args.get('subject_id', '').strip()
+    status = request.args.get('status', '').strip().lower()
+    query = Activity.query
+    if q:
+        like = f'%{q}%'; query = query.filter(or_(Activity.title.ilike(like), Activity.description.ilike(like)))
+    if series_id.isdigit(): query = query.filter_by(series_id=int(series_id))
+    if subject_id.isdigit(): query = query.filter_by(subject_id=int(subject_id))
+    items = query.order_by(Activity.id.desc()).all()
     attempted_ids = {a.activity_id for a in ActivityAttempt.query.filter_by(user_id=current_user.id).all()}
     now = datetime.utcnow()
-    return render_template('student/activities.html', activities=items, attempted_ids=attempted_ids, now=now)
+    if status == 'pending': items = [a for a in items if a.id not in attempted_ids and not (a.due_at and now > a.due_at)]
+    elif status == 'done': items = [a for a in items if a.id in attempted_ids]
+    elif status == 'expired': items = [a for a in items if a.due_at and now > a.due_at]
+    return render_template('student/activities.html', activities=items, attempted_ids=attempted_ids, now=now, q=q, series_id=series_id, subject_id=subject_id, status=status, series=Series.query.order_by(Series.id).all(), subjects=Subject.query.order_by(Subject.name).all())
 
 @student_bp.route('/atividade/<int:id>',methods=['GET','POST'])
 def activity(id):
@@ -163,15 +178,50 @@ def progress():
     total=Content.query.count(); completed=Progress.query.filter_by(user_id=current_user.id).count(); percent=round(completed/total*100) if total else 0
     attempts=ActivityAttempt.query.filter_by(user_id=current_user.id).order_by(ActivityAttempt.id.desc()).all()
     return render_template('student/progress.html',total=total,completed=completed,percent=percent,attempts=attempts)
-@student_bp.get('/notificacoes')
+@student_bp.route('/notificacoes', methods=['GET', 'POST'])
 def notifications():
-    items=Notification.query.filter_by(user_id=current_user.id).order_by(Notification.id.desc()).all(); Notification.query.filter_by(user_id=current_user.id,read=False).update({'read':True}); db.session.commit(); return render_template('student/notifications.html',notifications=items)
+    if request.method == 'POST':
+        action = request.form.get('action', '')
+        if action == 'read_all':
+            Notification.query.filter_by(user_id=current_user.id, read=False).update({'read': True})
+            flash('Todas as notificações foram marcadas como lidas.', 'success')
+        elif action == 'read_one':
+            nid = request.form.get('notification_id', '').strip()
+            if nid.isdigit():
+                item = Notification.query.filter_by(id=int(nid), user_id=current_user.id).first_or_404()
+                item.read = True
+        db.session.commit()
+        return redirect(url_for('student.notifications'))
+    items = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.id.desc()).all()
+    unread = sum(1 for item in items if not item.read)
+    return render_template('student/notifications.html', notifications=items, unread=unread)
 @student_bp.get('/busca')
 def search():
-    q=request.args.get('q','').strip(); contents=[]; activities=[]; experiments=[]
+    q = request.args.get('q', '').strip()
+    category = request.args.get('category', '').strip().lower()
+    series_id = request.args.get('series_id', '').strip()
+    subject_id = request.args.get('subject_id', '').strip()
+    contents, activities, experiments = [], [], []
     if q:
-        like=f'%{q}%'; contents=Content.query.filter(or_(Content.title.ilike(like),Content.description.ilike(like),Content.body.ilike(like))).order_by(Content.id.desc()).all(); activities=Activity.query.filter(or_(Activity.title.ilike(like),Activity.description.ilike(like))).order_by(Activity.id.desc()).all(); experiments=Experiment.query.filter(or_(Experiment.title.ilike(like),Experiment.description.ilike(like))).order_by(Experiment.id.desc()).all()
-    return render_template('student/search.html',q=q,contents=contents,activities=activities,experiments=experiments)
+        like = f'%{q}%'
+        if category in {'', 'content'}:
+            query = Content.query.filter(or_(Content.title.ilike(like), Content.description.ilike(like), Content.body.ilike(like)))
+            if series_id.isdigit(): query = query.filter_by(series_id=int(series_id))
+            if subject_id.isdigit(): query = query.filter_by(subject_id=int(subject_id))
+            contents = query.order_by(Content.id.desc()).all()
+        if category in {'', 'activity'}:
+            query = Activity.query.filter(or_(Activity.title.ilike(like), Activity.description.ilike(like)))
+            if series_id.isdigit(): query = query.filter_by(series_id=int(series_id))
+            if subject_id.isdigit(): query = query.filter_by(subject_id=int(subject_id))
+            activities = query.order_by(Activity.id.desc()).all()
+        if category in {'', 'experiment'}:
+            query = Experiment.query.filter(or_(Experiment.title.ilike(like), Experiment.description.ilike(like)))
+            if series_id.isdigit(): query = query.filter_by(series_id=int(series_id))
+            if subject_id.isdigit(): query = query.filter_by(subject_id=int(subject_id))
+            experiments = query.order_by(Experiment.id.desc()).all()
+    return render_template('student/search.html', q=q, category=category, series_id=series_id, subject_id=subject_id,
+                           series=Series.query.order_by(Series.id).all(), subjects=Subject.query.order_by(Subject.name).all(),
+                           contents=contents, activities=activities, experiments=experiments)
 @student_bp.get('/arquivo/<int:id>')
 def arquivo(id):
     c=Content.query.get_or_404(id)

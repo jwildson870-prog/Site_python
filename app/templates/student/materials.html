@@ -6,9 +6,11 @@
   <form class="student-filter" method="get" action="{{ url_for('student.materials') }}">
     <label><span>Buscar</span><input name="q" value="{{ q }}" placeholder="Digite o título ou assunto..."></label>
     <label><span>Tipo</span><select name="kind"><option value="">Todos os tipos</option>{% for value,label in [('pdf','PDF'),('file','Arquivo'),('slide','Slides'),('video','Vídeo'),('link','Link'),('explanation','Explicação')] %}<option value="{{ value }}" {% if kind==value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+    <label><span>Série</span><select name="series_id"><option value="">Todas</option>{% for s in series %}<option value="{{s.id}}" {% if series_id==s.id|string %}selected{% endif %}>{{s.name}}</option>{% endfor %}</select></label>
+    <label><span>Matéria</span><select name="subject_id"><option value="">Todas</option>{% for s in subjects %}<option value="{{s.id}}" {% if subject_id==s.id|string %}selected{% endif %}>{{s.name}}</option>{% endfor %}</select></label>
     <button class="btn" type="submit">Filtrar</button>
   </form>
-  <div class="student-results-head"><strong>{{ contents|length }} material(is)</strong>{% if q or kind %}<a class="text-link" href="{{ url_for('student.materials') }}">Limpar filtros</a>{% endif %}</div>
+  <div class="student-results-head"><strong>{{ contents|length }} material(is)</strong>{% if q or kind or series_id or subject_id %}<a class="text-link" href="{{ url_for('student.materials') }}">Limpar filtros</a>{% endif %}</div>
   <div class="student-material-grid">
     {% for c in contents %}
     <a class="student-material-card" href="{{ url_for('student.content',id=c.id) }}">

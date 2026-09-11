@@ -16,6 +16,15 @@
     <button class="btn admin-primary" type="submit">Criar atividade</button>
   </form>
 
+  <form class="smart-search-form admin-library-filter" method="get">
+    <label class="search-query-field"><span>Buscar</span><input name="q" value="{{q}}" placeholder="Título ou descrição..."></label>
+    <label><span>Série</span><select name="series_id"><option value="">Todas</option>{% for s in series %}<option value="{{s.id}}" {% if series_id==s.id|string %}selected{% endif %}>{{s.name}}</option>{% endfor %}</select></label>
+    <label><span>Matéria</span><select name="subject_id"><option value="">Todas</option>{% for s in subjects %}<option value="{{s.id}}" {% if subject_id==s.id|string %}selected{% endif %}>{{s.name}}</option>{% endfor %}</select></label>
+    <label><span>Prazo</span><select name="status"><option value="">Todas</option><option value="pending" {% if status=='pending' %}selected{% endif %}>Em aberto</option><option value="expired" {% if status=='expired' %}selected{% endif %}>Encerradas</option></select></label>
+    <button class="btn" type="submit">Filtrar</button>{% if q or series_id or subject_id or status %}<a class="btn secondary" href="{{url_for('admin.activities')}}">Limpar</a>{% endif %}
+  </form>
+  <div class="library-toolbar"><div><strong>{{activities|length}}</strong><span>atividade(s) encontrada(s)</span></div><div class="library-hint">Organização por turma e prazo</div></div>
+
   <div class="activity-list">
   {% for a in activities %}
     {% set total = a.get_questions()|length %}

@@ -1,1 +1,24 @@
-{% extends 'base.html' %}{% block title %}Busca · Portal Python{% endblock %}{% block content %}<section class="student-shell"><span class="eyebrow">PESQUISA</span><h1>Buscar no Portal Python</h1><form class="inlineform"><input name="q" value="{{q}}" placeholder="Digite um conteúdo, atividade ou projeto..."><button class="btn">Buscar</button></form>{% if q %}<h2>Resultados para “{{q}}”</h2><div class="list">{% for c in contents %}<a class="card row" href="{{url_for('student.content',id=c.id)}}"><div><h3>▤ {{c.title}}</h3><p>{{c.series.name}} · {{c.subject.name}}</p></div></a>{% endfor %}{% for a in activities %}<a class="card row" href="{{url_for('student.activity',id=a.id)}}"><div><h3>📝 {{a.title}}</h3><p>Atividade · {{a.series.name}} · {{a.subject.name}}</p></div></a>{% endfor %}{% for e in experiments %}<a class="card row" href="{{url_for('student.experiment',id=e.id)}}"><div><h3>&gt;_ {{e.title}}</h3><p>Projeto · {{e.series.name}} · {{e.subject.name}}</p></div></a>{% endfor %}{% if not contents and not activities and not experiments %}<div class="card">Nenhum resultado encontrado.</div>{% endif %}</div>{% endif %}</section>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Buscar · Portal Python{% endblock %}
+{% block content %}
+<section class="student-shell search-page">
+  <div class="student-page-head"><div><span class="eyebrow">PESQUISA</span><h1>Buscar no Portal Python</h1><p>Encontre materiais, atividades e projetos usando filtros rápidos.</p></div></div>
+  <form class="smart-search-form" method="get" action="{{ url_for('student.search') }}">
+    <label class="search-query-field"><span>Termo</span><input name="q" value="{{ q }}" placeholder="Título, assunto ou palavra-chave..." autofocus></label>
+    <label><span>Categoria</span><select name="category"><option value="">Tudo</option><option value="content" {% if category=='content' %}selected{% endif %}>Materiais</option><option value="activity" {% if category=='activity' %}selected{% endif %}>Atividades</option><option value="experiment" {% if category=='experiment' %}selected{% endif %}>Projetos</option></select></label>
+    <label><span>Série</span><select name="series_id"><option value="">Todas</option>{% for s in series %}<option value="{{s.id}}" {% if series_id==s.id|string %}selected{% endif %}>{{s.name}}</option>{% endfor %}</select></label>
+    <label><span>Matéria</span><select name="subject_id"><option value="">Todas</option>{% for s in subjects %}<option value="{{s.id}}" {% if subject_id==s.id|string %}selected{% endif %}>{{s.name}}</option>{% endfor %}</select></label>
+    <button class="btn" type="submit">Buscar</button>
+    {% if q or category or series_id or subject_id %}<a class="btn secondary" href="{{url_for('student.search')}}">Limpar</a>{% endif %}
+  </form>
+  {% if q %}
+  <div class="search-result-bar"><strong>Resultados para “{{q}}”</strong><span>{{ contents|length + activities|length + experiments|length }} encontrado(s)</span></div>
+  <div class="search-results-grid">
+    {% for c in contents %}<a class="search-result-card" href="{{url_for('student.content',id=c.id)}}"><span class="search-result-icon"><img src="{{url_for('static',filename='icons/ui/file.svg')}}" alt=""></span><span><small>MATERIAL · {{c.series.name}} · {{c.subject.name}}</small><strong>{{c.title}}</strong><em>{{c.description or 'Material de estudo'}}</em></span><b>→</b></a>{% endfor %}
+    {% for a in activities %}<a class="search-result-card" href="{{url_for('student.activity',id=a.id)}}"><span class="search-result-icon"><img src="{{url_for('static',filename='icons/ui/check.svg')}}" alt=""></span><span><small>ATIVIDADE · {{a.series.name}} · {{a.subject.name}}</small><strong>{{a.title}}</strong><em>{{a.description or 'Atividade avaliativa'}}</em></span><b>→</b></a>{% endfor %}
+    {% for e in experiments %}<a class="search-result-card" href="{{url_for('student.experiment',id=e.id)}}"><span class="search-result-icon"><img src="{{url_for('static',filename='icons/ui/code.svg')}}" alt=""></span><span><small>PROJETO · {{e.series.name}} · {{e.subject.name}}</small><strong>{{e.title}}</strong><em>{{e.description or 'Projeto de programação'}}</em></span><b>→</b></a>{% endfor %}
+  </div>
+  {% if not contents and not activities and not experiments %}<div class="student-empty student-empty-box">Nenhum resultado encontrado. Tente outro termo ou remova algum filtro.</div>{% endif %}
+  {% else %}<div class="search-empty-state"><span class="search-empty-icon"><img src="{{url_for('static',filename='icons/ui/search.svg')}}" alt=""></span><h2>Comece uma busca</h2><p>Digite algo acima para localizar rapidamente o conteúdo que você precisa.</p></div>{% endif %}
+</section>
+{% endblock %}

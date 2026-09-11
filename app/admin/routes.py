@@ -176,7 +176,22 @@ def subject_delete(id):
     s=Subject.query.get_or_404(id); db.session.delete(s); db.session.commit(); flash('Matéria excluída.','success'); return redirect(url_for('admin.subjects_list'))
 
 @admin_bp.get('/contents')
-def contents(): return render_template('admin/contents.html',contents=Content.query.order_by(Content.id.desc()).all())
+def contents():
+    q = request.args.get('q', '').strip()
+    kind = request.args.get('kind', '').strip().lower()
+    series_id = request.args.get('series_id', '').strip()
+    subject_id = request.args.get('subject_id', '').strip()
+    query = Content.query
+    if q:
+        like = f'%{q}%'
+        query = query.filter(or_(Content.title.ilike(like), Content.description.ilike(like), Content.body.ilike(like)))
+    if kind in ALLOWED_KINDS:
+        query = query.filter_by(kind=kind)
+    if series_id.isdigit(): query = query.filter_by(series_id=int(series_id))
+    if subject_id.isdigit(): query = query.filter_by(subject_id=int(subject_id))
+    contents = query.order_by(Content.id.desc()).all()
+    return render_template('admin/contents.html', contents=contents, q=q, kind=kind, series_id=series_id, subject_id=subject_id,
+                           series=Series.query.order_by(Series.id).all(), subjects=Subject.query.order_by(Subject.name).all())
 @admin_bp.get('/series/<int:id>')
 def series_detail(id): return render_template('admin/series_detail.html',series=Series.query.get_or_404(id))
 
@@ -364,11 +379,17 @@ def user_performance(id):
 @admin_bp.get('/users')
 def users():
     q = request.args.get('q', '').strip()
+    role = request.args.get('role', '').strip().lower()
+    sort = request.args.get('sort', 'recent').strip().lower()
     query = User.query
     if q:
         like = f'%{q}%'
         query = query.filter(or_(User.name.ilike(like), User.email.ilike(like)))
-    return render_template('admin/users.html', users=query.order_by(User.id.desc()).all(), q=q)
+    if role in {'student', 'admin'}:
+        query = query.filter_by(role=role)
+    ordering = User.name.asc() if sort == 'name' else User.id.desc()
+    users_list = query.order_by(ordering).all()
+    return render_template('admin/users.html', users=users_list, q=q, role=role, sort=sort)
 
 @admin_bp.post('/users/<int:id>/delete')
 def user_delete(id):
@@ -385,6 +406,10 @@ def user_delete(id):
 
 @admin_bp.route('/activities', methods=['GET', 'POST'])
 def activities():
+    q = request.args.get('q', '').strip()
+    series_id = request.args.get('series_id', '').strip()
+    subject_id = request.args.get('subject_id', '').strip()
+    status = request.args.get('status', '').strip().lower()
     if request.method == 'POST':
         title = request.form.get('title', '').strip()
         description = request.form.get('description', '').strip()
@@ -405,7 +430,17 @@ def activities():
             db.session.commit()
             flash('Atividade criada. Agora adicione as questões.', 'success')
             return redirect(url_for('admin.activity_edit', id=a.id))
-    return render_template('admin/activities.html', activities=Activity.query.order_by(Activity.id.desc()).all(), series=Series.query.all())
+    query = Activity.query
+    if q:
+        like = f'%{q}%'
+        query = query.filter(or_(Activity.title.ilike(like), Activity.description.ilike(like)))
+    if series_id.isdigit(): query = query.filter_by(series_id=int(series_id))
+    if subject_id.isdigit(): query = query.filter_by(subject_id=int(subject_id))
+    now = datetime.utcnow()
+    items = query.order_by(Activity.id.desc()).all()
+    if status == 'pending': items = [a for a in items if not a.due_at or a.due_at >= now]
+    elif status == 'expired': items = [a for a in items if a.due_at and a.due_at < now]
+    return render_template('admin/activities.html', activities=items, series=Series.query.order_by(Series.id).all(), subjects=Subject.query.order_by(Subject.name).all(), q=q, series_id=series_id, subject_id=subject_id, status=status, now=now)
 
 
 def parse_due_at(value):
