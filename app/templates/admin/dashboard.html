@@ -1,65 +1,53 @@
 {% extends 'base.html' %}
 {% block title %}Painel do Professor · Portal Python{% endblock %}
 {% block content %}
-<section class="admin-shell">
-    <div class="admin-hero">
-        <div>
-            <span class="eyebrow">ÁREA DO PROFESSOR</span>
-            <h1>Olá, {{ current_user.name }} 👋</h1>
-            <p>Gerencie materiais, aulas e conteúdos das quatro séries em um só lugar.</p>
-        </div>
-        <a class="btn admin-primary" href="{{ url_for('admin.content_new') }}">＋ Adicionar material</a>
+<section class="admin-shell python-dashboard">
+  <div class="admin-hero">
+    <div class="hero-copy">
+      <span class="eyebrow">ÁREA DO PROFESSOR</span>
+      <h1>Olá, {{ current_user.name }} <span class="wave">👋</span></h1>
+      <p>Organize aulas, exercícios, projetos e materiais de Python para todas as séries.</p>
+      <a class="btn admin-primary" href="{{ url_for('admin.content_new') }}">＋ <span>Adicionar material</span></a>
     </div>
+    <div class="hero-python-art" aria-hidden="true">
+      <img src="{{ url_for('static',filename='icons/python.svg') }}" alt="">
+      <div class="code-window"><span>def</span> aprender():<br>&nbsp;&nbsp;&nbsp;&nbsp;<span>return</span> "Futuro"<br><b>&gt;&gt;&gt;</b></div>
+    </div>
+  </div>
 
-    <div class="teacher-nav">
-        <a class="teacher-nav-item active" href="{{ url_for('admin.dashboard') }}">🏠 <span>Início</span></a>
-        {% for s in series_list %}
-        <a class="teacher-nav-item" href="{{ url_for('admin.series_detail', id=s.id) }}">🎓 <span>{{ s.name }}</span></a>
-        {% endfor %}
-        <a class="teacher-nav-item" href="{{ url_for('admin.content_new') }}">⬆️ <span>Adicionar material</span></a>
-        <a class="teacher-nav-item" href="{{ url_for('admin.contents') }}">📦 <span>Meus materiais</span></a>
-    </div>
+  <div class="admin-stats">
+    <a class="admin-stat" href="{{ url_for('admin.series_list') }}"><div class="stat-icon">{{ icon('layers') }}</div><div><strong>{{ series }}</strong><small>Séries</small><em>1º, 2º, 3º e 4º ano</em></div><span class="stat-arrow">→</span></a>
+    <a class="admin-stat" href="{{ url_for('admin.subjects_list') }}"><div class="stat-icon code">{{ icon('code') }}</div><div><strong>{{ subjects }}</strong><small>Matérias</small><em>Organize o conteúdo</em></div><span class="stat-arrow">→</span></a>
+    <a class="admin-stat" href="{{ url_for('admin.contents') }}"><div class="stat-icon file">{{ icon('file') }}</div><div><strong>{{ contents }}</strong><small>Materiais publicados</small><em>Apostilas, exercícios e projetos</em></div><span class="stat-arrow">→</span></a>
+    <a class="admin-stat" href="{{ url_for('admin.users') }}"><div class="stat-icon">{{ icon('users') }}</div><div><strong>{{ users }}</strong><small>Usuários</small><em>Professores e alunos</em></div><span class="stat-arrow">→</span></a>
+    <a class="admin-stat" href="{{ url_for('admin.activities') }}"><div class="stat-icon green">{{ icon('check') }}</div><div><strong>{{ activities }}</strong><small>Atividades</small><em>Crie e acompanhe</em></div><span class="stat-arrow">→</span></a>
+    <a class="admin-stat" href="{{ url_for('admin.experiments') }}"><div class="stat-icon cyan">{{ icon('terminal') }}</div><div><strong>{{ experiments }}</strong><small>Projetos práticos</small><em>Desafios e projetos em Python</em></div><span class="stat-arrow">→</span></a>
+  </div>
 
-    <div class="admin-stats">
-        <div class="admin-stat"><span>📚</span><strong>{{ series }}</strong><small>Séries</small></div>
-        <div class="admin-stat"><span>🧪</span><strong>{{ subjects }}</strong><small>Matérias</small></div>
-        <div class="admin-stat"><span>📦</span><strong>{{ contents }}</strong><small>Materiais publicados</small></div>
-        <div class="admin-stat"><span>👥</span><strong>{{ users }}</strong><small>Usuários</small></div><div class="admin-stat"><span>📝</span><strong>{{ activities }}</strong><small>Atividades</small></div><div class="admin-stat"><span>🧪</span><strong>{{ experiments }}</strong><small>Projetos práticos</small></div>
-    </div>
+  <div class="admin-section-title"><div><span class="eyebrow">PUBLICAÇÃO RÁPIDA</span><h2>O que você quer fazer?</h2></div></div>
+  <div class="admin-actions-grid python-actions">
+    <a class="admin-action-card featured" href="{{ url_for('admin.content_new') }}"><div class="action-icon">{{ icon('plusfile') }}</div><div><h3>Adicionar material</h3><p>Envie um arquivo, use um link ou publique uma explicação.</p></div><span class="arrow">→</span></a>
+    <a class="admin-action-card" href="{{ url_for('admin.contents') }}"><div class="action-icon">{{ icon('folder') }}</div><div><h3>Meus materiais</h3><p>Veja e gerencie tudo o que já foi publicado.</p></div><span class="arrow">→</span></a>
+    <a class="admin-action-card" href="{{ url_for('admin.subjects_list') }}"><div class="action-icon">{{ icon('code') }}</div><div><h3>Matérias</h3><p>Organize os conteúdos de programação por série.</p></div><span class="arrow">→</span></a>
+    <a class="admin-action-card" href="{{ url_for('admin.activities') }}"><div class="action-icon">{{ icon('check') }}</div><div><h3>Atividades</h3><p>Crie exercícios e acompanhe o aprendizado.</p></div><span class="arrow">→</span></a>
+    <a class="admin-action-card" href="{{ url_for('admin.experiments') }}"><div class="action-icon">{{ icon('terminal') }}</div><div><h3>Projetos práticos</h3><p>Publique desafios e projetos de Python.</p></div><span class="arrow">→</span></a>
+    <a class="admin-action-card" href="{{ url_for('admin.users') }}"><div class="action-icon">{{ icon('users') }}</div><div><h3>Usuários</h3><p>Veja e gerencie as contas dos alunos.</p></div><span class="arrow">→</span></a>
+  </div>
 
-    <div class="admin-section-title">
-        <div>
-            <span class="eyebrow">PUBLICAÇÃO RÁPIDA</span>
-            <h2>O que você quer fazer?</h2>
-        </div>
+  <div class="publish-panel">
+    <div class="publish-head"><div class="action-icon large">{{ icon('plusfile') }}</div><div><h2>Publicar conteúdo</h2><p>Adicione apostilas, exercícios, projetos e outros materiais para seus alunos.</p></div><a class="outline-btn" href="{{ url_for('admin.content_new') }}">Ver todos <span>→</span></a></div>
+    <div class="publish-types">
+      <a href="{{ url_for('admin.content_new') }}"><span>{{ icon('file') }}</span>Apostila</a>
+      <a href="{{ url_for('admin.content_new') }}"><span>{{ icon('code') }}</span>Exercício</a>
+      <a href="{{ url_for('admin.content_new') }}"><span>{{ icon('terminal') }}</span>Projeto</a>
+      <a href="{{ url_for('admin.content_new') }}"><span>▧</span>Imagem</a>
+      <a href="{{ url_for('admin.content_new') }}"><span>▶</span>Vídeo</a>
+      <a href="{{ url_for('admin.content_new') }}"><span>•••</span>Outro</a>
     </div>
+  </div>
 
-    <div class="admin-actions-grid">
-        <a class="admin-action-card featured" href="{{ url_for('admin.content_new') }}">
-            <div class="action-icon">⬆️</div>
-            <div><h3>Adicionar material</h3><p>Envie um arquivo, use um link ou publique uma explicação.</p></div>
-            <span class="arrow">→</span>
-        </a>
-        <a class="admin-action-card" href="{{ url_for('admin.contents') }}">
-            <div class="action-icon">📦</div>
-            <div><h3>Meus materiais</h3><p>Veja tudo o que já foi publicado no portal.</p></div>
-            <span class="arrow">→</span>
-        </a>
-        <a class="admin-action-card" href="{{ url_for('admin.subjects_list') }}">
-            <div class="action-icon">🧪</div>
-            <div><h3>Matérias</h3><p>Organize as matérias de cada série.</p></div>
-            <span class="arrow">→</span>
-        </a>
-        <a class="admin-action-card" href="{{ url_for('admin.activities') }}"><div class="action-icon">📝</div><div><h3>Atividades</h3><p>Crie questões e correção automática.</p></div><span class="arrow">→</span></a><a class="admin-action-card" href="{{ url_for('admin.experiments') }}"><div class="action-icon">🧪</div><div><h3>Projetos práticos</h3><p>Publique roteiros de projeto Python.</p></div><span class="arrow">→</span></a><a class="admin-action-card" href="{{ url_for('admin.users') }}"><div class="action-icon">👥</div><div><h3>Usuários</h3><p>Veja e gerencie contas de alunos.</p></div><span class="arrow">→</span></a><a class="admin-action-card" href="{{ url_for('admin.series_list') }}">
-            <div class="action-icon">🎓</div>
-            <div><h3>Séries</h3><p>Configure 1º, 2º, 3º e 4º ano.</p></div>
-            <span class="arrow">→</span>
-        </a>
-    </div>
+  <div class="materials-panel"><div class="panel-head"><div class="action-icon folder-icon">{{ icon('folder') }}</div><div><h2>Meus materiais</h2><p>Veja tudo o que já foi publicado no portal.</p></div><a class="outline-btn" href="{{ url_for('admin.contents') }}">Gerenciar <span>→</span></a></div><div class="panel-empty"><span>{{ icon('file') }}</span><div><strong>{{ contents }} materiais publicados</strong><p>Acesse a área de materiais para visualizar, editar ou excluir conteúdos.</p></div><a class="btn secondary" href="{{ url_for('admin.contents') }}">Abrir materiais</a></div></div>
 
-    <div class="teacher-tip">
-        <span>💡</span>
-        <div><strong>Dica:</strong> você pode publicar um material do computador ou apontar para um arquivo no Google Drive, OneDrive, Dropbox ou outro serviço usando um link.</div>
-    </div>
+  <div class="quick-publish"><div class="action-icon purple">ϟ</div><div><h2>Publicação rápida</h2><p>Adicione um arquivo ou cole um link para compartilhar com seus alunos.</p></div><a class="outline-btn" href="{{ url_for('admin.content_new') }}">＋ Nova publicação</a><div class="quick-input">{{ icon('link') }}<span>Cole o link do arquivo ou insira uma descrição...</span><b>→</b></div></div>
 </section>
 {% endblock %}
