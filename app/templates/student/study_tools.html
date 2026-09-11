@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Estudo Inteligente · Portal Python{% endblock %}
+{% block content %}
+<section class="student-shell smart-study-shell">
+  <div class="workspace-head">
+    <div><p class="eyebrow">FERRAMENTAS DE ESTUDO</p><h1>Estudo Inteligente</h1><p>Transforme qualquer conteúdo em resumo, mapa mental e questões para revisar mais rápido.</p></div>
+    <span class="workspace-head-badge">NOVO</span>
+  </div>
+  <div class="smart-grid">
+    <article class="card smart-card smart-input-card">
+      <div class="smart-card-head"><div><span class="badge">1 · CONTEÚDO</span><h2>Seu material</h2><p>Cole um texto ou carregue o conteúdo de um material.</p></div></div>
+      <label for="smartText">Texto para estudar</label>
+      <textarea id="smartText" class="smart-textarea" rows="15" placeholder="Cole aqui o texto da aula, apostila ou material..."></textarea>
+      <div class="smart-actions"><button class="btn" type="button" id="smartAnalyze">Analisar conteúdo</button><button class="btn secondary" type="button" id="smartClear">Limpar</button></div>
+      <p class="smart-note">A ferramenta funciona no próprio portal e não altera seus materiais salvos.</p>
+    </article>
+    <article class="card smart-card smart-output-card">
+      <div class="smart-tabs" role="tablist" aria-label="Ferramentas inteligentes">
+        <button class="smart-tab active" data-panel="summary" type="button">Resumo</button>
+        <button class="smart-tab" data-panel="mindmap" type="button">Mapa mental</button>
+        <button class="smart-tab" data-panel="quiz" type="button">Questões</button>
+        <button class="smart-tab" data-panel="tutor" type="button">Tutor</button>
+      </div>
+      <div id="smartPanel-summary" class="smart-panel active"><div class="empty-smart"><span>✦</span><h2>Resumo inteligente</h2><p>Insira um conteúdo ao lado e gere uma revisão com ideias principais, conceitos e palavras-chave.</p></div></div>
+      <div id="smartPanel-mindmap" class="smart-panel" hidden><div class="empty-smart"><span>◎</span><h2>Mapa mental</h2><p>O conteúdo será organizado em um mapa visual de tópicos e conexões.</p></div></div>
+      <div id="smartPanel-quiz" class="smart-panel" hidden><div class="empty-smart"><span>?</span><h2>Questões de revisão</h2><p>Gere perguntas a partir das ideias mais importantes do texto.</p></div></div>
+      <div id="smartPanel-tutor" class="smart-panel" hidden><div class="empty-smart"><span>◌</span><h2>Tutor de estudos</h2><p>Faça uma pergunta sobre o conteúdo e receba uma explicação baseada no texto fornecido.</p></div></div>
+    </article>
+  </div>
+</section>
+<script src="{{ url_for('static', filename='js/study-tools.js') }}" defer></script>
+{% endblock %}

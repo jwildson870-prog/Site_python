@@ -50,6 +50,7 @@
   {% else %}
     <a class="side-link {% if request.endpoint == 'student.dashboard' %}active{% endif %}" href="{{url_for('student.dashboard')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/home.svg') }}" alt=""></span><b>Início</b></a>
     <a class="side-link {% if request.endpoint in ['student.materials','student.series','student.subject','student.content'] %}active{% endif %}" href="{{url_for('student.materials')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/file.svg') }}" alt=""></span><b>Materiais</b></a>
+    <a class="side-link {% if request.endpoint == 'student.study_tools' %}active{% endif %}" href="{{url_for('student.study_tools')}}"><span class="nav-icon">✦</span><b>Estudo inteligente</b></a>
     <a class="side-link {% if request.endpoint in ['student.activities','student.activity'] %}active{% endif %}" href="{{url_for('student.activities')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/check.svg') }}" alt=""></span><b>Atividades</b></a>
     <a class="side-link {% if request.endpoint in ['student.experiments','student.experiment'] %}active{% endif %}" href="{{url_for('student.experiments')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/terminal.svg') }}" alt=""></span><b>Projetos Python</b></a>
     <a class="side-link {% if request.endpoint == 'student.favorites' %}active{% endif %}" href="{{url_for('student.favorites')}}"><span class="nav-icon">★</span><b>Favoritos</b></a>
