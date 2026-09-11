@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 import boto3
+from botocore.config import Config
 from botocore.exceptions import BotoCoreError, ClientError
 from flask import current_app
 
@@ -60,12 +61,20 @@ def _client():
             code='storage_config',
         )
 
+    # O Backblaze B2 é compatível com S3. Forçamos S3 v4 e path-style para
+    # evitar problemas de DNS/certificado com nomes de bucket e garantimos que
+    # o endpoint informado pelo Render seja usado literalmente.
     return boto3.client(
         's3',
-        endpoint_url=endpoint,
+        endpoint_url=endpoint.rstrip('/'),
         aws_access_key_id=_key_id(),
         aws_secret_access_key=_env('B2_APPLICATION_KEY'),
         region_name=_env('B2_REGION') or 'us-east-005',
+        config=Config(
+            signature_version='s3v4',
+            s3={'addressing_style': 'path'},
+            retries={'max_attempts': 3, 'mode': 'standard'},
+        ),
     )
 
 
@@ -93,7 +102,14 @@ def _friendly_b2_error(exc, action='acessar o arquivo'):
             technical=f'{code}: {message}' if code or message else str(exc),
         )
 
-    if code in {'NoSuchBucket', 'NotFound', 'NoSuchKey', '404'} or status == 404:
+    if code == 'NoSuchBucket':
+        return StorageError(
+            'O bucket do Backblaze B2 não foi encontrado. Confira B2_BUCKET_NAME, B2_ENDPOINT e B2_REGION no Render.',
+            code='storage_bucket_not_found',
+            technical=f'{code}: {message}' if code or message else str(exc),
+        )
+
+    if code in {'NoSuchKey', 'NotFound', '404'} or (status == 404 and action in {'abrir o arquivo', 'excluir o arquivo'}):
         return StorageError(
             'O arquivo não foi encontrado no armazenamento do Portal Python. Ele pode ter sido removido ou o caminho do arquivo pode estar incorreto.',
             code='storage_not_found',
@@ -107,9 +123,9 @@ def _friendly_b2_error(exc, action='acessar o arquivo'):
             technical=f'{code}: {message}' if code or message else str(exc),
         )
 
-    if code in {'InvalidBucketName', 'AuthorizationHeaderMalformed'}:
+    if code in {'InvalidBucketName', 'AuthorizationHeaderMalformed', 'InvalidRequest', 'PermanentRedirect'}:
         return StorageError(
-            'A configuração do bucket do Backblaze está incorreta. Confira o nome do bucket e a região/endpoint configurados no Render.',
+            'A configuração do Backblaze B2 está incorreta. Confira o nome do bucket, B2_REGION e B2_ENDPOINT no Render. Para a região US East 005, use https://s3.us-east-005.backblazeb2.com e us-east-005.',
             code='storage_config',
             technical=f'{code}: {message}' if code or message else str(exc),
         )
