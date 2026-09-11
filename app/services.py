@@ -2,46 +2,36 @@ import os
 from .extensions import db
 from .models import User, Series, Subject, Content
 
-# Os quatro níveis organizam a trilha de aprendizagem em Python.
 CANONICAL_SERIES = {
-    'Nível 1 — Fundamentos': ['Nível 1 — Fundamentos', '1º ano', '1ª Série', '1º Série'],
-    'Nível 2 — Estruturas': ['Nível 2 — Estruturas', '2º ano', '2ª Série', '2º Série'],
-    'Nível 3 — Programação': ['Nível 3 — Programação', '3º ano', '3ª Série', '3º Série'],
-    'Nível 4 — Projetos': ['Nível 4 — Projetos', '4º ano', '4ª Série', '4º Série'],
+    '1º ano': ['1º ano', '1ª Série', '1º Série'],
+    '2º ano': ['2º ano', '2ª Série', '2º Série'],
+    '3º ano': ['3º ano', '3ª Série', '3º Série'],
+    '4º ano': ['4º ano', '4ª Série', '4º Série'],
 }
 INITIAL_SUBJECTS = {
-    'Nível 1 — Fundamentos': ['Sintaxe e Fundamentos'],
-    'Nível 2 — Estruturas': ['Estruturas de Dados'],
-    'Nível 3 — Programação': ['Funções e POO'],
-    'Nível 4 — Projetos': ['Projetos em Python'],
+    '1º ano': ['Química Geral'],
+    '2º ano': ['Química Orgânica'],
+    '3º ano': ['Físico-Química'],
+    '4º ano': ['Química Aplicada'],
 }
 TOPICS = {
-    ('Nível 1 — Fundamentos', 'Sintaxe e Fundamentos'): [
-        'Variáveis e tipos de dados', 'Entrada e saída com input() e print()',
-        'Operadores e expressões', 'if, elif e else', 'while e for',
-    ],
-    ('Nível 2 — Estruturas', 'Estruturas de Dados'): [
-        'Listas', 'Tuplas', 'Dicionários', 'Conjuntos (set)', 'Listas de listas',
-    ],
-    ('Nível 3 — Programação', 'Funções e POO'): [
-        'Funções e parâmetros', 'Escopo e retorno', 'Módulos e bibliotecas',
-        'Classes e objetos', 'Herança e encapsulamento',
-    ],
-    ('Nível 4 — Projetos', 'Projetos em Python'): [
-        'Arquivos JSON e CSV', 'Tratamento de erros com try/except',
-        'Persistência de dados', 'Organização de projetos', 'Projeto final',
-    ],
+    ('1º ano', 'Química Geral'): ['Estrutura Atômica', 'Prótons, nêutrons e elétrons', 'Tabela Periódica', 'Ligações Químicas'],
+    ('2º ano', 'Química Orgânica'): ['Funções Orgânicas', 'Hidrocarbonetos'],
+    ('3º ano', 'Físico-Química'): ['Eletroquímica', 'Termoquímica'],
+    ('4º ano', 'Química Aplicada'): ['Química Ambiental', 'Química no Cotidiano'],
 }
 
 def ensure_admin():
-    email = os.getenv('ADMIN_EMAIL', 'professor@portalpython.com').strip().lower()
-    password = os.getenv('ADMIN_PASSWORD', 'Python@2026')
-    name = os.getenv('ADMIN_NAME', 'Professor Python').strip() or 'Professor Python'
+    email = os.getenv('ADMIN_EMAIL', 'professor@portaljm.com').strip().lower()
+    password = os.getenv('ADMIN_PASSWORD', 'PortalJM@2026')
+    name = os.getenv('ADMIN_NAME', 'Professor JM').strip() or 'Professor JM'
     if not email or not password:
         return None, False
 
+    # Reaproveita o usuário do e-mail configurado, evitando conflitos de UNIQUE.
     target = User.query.filter_by(email=email).first()
     admins = User.query.filter_by(role='admin').order_by(User.id).all()
+
     if target:
         admin = target
         for other in admins:
@@ -87,13 +77,9 @@ def seed_initial_content():
                 if not Content.query.filter_by(title=title, subject_id=sub.id).first():
                     db.session.add(Content(
                         title=title,
-                        description=f'Conteúdo de Python: {title}.',
+                        description=f'Conteúdo introdutório de {title}.',
                         kind='explanation',
-                        body=(
-                            f'<p><strong>{title}</strong></p>'
-                            f'<p>Material introdutório para aprender Python passo a passo. '
-                            f'Use o painel do professor para editar, ampliar e adicionar exemplos e exercícios.</p>'
-                        ),
+                        body=f'<p><strong>{title}</strong></p><p>Material inicial de demonstração do Portal JM – Química. O professor pode editar este conteúdo pelo painel do professor.</p>',
                         series_id=s.id, subject_id=sub.id
                     ))
     db.session.commit()

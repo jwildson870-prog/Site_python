@@ -1,15 +1,1 @@
-{% extends 'base.html' %}
-{% block title %}Buscar Materiais · Portal Python{% endblock %}
-{% block content %}
-<section class="student-shell">
-  <p><a class="back-link" href="{{ url_for('student.dashboard') }}">← Início</a></p>
-  <div class="admin-page-head"><div><span class="eyebrow">BIBLIOTECA</span><h1>Buscar materiais</h1><p>Encontre rapidamente os conteúdos publicados pelo professor.</p></div></div>
-  <form class="student-search large" action="{{ url_for('student.search') }}" method="get"><span>⌕</span><input name="q" value="{{ q }}" type="search" placeholder="Digite um assunto, título ou palavra-chave"><button class="btn" type="submit">Buscar</button></form>
-  {% if q %}<p class="search-result-count">{{ contents|length }} resultado(s) para <strong>“{{ q }}”</strong></p>{% endif %}
-  <div class="list student-results">
-    {% for c in contents %}
-    <a class="card row" href="{{ url_for('student.content', id=c.id) }}"><div><h2>{{ c.title }}</h2><p>{{ c.subject.name }} · {{ c.description or 'Material de estudo' }}</p></div><span class="badge">{{ {'explanation':'Explicação','file':'Arquivo','pdf':'PDF','slide':'Slides','video':'Vídeo','link':'Link'}.get(c.kind,'Material') }}{% if c.id in completed_ids %} · ✓{% endif %}</span></a>
-    {% else %}<div class="card empty-state"><span>⌕</span><h2>Nenhum material encontrado</h2><p>Tente outro termo de busca.</p></div>{% endfor %}
-  </div>
-</section>
-{% endblock %}
+{% extends 'base.html' %}{% block title %}Busca · Portal JM{% endblock %}{% block content %}<section class="student-shell"><span class="eyebrow">PESQUISA</span><h1>Buscar no Portal JM</h1><form class="inlineform"><input name="q" value="{{q}}" placeholder="Digite um conteúdo, atividade ou experimento..."><button class="btn">Buscar</button></form>{% if q %}<h2>Resultados para “{{q}}”</h2><div class="list">{% for c in contents %}<a class="card row" href="{{url_for('student.content',id=c.id)}}"><div><h3>📚 {{c.title}}</h3><p>{{c.series.name}} · {{c.subject.name}}</p></div></a>{% endfor %}{% for a in activities %}<a class="card row" href="{{url_for('student.activity',id=a.id)}}"><div><h3>📝 {{a.title}}</h3><p>Atividade · {{a.series.name}} · {{a.subject.name}}</p></div></a>{% endfor %}{% for e in experiments %}<a class="card row" href="{{url_for('student.experiment',id=e.id)}}"><div><h3>🧪 {{e.title}}</h3><p>Experimento · {{e.series.name}} · {{e.subject.name}}</p></div></a>{% endfor %}{% if not contents and not activities and not experiments %}<div class="card">Nenhum resultado encontrado.</div>{% endif %}</div>{% endif %}</section>{% endblock %}

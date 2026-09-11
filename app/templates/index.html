@@ -1,18 +1,1 @@
-{% extends 'base.html' %}
-{% block title %}Portal Python{% endblock %}
-{% block content %}
-<section class="hero">
-  <div class="card center">
-    <div class="atom">🐍</div>
-    <span class="eyebrow">APRENDA PYTHON</span>
-    <h1>Portal Python</h1>
-    <p>Aprenda Python do zero ao desenvolvimento de projetos, com aulas, exemplos, exercícios e materiais organizados.</p>
-    <div class="code-preview"><code>print("Olá, mundo!")</code></div>
-    <h2>Vamos começar?</h2>
-    <div class="actions">
-      <a class="btn" href="{{url_for('auth.login')}}">Já tenho uma conta</a>
-      <a class="btn secondary" href="{{url_for('auth.register')}}">Criar minha conta</a>
-    </div>
-  </div>
-</section>
-{% endblock %}
+{% extends 'base.html' %}{% block content %}<section class="hero"><div class="card center"><div class="atom">⚛</div><h1>Portal JM – Química</h1><p>Aprenda Química com conteúdos organizados, materiais e aulas.</p><h2>Você já possui uma conta?</h2><div class="actions"><a class="btn" href="{{url_for('auth.login')}}">Já tenho uma conta</a><a class="btn secondary" href="{{url_for('auth.register')}}">Ainda não tenho uma conta</a></div></div></section>{% endblock %}

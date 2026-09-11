@@ -65,3 +65,13 @@
     }
   });
 })();
+
+
+// Registra o service worker para habilitar o funcionamento como PWA.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('/static/service-worker.js').catch(function (error) {
+      console.warn('Não foi possível registrar o Service Worker:', error);
+    });
+  });
+}

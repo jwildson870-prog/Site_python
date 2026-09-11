@@ -9,3 +9,4 @@ email-validator>=2.2,<3
 gunicorn>=23,<24
 pytest>=8,<9
 requests>=2.32,<3
+boto3>=1.35,<2

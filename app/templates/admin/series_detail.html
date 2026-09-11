@@ -4,20 +4,20 @@
 <section class="admin-shell">
   <a class="back-link" href="{{ url_for('admin.dashboard') }}">← Início</a>
   <div class="admin-page-head">
-    <div><span class="eyebrow">ÁREA DO PROFESSOR · TURMA</span><h1>{{ series.name }}</h1><p>Materiais e módulos publicados para esta turma.</p></div>
+    <div><span class="eyebrow">ÁREA DO PROFESSOR · TURMA</span><h1>{{ series.name }}</h1><p>Materiais e matérias publicados para esta turma.</p></div>
     <a class="btn admin-primary" href="{{ url_for('admin.content_new') }}">＋ Adicionar material</a>
   </div>
   <div class="grid">
     {% for subject in series.subjects %}
     <div class="publisher-card">
-      <span class="badge">🐍 Módulo</span><h2>{{ subject.name }}</h2>
+      <span class="badge">🧪 Matéria</span><h2>{{ subject.name }}</h2>
       <p class="muted">{{ subject.contents|length }} material(is)</p>
       {% for c in subject.contents|sort(attribute='id', reverse=true) %}
         <div class="material-mini"><strong>{{ c.title }}</strong><span class="badge">{{ {'explanation':'Explicação','file':'Arquivo','pdf':'PDF','slide':'Slides','video':'Vídeo','link':'Link'}.get(c.kind,'Material') }}</span></div>
-      {% else %}<p class="muted">Nenhum material nesta módulo.</p>{% endfor %}
+      {% else %}<p class="muted">Nenhum material nesta matéria.</p>{% endfor %}
     </div>
     {% else %}
-      <div class="publisher-card empty-state"><span>🐍</span><h2>Nenhuma módulo</h2><p>Cadastre uma módulo para esta turma.</p><a class="btn" href="{{ url_for('admin.subjects_list') }}">Adicionar módulo</a></div>
+      <div class="publisher-card empty-state"><span>🧪</span><h2>Nenhuma matéria</h2><p>Cadastre uma matéria para esta turma.</p><a class="btn" href="{{ url_for('admin.subjects_list') }}">Adicionar matéria</a></div>
     {% endfor %}
   </div>
 </section>

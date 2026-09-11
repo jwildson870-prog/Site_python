@@ -1,10 +1,10 @@
-const CACHE_NAME = 'portal-python-static-v1';
+const CACHE_NAME = 'portal-jm-static-v4';
 const STATIC_ASSETS = [
   '/static/css/style.css',
   '/static/js/ui.js',
-  '/static/manifest.webmanifest',
-  '/static/icons/python.svg',
-  '/static/icons/python.svg',
+  '/static/manifest.json',
+  '/static/icons/icon-192.png',
+  '/static/icons/icon-512.png',
   '/static/js/pwa.js',
   '/static/offline.html'
 ];

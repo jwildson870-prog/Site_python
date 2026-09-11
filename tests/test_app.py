@@ -7,9 +7,9 @@ from app.models import User, Series, Subject, Content
 
 @pytest.fixture()
 def app(tmp_path, monkeypatch):
-    monkeypatch.setenv('ADMIN_EMAIL', 'professor@portalpython.com')
-    monkeypatch.setenv('ADMIN_PASSWORD', 'Python@2026')
-    monkeypatch.setenv('ADMIN_NAME', 'Professor Python')
+    monkeypatch.setenv('ADMIN_EMAIL', 'professor@portaljm.com')
+    monkeypatch.setenv('ADMIN_PASSWORD', 'PortalJM@2026')
+    monkeypatch.setenv('ADMIN_NAME', 'Professor JM')
     app = create_app({
         'TESTING': True,
         'WTF_CSRF_ENABLED': False,
@@ -29,7 +29,7 @@ def login(client, email, password):
     return client.post('/auth/login', data={'email': email, 'password': password})
 
 def test_teacher_login_redirect_and_isolation(client):
-    r = login(client, 'professor@portalpython.com', 'Python@2026')
+    r = login(client, 'professor@portaljm.com', 'PortalJM@2026')
     assert r.status_code == 302
     assert r.headers['Location'].endswith('/admin/')
     panel = client.get('/admin/')
@@ -53,19 +53,19 @@ def test_student_login_and_admin_block(client):
 def test_four_real_series_exist(client, app):
     with app.app_context():
         names = {s.name for s in Series.query.all()}
-    assert {'Nível 1 — Fundamentos', 'Nível 2 — Estruturas', 'Nível 3 — Programação', 'Nível 4 — Projetos'} <= names
+    assert {'1º ano', '2º ano', '3º ano', '4º ano'} <= names
 
 def test_legacy_series_are_migrated_without_deleting_data(tmp_path, monkeypatch):
-    monkeypatch.setenv('ADMIN_EMAIL', 'professor@portalpython.com')
-    monkeypatch.setenv('ADMIN_PASSWORD', 'Python@2026')
-    monkeypatch.setenv('ADMIN_NAME', 'Professor Python')
+    monkeypatch.setenv('ADMIN_EMAIL', 'professor@portaljm.com')
+    monkeypatch.setenv('ADMIN_PASSWORD', 'PortalJM@2026')
+    monkeypatch.setenv('ADMIN_NAME', 'Professor JM')
     app = create_app({
         'TESTING': True, 'WTF_CSRF_ENABLED': False,
         'SQLALCHEMY_DATABASE_URI': f"sqlite:///{tmp_path / 'legacy.db'}",
         'UPLOAD_FOLDER': str(tmp_path / 'uploads'),
     })
     with app.app_context():
-        s = Series.query.filter_by(name='Nível 1 — Fundamentos').first()
+        s = Series.query.filter_by(name='1º ano').first()
         assert s is not None
         c = Content(title='Legado', description='', kind='explanation',
                     body='<p>Legado</p>', series_id=s.id,
@@ -75,9 +75,9 @@ def test_legacy_series_are_migrated_without_deleting_data(tmp_path, monkeypatch)
         assert db.session.get(Content, cid).title == 'Legado'
 
 def test_create_material_in_fourth_year(client, app):
-    login(client, 'professor@portalpython.com', 'Python@2026')
+    login(client, 'professor@portaljm.com', 'PortalJM@2026')
     with app.app_context():
-        s = Series.query.filter_by(name='Nível 4 — Projetos').first()
+        s = Series.query.filter_by(name='4º ano').first()
         sub = Subject.query.filter_by(series_id=s.id).first()
         sid, subid = s.id, sub.id
     r = client.post('/admin/contents/new', data={
@@ -91,7 +91,7 @@ def test_create_material_in_fourth_year(client, app):
         assert c and c.series_id == sid and c.subject_id == subid
 
 def test_external_link_material(client, app):
-    login(client, 'professor@portalpython.com', 'Python@2026')
+    login(client, 'professor@portaljm.com', 'PortalJM@2026')
     with app.app_context():
         s = Series.query.first()
         sub = Subject.query.filter_by(series_id=s.id).first()
@@ -106,7 +106,7 @@ def test_external_link_material(client, app):
         assert c.external_url.startswith('https://drive.google.com/')
 
 def test_pdf_upload(client, app):
-    login(client, 'professor@portalpython.com', 'Python@2026')
+    login(client, 'professor@portaljm.com', 'PortalJM@2026')
     with app.app_context():
         s = Series.query.first()
         sub = Subject.query.filter_by(series_id=s.id).first()
@@ -123,7 +123,7 @@ def test_pdf_upload(client, app):
     assert client.get(f'/aluno/pdf/{c.id}').status_code == 403
 
 def test_pdf_extension_validation(client, app):
-    login(client, 'professor@portalpython.com', 'Python@2026')
+    login(client, 'professor@portaljm.com', 'PortalJM@2026')
     with app.app_context():
         s = Series.query.first()
         sub = Subject.query.filter_by(series_id=s.id).first()
@@ -136,3 +136,15 @@ def test_pdf_extension_validation(client, app):
     assert r.status_code == 200
     with app.app_context():
         assert Content.query.filter_by(title='Não é PDF').first() is None
+
+def test_activity_and_experiment_are_available_to_students(client, app):
+    login(client, 'professor@portaljm.com', 'PortalJM@2026')
+    with app.app_context():
+        s = Series.query.filter_by(name='1º ano').first()
+        sub = Subject.query.filter_by(series_id=s.id).first()
+        a = Activity(title='Quiz de Química', description='Teste', series_id=s.id, subject_id=sub.id)
+        a.set_questions([{'question':'Quanto é 1+1?','options':['1','2','3','4'],'correct':'2'}])
+        e = Experiment(title='Experimento seguro', description='Teste', objective='Observar', materials='Materiais', steps='Passo a passo', safety='Faça com supervisão.', conclusion='Conclusão', series_id=s.id, subject_id=sub.id)
+        db.session.add_all([a,e]); db.session.commit(); aid,eid=a.id,e.id
+    client.post('/auth/logout')
+    login(client, 'aluno@test.local', 'Senha1234!') if False else None

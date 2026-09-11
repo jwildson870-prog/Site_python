@@ -1,1 +1,14 @@
-{% extends 'base.html' %}{% block content %}<div class="card center"><h1>Ops!</h1><p>{{message}}</p><a class="btn" href="{{url_for('home')}}">Voltar ao início</a></div>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}{{ error_title or 'Ops!' }} · Portal JM{% endblock %}
+{% block content %}
+<div class="card center error-page">
+  <div class="error-icon" aria-hidden="true">⚠️</div>
+  <h1>{{ error_title or 'Ops!' }}</h1>
+  <p>{{ message }}</p>
+  {% if back_url %}
+    <a class="btn" href="{{ back_url }}">Voltar ao material</a>
+  {% else %}
+    <a class="btn" href="{{ url_for('home') }}">Voltar ao início</a>
+  {% endif %}
+</div>
+{% endblock %}

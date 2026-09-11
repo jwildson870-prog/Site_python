@@ -1,0 +1,124 @@
+/*
+  PORTAL JM — CAMADA DE TEMA / COMPATIBILIDADE
+  Esta folha mantém a mesma identidade visual do style.css para
+  páginas/componentes que eventualmente a carreguem separadamente.
+  Não altera lógica, rotas, login ou estrutura do projeto.
+*/
+:root{
+  --pjm-bg:#06111f;
+  --pjm-bg-2:#09182b;
+  --pjm-surface:#0c1b2f;
+  --pjm-surface-2:#10233b;
+  --pjm-surface-3:#132943;
+  --pjm-primary:#38bdf8;
+  --pjm-primary-2:#3b82f6;
+  --pjm-primary-dark:#2563eb;
+  --pjm-accent:#14b8a6;
+  --pjm-text:#f3f7ff;
+  --pjm-text-soft:#d7e3f2;
+  --pjm-muted:#94a8bf;
+  --pjm-border:#1d3552;
+  --pjm-radius:18px;
+}
+
+html,body{background:var(--pjm-bg) !important;color:var(--pjm-text)}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;overflow-x:hidden}
+a{color:var(--pjm-primary)}
+a:hover{color:#7dd3fc}
+
+header,.header,.navbar,.topbar,.top-bar,nav{box-shadow:0 8px 28px rgba(0,0,0,.14)}
+.navbar,.topbar,.top-bar{background:rgba(6,17,31,.90) !important;border-color:rgba(120,163,204,.16) !important}
+.navbar a,.topbar a,.top-bar a{color:#fff !important}
+
+.container,.content,.main-content,main{max-width:1200px}
+.card,.panel,.box,.content-card,.dashboard-card{
+  background:linear-gradient(180deg,#0e2239,#0b1b2f);
+  border:1px solid var(--pjm-border);
+  border-radius:var(--pjm-radius);
+  box-shadow:0 10px 28px rgba(0,0,0,.20);
+}
+
+button,.btn,input[type="submit"],input[type="button"],.button{border-radius:12px !important;transition:background .16s ease,border-color .16s ease,box-shadow .16s ease,transform .12s ease}
+.btn-primary,.primary,button.primary,button[type="submit"],input[type="submit"]{
+  background:linear-gradient(135deg,var(--pjm-primary-2),var(--pjm-primary)) !important;
+  color:#fff !important;
+  border-color:rgba(56,189,248,.45) !important;
+}
+.btn-primary:hover,.primary:hover,button.primary:hover,button[type="submit"]:hover,input[type="submit"]:hover{
+  background:linear-gradient(135deg,#2563eb,#22c1ee) !important;
+  box-shadow:0 10px 22px rgba(37,99,235,.24);
+}
+
+input,select,textarea{border:1px solid #294462 !important;border-radius:11px !important;background:#09192b !important;color:#f3f7ff !important}
+input:focus,select:focus,textarea:focus{outline:none !important;border-color:var(--pjm-primary) !important;box-shadow:0 0 0 3px rgba(56,189,248,.12) !important}
+
+ table{background:#0b1a2c;border:1px solid var(--pjm-border);border-radius:14px}
+th{background:#10243c !important;color:#dbeafe}
+th,td{border-bottom:1px solid rgba(120,163,204,.13)}
+tbody tr:hover{background:rgba(56,189,248,.045)}
+
+.portal-body{
+  background:
+    radial-gradient(circle at 10% -10%,rgba(56,189,248,.10),transparent 30%),
+    radial-gradient(circle at 100% 0%,rgba(59,130,246,.10),transparent 27%),
+    #06111f !important;
+}
+.portal-main{background:transparent}
+.portal-topbar{height:70px;padding:0 clamp(14px,3vw,32px);box-shadow:0 8px 28px rgba(0,0,0,.14)}
+.portal-content{width:min(1240px,100%);padding:clamp(18px,2.5vw,32px) clamp(12px,3vw,38px) 40px;margin:0 auto}
+
+.portal-content .admin-hero{
+  position:relative;overflow:hidden;display:flex;align-items:center;min-height:190px;
+  padding:clamp(22px,3vw,34px);margin:0 0 24px;
+  border:1px solid #1e3b5d;border-radius:24px;
+  background:radial-gradient(circle at 90% 15%,rgba(56,189,248,.12),transparent 25%),linear-gradient(135deg,#0d2037,#0a1729 70%,#0a1627);
+  box-shadow:0 14px 34px rgba(0,0,0,.24);
+}
+.portal-content .admin-hero h1{margin:7px 0 8px;font-size:clamp(1.85rem,4vw,2.8rem);line-height:1.08;letter-spacing:-.045em}
+.portal-content .admin-hero p{max-width:690px;line-height:1.55;color:#9db0c5}
+.portal-content .eyebrow{font-size:.7rem;letter-spacing:.17em;color:#4dd8f4}
+.portal-content .teacher-nav{display:flex;gap:9px;flex-wrap:wrap;margin:0 0 26px}
+.portal-content .teacher-nav-item{min-height:46px;padding:10px 15px;border-radius:13px;background:rgba(13,31,51,.78);border:1px solid #1d3552;color:#aebfd2}
+.portal-content .teacher-nav-item:hover{background:rgba(56,189,248,.07);border-color:#315a80;color:#fff}
+.portal-content .teacher-nav-item.active{background:linear-gradient(135deg,rgba(37,99,235,.45),rgba(20,184,166,.20));border-color:#2d86b6;color:#fff}
+.portal-content .admin-stats{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:0 0 34px}
+.portal-content .admin-stat{min-height:108px;padding:18px 19px;border-radius:18px;border-color:#1d3552;background:linear-gradient(180deg,#0e2239,#0b1b2f);box-shadow:0 8px 22px rgba(0,0,0,.18);grid-template-columns:48px 1fr;column-gap:13px}
+.portal-content .admin-stat span{width:48px;height:48px;display:grid;place-items:center;border-radius:15px;background:rgba(37,99,235,.16);border:1px solid rgba(56,189,248,.14);font-size:1.55rem}
+.portal-content .admin-stat strong{font-size:1.7rem;line-height:1.05}
+.portal-content .admin-stat small{font-size:.84rem;color:#8fa4bb}
+.portal-content .admin-section-title{margin:0 0 15px;padding:0 2px}
+.portal-content .admin-section-title h2{font-size:clamp(1.35rem,2.2vw,1.7rem);letter-spacing:-.025em}
+.portal-content .admin-actions-grid{gap:15px}
+.portal-content .admin-action-card{min-height:124px;grid-template-columns:52px 1fr 34px;gap:15px;padding:19px;border-radius:19px;border-color:#1d3552;background:linear-gradient(180deg,#0e2239,#0b1b2f);box-shadow:0 8px 22px rgba(0,0,0,.18)}
+.portal-content .admin-action-card:hover{transform:translateY(-3px);border-color:#315d84;box-shadow:0 14px 30px rgba(0,0,0,.23)}
+.portal-content .admin-action-card.featured{background:linear-gradient(135deg,#102c4d,#0c253f);border-color:#285c83}
+.portal-content .action-icon{width:52px;height:52px;border-radius:15px;border:1px solid rgba(56,189,248,.16);background:rgba(37,99,235,.17);box-shadow:none;font-size:1.45rem}
+.portal-content .admin-action-card h3{font-size:1.04rem;color:#eef6ff}
+.portal-content .admin-action-card p{line-height:1.42;font-size:.91rem;color:#8fa4bb}
+.portal-content .arrow{width:32px;height:32px;display:grid;place-items:center;border-radius:50%;background:rgba(56,189,248,.10);color:#7dd3fc;font-size:1.2rem}
+.portal-content .teacher-tip{margin-top:20px;padding:15px 17px;border-radius:15px;background:#0b1a2c;border-color:#1d3552;color:#93a8bd;font-size:.9rem}
+
+.portal-sidebar{box-shadow:22px 0 50px rgba(0,0,0,.30)}
+.sidebar-install-btn{min-height:50px;padding:11px 14px !important;color:#fff !important;font-size:.95rem !important;font-weight:700 !important;line-height:1.2 !important;background:linear-gradient(135deg,#2563eb,#22bfe8) !important;box-shadow:0 8px 20px rgba(37,99,235,.22)}
+.sidebar-install-btn:hover{background:linear-gradient(135deg,#3b82f6,#22c1ee) !important}
+.mobile-bottom-nav{background:rgba(5,20,34,.94) !important;box-shadow:0 12px 30px rgba(0,0,0,.34) !important;border:1px solid rgba(96,165,250,.15) !important;backdrop-filter:blur(14px)}
+
+@media (max-width:1100px){.portal-content .admin-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:899px){.portal-topbar{height:64px}.portal-content{padding:18px 16px 30px}.portal-content .admin-hero{min-height:0;align-items:flex-start;gap:18px;padding:22px}.portal-content .admin-hero .btn{width:100%;max-width:330px}.portal-content .teacher-nav{gap:8px;margin-bottom:22px}.portal-content .teacher-nav-item{min-height:44px;padding:9px 13px}}
+@media (max-width:560px){.portal-content{padding:14px 12px 26px}.portal-content .admin-hero{padding:20px 18px;border-radius:20px;margin-bottom:18px}.portal-content .admin-hero h1{font-size:clamp(1.7rem,8vw,2.15rem)}.portal-content .admin-hero p{font-size:.91rem;line-height:1.45}.portal-content .admin-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.portal-content .admin-stat{min-height:88px;padding:13px 11px;grid-template-columns:38px 1fr;column-gap:9px;border-radius:15px}.portal-content .admin-stat span{width:38px;height:38px;border-radius:12px;font-size:1.25rem}.portal-content .admin-stat strong{font-size:1.35rem}.portal-content .admin-stat small{font-size:.74rem}.portal-content .admin-action-card{min-height:108px;grid-template-columns:44px 1fr 30px;gap:10px;padding:14px;border-radius:16px}.portal-content .action-icon{width:44px;height:44px;border-radius:13px;font-size:1.25rem}}
+
+
+/* Final visual consistency layer */
+.topbar{height:72px;justify-content:flex-start;gap:12px;padding:0 clamp(14px,3vw,30px);background:rgba(4,13,24,.94)!important;border-bottom:1px solid rgba(96,165,250,.14)!important}
+.topbar-space{display:none!important}
+.menu-toggle{width:46px!important;height:46px!important;flex:0 0 46px;border-color:rgba(96,165,250,.12)!important;background:rgba(15,35,58,.65)!important}
+.menu-toggle::before{content:"☰";width:auto;height:auto;border:0;box-shadow:none;font-size:22px}
+.topbar-brand{display:flex;align-items:baseline;gap:8px}.topbar-brand strong{font-size:1rem;color:#f5f9ff}.topbar-brand span{font-size:.78rem;color:#7f96af}
+.side-menu{width:min(300px,88vw);background:linear-gradient(180deg,#071526 0%,#06111f 100%)}
+.side-link{min-height:50px;border-radius:13px}
+.side-install{min-height:50px}
+.app-authenticated .site-main{min-height:calc(100vh - 72px);padding:94px clamp(16px,4vw,42px) 38px}
+.admin-shell,.student-shell{width:min(1180px,100%);margin:0 auto}
+.teacher-nav{display:none!important}
+@media(max-width:760px){.topbar{height:64px}.menu-toggle{width:44px!important;height:44px!important;flex-basis:44px}.app-authenticated .site-main{min-height:calc(100vh - 64px);padding:80px 14px 26px}.admin-hero{display:block;min-height:0;padding:22px 20px;border-radius:20px}.admin-hero .btn{width:100%;margin-top:18px}.admin-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.admin-actions-grid{grid-template-columns:1fr;gap:10px}}
+@media(max-width:430px){.topbar-brand span{display:none}.side-menu{width:88vw;max-width:330px}.app-authenticated .site-main{padding-left:12px;padding-right:12px}}
