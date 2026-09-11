@@ -14,6 +14,11 @@
     <a class="professor-metric" href="{{url_for('admin.performance')}}"><span class="professor-metric-icon"><img src="{{url_for('static',filename='icons/ui/chart.svg')}}" alt=""></span><span><strong>{{overall_completion}}%</strong><small>Conclusão média</small></span></a>
   </div>
 
+  <div class="professor-panel smart-alert-dashboard-panel">
+    <div class="professor-panel-head"><div><span class="eyebrow">MONITORAMENTO</span><h2>Alertas inteligentes</h2><p>{{alert_counts.high}} alta prioridade · {{alert_counts.medium}} para acompanhar</p></div><a class="text-link" href="{{url_for('admin.alerts')}}">Ver todos</a></div>
+    <div class="smart-alert-dashboard-list">{% for alert in smart_alerts[:5] %}<a class="smart-alert-mini priority-{{alert.priority}}" href="{{alert.link or url_for('admin.alerts')}}"><span class="alert-dot {{alert.priority}}"></span><span><strong>{{alert.message}}</strong><small>{{alert.created_at.strftime('%d/%m às %H:%M')}}</small></span><b>›</b></a>{% else %}<div class="professor-empty">Nenhum alerta ativo. O acompanhamento está em dia.</div>{% endfor %}</div>
+  </div>
+
   <div class="professor-grid dashboard-insight-grid">
     <div class="professor-panel">
       <div class="professor-panel-head"><div><span class="eyebrow">DESEMPENHO</span><h2>Visão da turma</h2><p>Indicadores para decidir onde concentrar atenção.</p></div><a class="text-link" href="{{url_for('admin.performance')}}">Abrir desempenho</a></div>

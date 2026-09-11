@@ -8,7 +8,7 @@ from sqlalchemy import or_
 from werkzeug.utils import secure_filename
 from ..storage import upload as storage_upload, delete as storage_delete, get_file, b2_enabled, StorageError
 from ..extensions import db
-from ..models import Series, Subject, Content, User, Activity, ActivityAttempt, Experiment, Notification
+from ..models import Series, Subject, Content, User, Activity, ActivityAttempt, Experiment, Notification, Alert
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 ALLOWED_KINDS = {'explanation','file','pdf','slide','video','link'}
@@ -113,6 +113,58 @@ def admin_guard():
     if not current_user.is_authenticated: return redirect(url_for('auth.login', next=request.path))
     if not current_user.is_admin: abort(403)
 
+def _sync_smart_alerts(students, activities, attempts, now):
+    """Cria alertas acionáveis sem duplicar alertas ativos."""
+    latest_by_pair = {}
+    attempts_by_student = {}
+    for attempt in attempts:
+        latest_by_pair.setdefault((attempt.user_id, attempt.activity_id), attempt)
+        attempts_by_student.setdefault(attempt.user_id, []).append(attempt)
+    existing = {(a.kind, a.user_id, a.activity_id) for a in Alert.query.filter_by(resolved=False).all()}
+    created = 0
+
+    def add(kind, user_id=None, activity_id=None, message='', link=None, priority='medium'):
+        nonlocal created
+        key = (kind, user_id, activity_id)
+        if key in existing:
+            return
+        db.session.add(Alert(kind=kind, user_id=user_id, activity_id=activity_id, message=message, link=link, priority=priority))
+        existing.add(key); created += 1
+
+    for student in students:
+        latest = [a for (uid, _), a in latest_by_pair.items() if uid == student.id]
+        scores = [a.score for a in latest]
+        avg = sum(scores) / len(scores) if scores else None
+        pending = max(len(activities) - len(latest), 0)
+        if avg is not None and avg < 6:
+            add('low_performance', student.id, None, f'{student.name} está com média abaixo de 6 ({avg:.1f}).', url_for('admin.user_performance', id=student.id), 'high')
+        if pending >= 2:
+            add('pending', student.id, None, f'{student.name} tem {pending} atividade(s) pendente(s).', url_for('admin.user_performance', id=student.id), 'medium')
+        student_attempts = sorted(attempts_by_student.get(student.id, []), key=lambda a: a.created_at or datetime.min, reverse=True)
+        if student_attempts and student_attempts[0].created_at and (now - student_attempts[0].created_at).days >= 14 and activities:
+            add('inactive', student.id, None, f'{student.name} não entrega atividades há pelo menos 14 dias.', url_for('admin.user_performance', id=student.id), 'medium')
+        if len(student_attempts) >= 2:
+            recent = sum(a.score for a in student_attempts[:2]) / 2
+            previous = sum(a.score for a in student_attempts[2:4]) / len(student_attempts[2:4]) if len(student_attempts) >= 4 else None
+            if previous is not None and recent <= previous - 2:
+                add('performance_drop', student.id, None, f'O desempenho recente de {student.name} caiu {previous-recent:.1f} ponto(s).', url_for('admin.user_performance', id=student.id), 'high')
+
+    for activity in activities:
+        if not activity.due_at:
+            continue
+        hours = (activity.due_at - now).total_seconds() / 3600
+        if 0 <= hours <= 24:
+            pending_count = max(len(students) - len({a.user_id for a in attempts if a.activity_id == activity.id}), 0)
+            if pending_count:
+                add('deadline', None, activity.id, f'{activity.title} vence em até 24h e ainda tem {pending_count} aluno(s) pendente(s).', url_for('admin.activity_results', id=activity.id), 'high')
+        elif 24 < hours <= 72:
+            pending_count = max(len(students) - len({a.user_id for a in attempts if a.activity_id == activity.id}), 0)
+            if pending_count:
+                add('deadline_soon', None, activity.id, f'{activity.title} vence em até 3 dias e tem {pending_count} aluno(s) pendente(s).', url_for('admin.activity_results', id=activity.id), 'medium')
+    if created:
+        db.session.commit()
+
+
 @admin_bp.get('/')
 def dashboard():
     recent_contents = Content.query.order_by(Content.id.desc()).limit(5).all()
@@ -169,6 +221,9 @@ def dashboard():
     latest_attempt_dates = [a.created_at for a in all_attempts[:8]]
     recent_activity_count = sum(1 for a in all_activities if a.created_at and (now - a.created_at).days <= 7)
     overall_completion = round(sum(r['completion'] for r in student_rows) / len(student_rows)) if student_rows else 0
+    _sync_smart_alerts(students, all_activities, all_attempts, now)
+    smart_alerts = Alert.query.filter_by(resolved=False).order_by(Alert.priority.desc(), Alert.created_at.desc()).limit(8).all()
+    alert_counts = {'high': Alert.query.filter_by(resolved=False, priority='high').count(), 'medium': Alert.query.filter_by(resolved=False, priority='medium').count()}
     return render_template('admin/dashboard.html',
         series=Series.query.count(), series_list=Series.query.order_by(Series.id).all(),
         subjects=Subject.query.count(), contents=Content.query.count(), users=User.query.count(),
@@ -176,7 +231,28 @@ def dashboard():
         recent_contents=recent_contents, recent_attempts=recent_attempts,
         total_attempts=total_attempts, average_score=average_score, unread_notifications=unread_notifications,
         risk_students=risk_students, activity_stats=activity_stats, deadline_activities=deadline_activities,
-        overall_completion=overall_completion, recent_activity_count=recent_activity_count, now=now)
+        overall_completion=overall_completion, recent_activity_count=recent_activity_count, now=now, smart_alerts=smart_alerts, alert_counts=alert_counts)
+
+@admin_bp.route('/alertas', methods=['GET', 'POST'])
+def alerts():
+    if request.method == 'POST':
+        alert_id = request.form.get('alert_id', type=int)
+        alert = db.session.get(Alert, alert_id) if alert_id else None
+        if not alert or alert.resolved:
+            abort(404)
+        alert.resolved = True
+        alert.resolved_at = datetime.utcnow()
+        db.session.commit()
+        flash('Alerta marcado como resolvido.', 'success')
+        return redirect(url_for('admin.alerts'))
+    students = User.query.filter_by(role='student').order_by(User.name).all()
+    activities = Activity.query.order_by(Activity.due_at.asc().nullslast(), Activity.id.desc()).all()
+    attempts = ActivityAttempt.query.order_by(ActivityAttempt.created_at.desc()).all()
+    now = datetime.utcnow()
+    _sync_smart_alerts(students, activities, attempts, now)
+    all_alerts = Alert.query.filter_by(resolved=False).order_by(Alert.priority.desc(), Alert.created_at.desc()).all()
+    return render_template('admin/alerts.html', alerts=all_alerts, now=now)
+
 
 @admin_bp.route('/series', methods=['GET','POST'])
 def series_list():

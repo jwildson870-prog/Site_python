@@ -128,3 +128,20 @@ class Notification(db.Model):
     link = db.Column(db.String(500))
     read = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
+class Alert(db.Model):
+    __tablename__ = 'alerts'
+    id = db.Column(db.Integer, primary_key=True)
+    kind = db.Column(db.String(40), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
+    activity_id = db.Column(db.Integer, db.ForeignKey('activities.id'), nullable=True, index=True)
+    message = db.Column(db.String(500), nullable=False)
+    link = db.Column(db.String(500))
+    priority = db.Column(db.String(12), nullable=False, default='medium')
+    resolved = db.Column(db.Boolean, default=False, nullable=False, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    resolved_at = db.Column(db.DateTime, nullable=True)
+
+    user = db.relationship('User', foreign_keys=[user_id])
+    activity = db.relationship('Activity', foreign_keys=[activity_id])

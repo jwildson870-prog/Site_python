@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Alertas · Portal Python{% endblock %}
+{% block content %}
+<section class="admin-shell smart-alerts-page">
+  <div class="admin-hero reference-hero">
+    <div class="hero-copy"><span class="eyebrow">MONITORAMENTO INTELIGENTE</span><h1>Alertas do professor</h1><p>Priorize os alunos, prazos e mudanças de desempenho que merecem atenção.</p></div>
+    <div class="smart-alert-summary"><strong>{{alerts|length}}</strong><span>alerta(s) ativo(s)</span></div>
+  </div>
+  <div class="alert-priority-guide"><span><i class="alert-dot high"></i> Alta prioridade</span><span><i class="alert-dot medium"></i> Acompanhar</span><span>Os alertas são atualizados automaticamente com os dados do portal.</span></div>
+  <div class="smart-alert-list">
+    {% for alert in alerts %}
+    <article class="smart-alert-card priority-{{alert.priority}}">
+      <div class="smart-alert-icon"><img src="{{url_for('static',filename='icons/ui/bell.svg')}}" alt=""></div>
+      <div class="smart-alert-body"><div class="smart-alert-meta"><span>{{ 'ALTA PRIORIDADE' if alert.priority == 'high' else 'ACOMPANHAR' }}</span><time>{{alert.created_at.strftime('%d/%m/%Y %H:%M')}}</time></div><h2>{{alert.message}}</h2><div class="smart-alert-actions">{% if alert.link %}<a class="btn btn-small" href="{{alert.link}}">Ver detalhes</a>{% endif %}<form method="post"><input type="hidden" name="alert_id" value="{{alert.id}}"><button class="btn btn-small" type="submit">Marcar como resolvido</button></form></div></div>
+    </article>
+    {% else %}<div class="professor-panel professor-empty-state"><strong>Tudo em dia.</strong><p>Nenhum alerta ativo no momento. O sistema continuará monitorando desempenho, pendências e prazos.</p></div>{% endfor %}
+  </div>
+</section>
+{% endblock %}
