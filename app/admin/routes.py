@@ -117,18 +117,66 @@ def admin_guard():
 def dashboard():
     recent_contents = Content.query.order_by(Content.id.desc()).limit(5).all()
     students = User.query.filter_by(role='student').order_by(User.id.desc()).all()
-    recent_attempts = ActivityAttempt.query.order_by(ActivityAttempt.id.desc()).limit(8).all()
     unread_notifications = Notification.query.filter_by(read=False).count()
     total_attempts = ActivityAttempt.query.count()
     average_score = db.session.query(db.func.avg(ActivityAttempt.score)).scalar()
     average_score = round(float(average_score), 1) if average_score is not None else 0
+
+    # Visão executiva do professor: agregações pequenas e prontas para o dashboard.
+    now = datetime.utcnow()
+    all_activities = Activity.query.order_by(Activity.id.desc()).all()
+    all_attempts = ActivityAttempt.query.order_by(ActivityAttempt.id.desc()).all()
+    latest_by_pair = {}
+    for attempt in all_attempts:
+        latest_by_pair.setdefault((attempt.user_id, attempt.activity_id), attempt)
+
+    student_rows = []
+    for student in students:
+        latest = [a for (uid, _), a in latest_by_pair.items() if uid == student.id]
+        scores = [a.score for a in latest]
+        avg = round(sum(scores) / len(scores), 1) if scores else None
+        pending = max(len(all_activities) - len(latest), 0)
+        completion = round(len(latest) / len(all_activities) * 100) if all_activities else 0
+        if avg is not None and avg < 6:
+            status = 'Atenção'
+        elif pending == 0 and all_activities:
+            status = 'Completo'
+        elif not latest:
+            status = 'Sem atividade'
+        else:
+            status = 'Em andamento'
+        student_rows.append({'student': student, 'average': avg, 'pending': pending, 'completion': completion, 'status': status})
+
+    risk_students = sorted(
+        [r for r in student_rows if r['status'] in {'Atenção', 'Sem atividade'} or r['pending'] >= 2],
+        key=lambda r: (r['average'] is None, r['average'] if r['average'] is not None else 0, -r['pending'])
+    )[:6]
+
+    activity_stats = []
+    student_count = len(students)
+    for activity in all_activities[:6]:
+        attempts = [a for a in all_attempts if a.activity_id == activity.id]
+        unique_students = {a.user_id for a in attempts}
+        avg = round(sum(a.score for a in attempts) / len(attempts), 1) if attempts else None
+        completion = round(len(unique_students) / student_count * 100) if student_count else 0
+        activity_stats.append({'activity': activity, 'attempts': len(attempts), 'average': avg, 'completion': completion})
+
+    deadline_activities = sorted(
+        [a for a in all_activities if a.due_at and a.due_at >= now],
+        key=lambda a: a.due_at
+    )[:5]
+    recent_attempts = all_attempts[:8]
+    latest_attempt_dates = [a.created_at for a in all_attempts[:8]]
+    recent_activity_count = sum(1 for a in all_activities if a.created_at and (now - a.created_at).days <= 7)
+    overall_completion = round(sum(r['completion'] for r in student_rows) / len(student_rows)) if student_rows else 0
     return render_template('admin/dashboard.html',
         series=Series.query.count(), series_list=Series.query.order_by(Series.id).all(),
         subjects=Subject.query.count(), contents=Content.query.count(), users=User.query.count(),
-        students_count=len(students), activities=Activity.query.count(), experiments=Experiment.query.count(),
+        students_count=len(students), activities=len(all_activities), experiments=Experiment.query.count(),
         recent_contents=recent_contents, recent_attempts=recent_attempts,
-        total_attempts=total_attempts, average_score=average_score,
-        unread_notifications=unread_notifications)
+        total_attempts=total_attempts, average_score=average_score, unread_notifications=unread_notifications,
+        risk_students=risk_students, activity_stats=activity_stats, deadline_activities=deadline_activities,
+        overall_completion=overall_completion, recent_activity_count=recent_activity_count, now=now)
 
 @admin_bp.route('/series', methods=['GET','POST'])
 def series_list():
