@@ -97,11 +97,18 @@ def _bucket():
 
 
 def _friendly_b2_error(exc, action='acessar o arquivo'):
-    """Converte erros técnicos do B2 em mensagens que o usuário consegue entender."""
-    error = getattr(exc, 'response', {}).get('Error', {}) if hasattr(exc, 'response') else {}
+    """Converte erros técnicos do B2 em mensagens que o usuário consegue entender.
+
+    Alguns erros do botocore não possuem ``response`` (ou podem expor
+    ``response=None``). Nunca deixe o próprio tratamento de erro gerar um
+    AttributeError e esconder a falha original.
+    """
+    response = getattr(exc, 'response', None) or {}
+    error = response.get('Error') or {}
+    metadata = response.get('ResponseMetadata') or {}
     code = str(error.get('Code', '')).strip()
     message = str(error.get('Message', '')).strip()
-    status = getattr(exc, 'response', {}).get('ResponseMetadata', {}).get('HTTPStatusCode') if hasattr(exc, 'response') else None
+    status = metadata.get('HTTPStatusCode')
 
     if code in {'AccessDenied', 'UnauthorizedAccess', 'AllAccessDisabled', '403'} or status == 403:
         return StorageError(
@@ -230,9 +237,10 @@ def get_file(key):
     try:
         return client.get_object(Bucket=_bucket(), Key=key)
     except ClientError as exc:
-        error = getattr(exc, 'response', {}).get('Error', {})
+        response = getattr(exc, 'response', None) or {}
+        error = response.get('Error') or {}
         code = str(error.get('Code', '')).strip()
-        status = getattr(exc, 'response', {}).get('ResponseMetadata', {}).get('HTTPStatusCode')
+        status = (response.get('ResponseMetadata') or {}).get('HTTPStatusCode')
         # Arquivos criados pelo antigo Portal JM podem continuar referenciados
         # no banco. Fazemos uma leitura de compatibilidade, mas novos uploads
         # continuam indo exclusivamente para B2_BUCKET_NAME.
