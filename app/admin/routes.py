@@ -12,16 +12,79 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 ALLOWED_KINDS = {'explanation','file','pdf','slide','video','link'}
 ALLOWED_EXTENSIONS = {'pdf','png','jpg','jpeg','webp','gif','ppt','pptx','doc','docx','txt'}
 MAX_UPLOAD = 25 * 1024 * 1024
+SAFE_INLINE_TYPES = {'pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp'}
+SAFE_TYPES = {
+    'pdf': 'application/pdf', 'png': 'image/png', 'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg', 'gif': 'image/gif', 'webp': 'image/webp',
+    'doc': 'application/msword', 'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'ppt': 'application/vnd.ms-powerpoint', 'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'txt': 'text/plain; charset=utf-8',
+}
+
+def safe_file_response(obj, filename, fallback_type='application/octet-stream'):
+    ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
+    return Response(obj['Body'].iter_chunks(chunk_size=64 * 1024), content_type=SAFE_TYPES.get(ext, fallback_type), headers={
+        'Content-Length': str(obj['ContentLength']),
+        'Content-Disposition': 'inline' if ext in SAFE_INLINE_TYPES else 'attachment',
+        'Cache-Control': 'private, no-store',
+        'X-Content-Type-Options': 'nosniff',
+    })
+
+# Assinaturas mínimas para os formatos mais comuns. A extensão sozinha não é
+# suficiente, pois pode ser alterada pelo usuário antes do upload.
+MAGIC_SIGNATURES = {
+    'pdf': (b'%PDF-',),
+    'png': (b'\x89PNG\r\n\x1a\n',),
+    'jpg': (b'\xff\xd8\xff',),
+    'jpeg': (b'\xff\xd8\xff',),
+    'gif': (b'GIF87a', b'GIF89a'),
+    'webp': (b'RIFF',),
+    'doc': (b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1',),
+    'ppt': (b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1',),
+    'docx': (b'PK\x03\x04',),
+    'pptx': (b'PK\x03\x04',),
+    'xlsx': (b'PK\x03\x04',),
+}
+
+def file_signature_ok(file_storage, extension):
+    signatures = MAGIC_SIGNATURES.get(extension)
+    if not signatures:
+        return True
+    stream = file_storage.stream
+    try:
+        position = stream.tell()
+        head = stream.read(16)
+        stream.seek(position)
+    except (AttributeError, OSError):
+        return False
+    return any(head.startswith(signature) for signature in signatures)
 
 def valid_url(value):
     parsed = urlparse(value or '')
-    return parsed.scheme in ('http','https') and bool(parsed.netloc)
+    return parsed.scheme in ('http','https') and bool(parsed.netloc) and not parsed.username and not parsed.password and len(value) <= 1000
+
+
+def mime_ok(extension, mimetype):
+    expected = {
+        'pdf': {'application/pdf'},
+        'png': {'image/png'},
+        'jpg': {'image/jpeg'}, 'jpeg': {'image/jpeg'},
+        'gif': {'image/gif'}, 'webp': {'image/webp'},
+        'doc': {'application/msword'}, 'docx': {'application/vnd.openxmlformats-officedocument.wordprocessingml.document'},
+        'ppt': {'application/vnd.ms-powerpoint'}, 'pptx': {'application/vnd.openxmlformats-officedocument.presentationml.presentation'},
+        'txt': {'text/plain', 'application/octet-stream'},
+    }
+    allowed = expected.get(extension)
+    return not allowed or not mimetype or mimetype.lower() in allowed
 
 def save_uploaded_file(file, required_extension=None):
     if not file or not file.filename: return None, None
     original = secure_filename(file.filename); extension = Path(original).suffix.lower().lstrip('.')
     if not extension or extension not in ALLOWED_EXTENSIONS or (required_extension and extension != required_extension): return False, None
+    if len(original) > 180 or any(ord(ch) < 32 for ch in original): return False, None
     if request.content_length and request.content_length > MAX_UPLOAD: return 'too_large', None
+    if not file_signature_ok(file, extension): return 'invalid_signature', None
+    if not mime_ok(extension, file.mimetype): return 'invalid_mime', None
     try:
         filename = storage_upload(file, original, file.mimetype)
     except StorageError as exc:
@@ -119,7 +182,7 @@ def content_form(content=None):
 
     s = Series.query.get(int(sid)) if sid.isdigit() else None
     sub = Subject.query.get(int(subid)) if subid.isdigit() else None
-    if not title or not s or not sub or sub.series_id != s.id or kind not in ALLOWED_KINDS:
+    if not title or len(title) > 200 or len(desc) > 5000 or not s or not sub or sub.series_id != s.id or kind not in ALLOWED_KINDS:
         flash('Preencha os dados obrigatórios corretamente.', 'error')
         return None, series, subjects
 
@@ -139,6 +202,12 @@ def content_form(content=None):
         )
         if uploaded is False:
             flash('Para PDF envie .pdf.' if kind == 'pdf' else 'Esse tipo de arquivo não é permitido.', 'error')
+            return None, series, subjects
+        if uploaded == 'invalid_mime':
+            flash('O tipo MIME do arquivo não corresponde à extensão informada.', 'error')
+            return None, series, subjects
+        if uploaded == 'invalid_signature':
+            flash('O conteúdo do arquivo não corresponde ao tipo informado. Escolha um arquivo válido.', 'error')
             return None, series, subjects
         if uploaded == 'too_large':
             flash('Arquivo muito grande. Limite: 25 MB.', 'error')
@@ -208,17 +277,17 @@ def content_delete(id):
 
 @admin_bp.get('/file/<path:filename>')
 def file(filename):
+    # Nunca permita que a URL seja usada como um navegador arbitrário do bucket.
+    # O arquivo precisa estar associado a um material existente no banco.
+    if not Content.query.filter_by(file_name=filename).first():
+        abort(404)
     if b2_enabled():
         try:
             obj = get_file(filename)
         except StorageError as exc:
             current_app.logger.warning('Falha ao abrir arquivo administrativo: %s | %s', exc.message, exc.technical)
             return render_template('error.html', message=exc.message, error_title='Não foi possível abrir o arquivo', back_url=url_for('admin.contents')), 502
-        return Response(obj['Body'].iter_chunks(chunk_size=64 * 1024), content_type=obj.get('ContentType') or 'application/octet-stream', headers={
-            'Content-Length': str(obj['ContentLength']),
-            'Content-Disposition': 'inline',
-            'Cache-Control': 'private, no-store',
-        })
+        return safe_file_response(obj, filename, obj.get('ContentType') or 'application/octet-stream')
     return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename, as_attachment=False)
 
 @admin_bp.get('/users')

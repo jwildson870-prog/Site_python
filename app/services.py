@@ -22,8 +22,8 @@ TOPICS = {
 }
 
 def ensure_admin():
-    email = os.getenv('ADMIN_EMAIL', 'professor@portalpython.local').strip().lower()
-    password = os.getenv('ADMIN_PASSWORD', 'PortalPython@2026')
+    email = os.getenv('ADMIN_EMAIL', '').strip().lower()
+    password = os.getenv('ADMIN_PASSWORD', '')
     name = os.getenv('ADMIN_NAME', 'Professor Python').strip() or 'Professor Python'
     if not email or not password:
         return None, False

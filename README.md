@@ -23,11 +23,7 @@ Acesse `http://127.0.0.1:5000`.
 
 ## Professor / administrador
 
-Por padrão, a conta pré-definida é:
-
-- E-mail: `professor@portalpython.local`
-- Senha: `PortalPython@2026`
-- Nome: `Professor Python`
+A conta de administrador é criada somente quando `ADMIN_EMAIL` e `ADMIN_PASSWORD` estão configurados. Não existe mais uma senha de administrador embutida no código.
 
 As variáveis `ADMIN_EMAIL`, `ADMIN_PASSWORD` e `ADMIN_NAME` podem ser configuradas no Render para trocar as credenciais sem alterar o código. O cadastro público nunca cria administrador: contas cadastradas pela tela pública são sempre ALUNO.
 
@@ -88,7 +84,7 @@ A remoção de materiais permanece disponível no backend, mas foi retirada da i
 
 
 ## Acesso de demonstração
-Por padrão, o sistema usa `professor@portalpython.local` / `PortalPython@2026` como administrador. Em produção, recomenda-se alterar essas variáveis no Render. Em produção, recomenda-se alterar essas variáveis no Render.
+Em produção, defina `ADMIN_EMAIL` e `ADMIN_PASSWORD` no Render com credenciais fortes e únicas. Nunca coloque essas credenciais no código ou no repositório.
 
 
 ## Quatro anos e compatibilidade com dados existentes
@@ -152,3 +148,16 @@ O backend envia e entrega os arquivos pelo próprio servidor. Registros antigos 
 ## Produção no Render
 
 Defina também uma `SECRET_KEY` aleatória e, em HTTPS, use `SESSION_COOKIE_SECURE=true`. Se o login Google estiver habilitado, configure `GOOGLE_REDIRECT_URI` com a URL pública do serviço no Render.
+
+## Segurança de produção
+
+- CSRF habilitado para requisições que alteram dados.
+- Sessões com HttpOnly, SameSite=Lax e cookie Secure em produção.
+- Proteção de sessão forte do Flask-Login.
+- Cabeçalhos de segurança e HSTS em produção.
+- Limite global de requisição de 25 MB e limites de partes/formulário.
+- Uploads com extensão permitida, nome sanitizado, tamanho limitado e validação de assinatura para formatos conhecidos.
+- Arquivos enviados são servidos com tipos MIME definidos pelo servidor; formatos potencialmente executáveis pelo navegador são baixados como anexo.
+- Rotas de professor e aluno possuem verificação de papel no servidor.
+- Arquivos administrativos precisam estar vinculados a um material existente, evitando navegação arbitrária pelo bucket.
+- Em produção, mantenha `SECRET_KEY`, `DATABASE_URL` e credenciais do B2 somente nas variáveis de ambiente do Render.

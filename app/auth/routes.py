@@ -7,7 +7,7 @@ from ..extensions import db
 from ..models import User
 
 auth_bp=Blueprint('auth',__name__,url_prefix='/auth'); oauth=OAuth()
-def email_ok(v): return bool(re.fullmatch(r'[^@\s]+@[^@\s]+\.[^@\s]+',v))
+def email_ok(v): return bool(re.fullmatch(r'[^@\s]+@[^@\s]+\.[^@\s]+',v)) and len(v) <= 255
 def register_google():
     oauth.init_app(current_app); oauth.register(name='google',client_id=os.getenv('GOOGLE_CLIENT_ID'),client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',client_kwargs={'scope':'openid email profile'})
     return oauth.create_client('google')
@@ -18,8 +18,8 @@ def register():
     if current_user.is_authenticated:return redirect(url_for('auth.index'))
     if request.method=='POST':
         name=request.form.get('name','').strip(); email=request.form.get('email','').strip().lower(); p=request.form.get('password',''); c=request.form.get('confirm_password','')
-        if not name or not email_ok(email) or not p: flash('Preencha os campos corretamente.','error')
-        elif len(p)<8: flash('A senha deve ter pelo menos 8 caracteres.','error')
+        if not name or len(name) > 120 or not email_ok(email) or not p: flash('Preencha os campos corretamente.','error')
+        elif len(p)<10: flash('A senha deve ter pelo menos 10 caracteres.','error')
         elif p!=c: flash('As senhas não coincidem.','error')
         elif User.query.filter_by(email=email).first(): flash('Este e-mail já está cadastrado.','error')
         else:
@@ -46,7 +46,8 @@ def login():
         flash('E-mail ou senha inválidos.','error')
         return render_template('auth/login.html')
 
-    login_user(u)
+    session.clear()
+    login_user(u, remember=False, fresh=True)
     return redirect(url_for('admin.dashboard' if u.is_admin else 'student.dashboard'))
 @auth_bp.post('/logout')
 @login_required
@@ -64,4 +65,4 @@ def google_callback():
     u=User.query.filter((User.google_sub==sub)|(User.email==email)).first()
     if not u:u=User(name=info.get('name') or email.split('@')[0],email=email,role='student',google_sub=sub);db.session.add(u)
     else:u.google_sub=sub
-    db.session.commit();login_user(u);return redirect(url_for('admin.dashboard' if u.is_admin else 'student.dashboard'))
+    db.session.commit();session.clear();login_user(u, remember=False, fresh=True);return redirect(url_for('admin.dashboard' if u.is_admin else 'student.dashboard'))

@@ -10,3 +10,4 @@ gunicorn>=23,<24
 pytest>=8,<9
 requests>=2.32,<3
 boto3>=1.35,<2
+bleach>=6.1,<7

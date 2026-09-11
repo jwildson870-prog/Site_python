@@ -4,7 +4,28 @@ from sqlalchemy import or_
 from ..extensions import db
 from ..models import Series,Subject,Content,Activity,ActivityAttempt,Experiment,Favorite,Progress,Notification
 from ..storage import get_file, b2_enabled, StorageError
+import json
 student_bp=Blueprint('student',__name__,url_prefix='/aluno')
+
+SAFE_INLINE_TYPES = {'pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp'}
+SAFE_TYPES = {
+    'pdf': 'application/pdf', 'png': 'image/png', 'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg', 'gif': 'image/gif', 'webp': 'image/webp',
+    'doc': 'application/msword', 'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'ppt': 'application/vnd.ms-powerpoint', 'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'txt': 'text/plain; charset=utf-8',
+}
+
+def safe_file_response(obj, filename, fallback_type='application/octet-stream'):
+    ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
+    content_type = SAFE_TYPES.get(ext, fallback_type)
+    disposition = 'inline' if ext in SAFE_INLINE_TYPES else 'attachment'
+    return Response(obj['Body'].iter_chunks(chunk_size=64 * 1024), content_type=content_type, headers={
+        'Content-Length': str(obj['ContentLength']),
+        'Content-Disposition': disposition,
+        'Cache-Control': 'private, no-store',
+        'X-Content-Type-Options': 'nosniff',
+    })
 @student_bp.before_request
 def guard():
     if not current_user.is_authenticated:return redirect(url_for('auth.login',next='/aluno/'))
@@ -37,8 +58,8 @@ def activities(): return render_template('student/activities.html',activities=Ac
 def activity(id):
     a=Activity.query.get_or_404(id); questions=a.get_questions()
     if request.method=='POST':
-        answers={str(i):request.form.get(f'q{i}','') for i in range(len(questions))}; correct=sum(1 for i,q in enumerate(questions) if answers[str(i)]==q.get('correct')); total=len(questions); score=(correct/total*10) if total else 0
-        attempt=ActivityAttempt(user_id=current_user.id,activity_id=a.id,answers_json=__import__('json').dumps(answers,ensure_ascii=False),score=score,total=total); db.session.add(attempt); db.session.commit(); return render_template('student/activity_result.html',activity=a,score=score,correct=correct,total=total)
+        answers={str(i):request.form.get(f'q{i}','') for i in range(len(questions))}; valid_answers={str(i): set(q.get('options') or []) for i,q in enumerate(questions)}; answers={k:v for k,v in answers.items() if v in valid_answers.get(k,set())}; correct=sum(1 for i,q in enumerate(questions) if answers.get(str(i))==q.get('correct')); total=len(questions); score=(correct/total*10) if total else 0
+        attempt=ActivityAttempt(user_id=current_user.id,activity_id=a.id,answers_json=json.dumps(answers,ensure_ascii=False),score=score,total=total); db.session.add(attempt); db.session.commit(); return render_template('student/activity_result.html',activity=a,score=score,correct=correct,total=total)
     return render_template('student/activity.html',activity=a,questions=questions)
 @student_bp.get('/experimentos')
 def experiments(): return render_template('student/experiments.html',experiments=Experiment.query.order_by(Experiment.id.desc()).all())
@@ -68,11 +89,7 @@ def arquivo(id):
         except StorageError as exc:
             current_app.logger.warning('Falha ao abrir material %s: %s | %s', c.id, exc.message, exc.technical)
             return render_template('error.html', message=exc.message, error_title='Não foi possível abrir o material', back_url=url_for('student.content', id=c.id)), 502
-        return Response(obj['Body'].iter_chunks(chunk_size=64 * 1024), content_type=obj.get('ContentType') or 'application/octet-stream', headers={
-            'Content-Length': str(obj['ContentLength']),
-            'Content-Disposition': 'inline',
-            'Cache-Control': 'private, no-store',
-        })
+        return safe_file_response(obj, c.file_name, obj.get('ContentType') or 'application/octet-stream')
     return send_from_directory(current_app.config['UPLOAD_FOLDER'],c.file_name,as_attachment=False)
 @student_bp.get('/pdf/<int:id>')
 def pdf(id):
@@ -84,9 +101,5 @@ def pdf(id):
         except StorageError as exc:
             current_app.logger.warning('Falha ao abrir PDF %s: %s | %s', c.id, exc.message, exc.technical)
             return render_template('error.html', message=exc.message, error_title='Não foi possível abrir o PDF', back_url=url_for('student.content', id=c.id)), 502
-        return Response(obj['Body'].iter_chunks(chunk_size=64 * 1024), content_type='application/pdf', headers={
-            'Content-Length': str(obj['ContentLength']),
-            'Content-Disposition': 'inline',
-            'Cache-Control': 'private, no-store',
-        })
+        return safe_file_response(obj, c.file_name, 'application/pdf')
     return send_from_directory(current_app.config['UPLOAD_FOLDER'],c.file_name,mimetype='application/pdf')
