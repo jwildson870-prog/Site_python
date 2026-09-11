@@ -4,7 +4,7 @@
 <section class="admin-shell workspace-shell">
   <div class="workspace-head">
     <div><a class="back-link" href="{{url_for('admin.dashboard')}}">← Painel do professor</a><span class="eyebrow">PUBLICAÇÃO</span><h1>{{'Editar material' if content else 'Adicionar material'}}</h1><p>Preencha as informações abaixo. Os campos estão separados por etapas para facilitar a publicação.</p></div>
-    <div class="workspace-head-badge">📚 <span>Material</span></div>
+    <div class="workspace-head-badge"><span class="code-badge">&lt;/&gt;</span> <span>Conteúdo Python</span></div>
   </div>
   <form class="publisher workspace-form" method="post" enctype="multipart/form-data">
     <input type="hidden" name="csrf_token" value="{{csrf_token()}}">
@@ -13,7 +13,7 @@
         <div class="publisher-card form-section">
           <div class="form-section-head"><div class="step-number">1</div><div><span class="eyebrow">INFORMAÇÕES</span><h2>Dados do material</h2><p>Defina o título, série, matéria e tipo.</p></div></div>
           <div class="form-grid tidy-grid">
-            <label class="field-block full">Título<input name="title" value="{{content.title if content else ''}}" placeholder="Ex.: Ligações Pythons" required></label>
+            <label class="field-block full">Título<input name="title" value="{{content.title if content else ''}}" placeholder="Ex.: Estruturas de repetição" required></label>
             <label class="field-block">Série<select name="series_id" required>{% for s in series %}<option value="{{s.id}}" {% if content and content.series_id==s.id %}selected{% endif %}>{{s.name}}</option>{% endfor %}</select></label>
             <label class="field-block">Matéria<select name="subject_id" required>{% for s in subjects %}<option value="{{s.id}}" {% if content and content.subject_id==s.id %}selected{% endif %}>{{s.series.name}} · {{s.name}}</option>{% endfor %}</select></label>
             <label class="field-block full">Tipo de material<select name="kind" required>{% for value,label in [('file','Arquivo'),('pdf','PDF'),('slide','Slides'),('video','Vídeo'),('link','Link externo'),('explanation','Explicação')] %}<option value="{{value}}" {% if content and content.kind==value %}selected{% endif %}>{{label}}</option>{% endfor %}</select></label>
@@ -33,7 +33,7 @@
         </div>
       </div>
       <aside class="workspace-side">
-        <div class="publish-summary"><span class="summary-icon">✓</span><h3>Pronto para publicar?</h3><p>Revise os dados antes de salvar. Você poderá editar o material depois.</p><button class="btn admin-primary publish-btn" type="submit">💾 {{'Salvar alterações' if content else 'Publicar material'}}</button></div>
+        <div class="publish-summary"><span class="summary-icon">✓</span><h3>Pronto para publicar?</h3><p>Revise os dados antes de salvar. Você poderá editar o material depois.</p><button class="btn admin-primary publish-btn" type="submit">{{'Salvar alterações' if content else 'Publicar material'}}</button></div>
         <div class="workspace-help"><strong>💡 Dica</strong><p>Use títulos curtos e uma descrição objetiva. Links do Drive, YouTube e outros serviços podem ser usados.</p></div>
       </aside>
     </div>

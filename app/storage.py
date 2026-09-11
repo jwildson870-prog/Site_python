@@ -174,9 +174,24 @@ def get_file(key):
     """
     if not b2_enabled():
         return None
+    client = _client()
     try:
-        return _client().get_object(Bucket=_bucket(), Key=key)
-    except (BotoCoreError, ClientError) as exc:
+        return client.get_object(Bucket=_bucket(), Key=key)
+    except ClientError as exc:
+        error = getattr(exc, 'response', {}).get('Error', {})
+        code = str(error.get('Code', '')).strip()
+        status = getattr(exc, 'response', {}).get('ResponseMetadata', {}).get('HTTPStatusCode')
+        # Arquivos criados pelo antigo Portal JM podem continuar referenciados
+        # no banco. Fazemos uma leitura de compatibilidade, mas novos uploads
+        # continuam indo exclusivamente para B2_BUCKET_NAME (SitPython).
+        legacy_bucket = _env('B2_LEGACY_BUCKET_NAME') or 'PortalJm'
+        if key and legacy_bucket and legacy_bucket != _bucket() and (code in {'NoSuchKey', 'NotFound', '404'} or status == 404):
+            try:
+                return client.get_object(Bucket=legacy_bucket, Key=key)
+            except (BotoCoreError, ClientError):
+                pass
+        raise _friendly_b2_error(exc, 'abrir o arquivo') from exc
+    except BotoCoreError as exc:
         raise _friendly_b2_error(exc, 'abrir o arquivo') from exc
 
 

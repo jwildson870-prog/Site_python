@@ -10,14 +10,14 @@
   <div class="grid">
     {% for subject in series.subjects %}
     <div class="publisher-card">
-      <span class="badge">🧪 Matéria</span><h2>{{ subject.name }}</h2>
+      <span class="badge">&lt;/&gt; Matéria</span><h2>{{ subject.name }}</h2>
       <p class="muted">{{ subject.contents|length }} material(is)</p>
       {% for c in subject.contents|sort(attribute='id', reverse=true) %}
         <div class="material-mini"><strong>{{ c.title }}</strong><span class="badge">{{ {'explanation':'Explicação','file':'Arquivo','pdf':'PDF','slide':'Slides','video':'Vídeo','link':'Link'}.get(c.kind,'Material') }}</span></div>
       {% else %}<p class="muted">Nenhum material nesta matéria.</p>{% endfor %}
     </div>
     {% else %}
-      <div class="publisher-card empty-state"><span>🧪</span><h2>Nenhuma matéria</h2><p>Cadastre uma matéria para esta turma.</p><a class="btn" href="{{ url_for('admin.subjects_list') }}">Adicionar matéria</a></div>
+      <div class="publisher-card empty-state"><span>&lt;/&gt;</span><h2>Nenhuma matéria</h2><p>Cadastre uma matéria para esta turma.</p><a class="btn" href="{{ url_for('admin.subjects_list') }}">Adicionar matéria</a></div>
     {% endfor %}
   </div>
 </section>

@@ -43,7 +43,8 @@ def admin_guard():
 
 @admin_bp.get('/')
 def dashboard():
-    return render_template('admin/dashboard.html', series=Series.query.count(), series_list=Series.query.order_by(Series.id).all(), subjects=Subject.query.count(), contents=Content.query.count(), users=User.query.count(), activities=Activity.query.count(), experiments=Experiment.query.count())
+    recent_contents = Content.query.order_by(Content.id.desc()).limit(4).all()
+    return render_template('admin/dashboard.html', series=Series.query.count(), series_list=Series.query.order_by(Series.id).all(), subjects=Subject.query.count(), contents=Content.query.count(), users=User.query.count(), activities=Activity.query.count(), experiments=Experiment.query.count(), recent_contents=recent_contents)
 
 @admin_bp.route('/series', methods=['GET','POST'])
 def series_list():

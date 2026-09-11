@@ -83,3 +83,28 @@ def seed_initial_content():
                         series_id=s.id, subject_id=sub.id
                     ))
     db.session.commit()
+
+
+def migrate_legacy_python_subjects():
+    """Converte matérias herdadas do antigo portal para o currículo Python.
+
+    Os registros de conteúdos/atividades/projetos são preservados: apenas a matéria
+    de origem é ajustada para que formulários e filtros não continuem exibindo
+    nomes de Química no Portal Python.
+    """
+    legacy_words = ('quím', 'quimic', 'laboratório', 'laboratorio', 'átomo', 'atomo', 'tabela periódica', 'tabela periodica')
+    for series_name, target_name in ((name, subjects[0]) for name, subjects in INITIAL_SUBJECTS.items()):
+        series = Series.query.filter_by(name=series_name).first()
+        if not series:
+            continue
+        target = Subject.query.filter_by(name=target_name, series_id=series.id).first()
+        if not target:
+            continue
+        legacy = [s for s in Subject.query.filter_by(series_id=series.id).all()
+                  if s.id != target.id and any(word in (s.name or '').lower() for word in legacy_words)]
+        for old in legacy:
+            for item in list(old.contents): item.subject_id = target.id
+            for item in list(old.activities): item.subject_id = target.id
+            for item in list(old.experiments): item.subject_id = target.id
+            db.session.delete(old)
+    db.session.commit()

@@ -44,6 +44,6 @@ def create_app(test_config=None):
         from .services import seed_initial_content; seed_initial_content(); print('Conteúdo inicial confirmado.')
     with app.app_context():
         db.create_all()
-        from .services import ensure_admin,seed_initial_content
-        ensure_admin(); seed_initial_content()
+        from .services import ensure_admin,seed_initial_content,migrate_legacy_python_subjects
+        ensure_admin(); seed_initial_content(); migrate_legacy_python_subjects()
     return app

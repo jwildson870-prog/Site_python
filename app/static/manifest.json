@@ -23,7 +23,7 @@
       "purpose": "any maskable"
     }
   ],
-  "id": "/?app=python",
+  "id": "/",
   "prefer_related_applications": false,
   "categories": [
     "education",
