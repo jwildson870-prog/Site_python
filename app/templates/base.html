@@ -8,11 +8,12 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="manifest" href="{{ url_for('static',filename='manifest.json') }}">
-  <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static',filename='icons/icon-192.png') }}">
+  <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static',filename='icons/python-icon-192.png') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static',filename='icons/python-icon-192.png') }}">
   <title>{% block title %}Portal Python{% endblock %}</title>
-  <link rel="stylesheet" href="{{ url_for('static',filename='css/style.css', v='20260911-python-mobile-1') }}">
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/style.css', v='20260911-python-mobile-2') }}">
 </head>
-<body class="{% if current_user.is_authenticated %}app-authenticated{% else %}public-page{% endif %}">
+<body class="{% if current_user.is_authenticated %}app-authenticated{% else %}public-page{% endif %}{% if request.endpoint in ['auth.login', 'auth.register'] %} auth-page{% endif %}">
 <input class="menu-check" id="menuCheck" type="checkbox" aria-hidden="true">
 <header class="topbar">
   {% if current_user.is_authenticated %}<label class="menu-toggle" for="menuCheck" aria-label="Abrir menu" title="Abrir menu"><span></span><span></span><span></span></label>{% endif %}
@@ -51,7 +52,7 @@
     <a class="side-link {% if request.endpoint == 'student.search' %}active{% endif %}" href="{{url_for('student.search')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/search.svg') }}" alt=""></span><b>Buscar</b></a>
   {% endif %}
   </nav>
-  <button class="side-link side-install" id="pwaInstallButton" type="button" hidden><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/plus.svg') }}" alt=""></span><b>Baixar aplicativo</b></button>
+  <button class="side-link side-install" id="pwaInstallButton" type="button" hidden><span class="nav-icon"><img src="{{ url_for('static',filename='icons/python-icon-192.png') }}" alt=""></span><b>Instalar aplicativo</b></button>
   <div class="side-bottom">
     {% if current_user.is_authenticated and current_user.is_admin %}<div class="side-python-quote"><img src="{{ url_for('static',filename='icons/python.svg') }}" alt="Python"><strong>Python</strong><span>é mais que uma linguagem,<br>é uma forma de pensar.</span></div>{% endif %}
     <div class="side-user"><div class="user-avatar">{{current_user.name[:1]|upper}}</div><div class="side-user-text"><strong>{{current_user.name}}</strong><small>{{'Professor' if current_user.is_admin else 'Aluno'}}</small></div></div>

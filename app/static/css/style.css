@@ -1916,3 +1916,59 @@ body.app-authenticated .site-footer{
   .student-shell .grid{grid-template-columns:1fr 1fr}
   .admin-hero .actions{grid-template-columns:1fr}
 }
+
+/* =========================================================
+   AJUSTES FINAIS — INSTALAÇÃO PWA E BOTÕES
+   Apenas comportamento visual/touch; sem alteração de rotas.
+========================================================= */
+.side-install[hidden]{display:none !important}
+.side-install:not([hidden]){display:flex !important}
+.side-install .nav-icon img{width:22px;height:22px;object-fit:contain;border-radius:5px}
+.btn,
+.side-link,
+.side-logout,
+button,
+a.btn{
+  -webkit-tap-highlight-color:transparent;
+}
+.btn,
+button.btn{
+  appearance:none;
+  -webkit-appearance:none;
+  font-family:inherit;
+  line-height:1.2;
+  text-align:center;
+  white-space:normal;
+  touch-action:manipulation;
+}
+.btn:focus-visible,
+.side-link:focus-visible,
+.side-logout:focus-visible,
+.menu-toggle:focus-visible,
+.menu-close:focus-visible{
+  outline:3px solid rgba(56,189,248,.35);
+  outline-offset:2px;
+}
+.content-tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.content-tools form{margin:0;display:flex;min-width:0}
+.content-tools .btn{min-width:0}
+.material-actions,.organized-actions,.manage-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.material-actions form,.organized-actions form,.manage-actions form{margin:0;display:flex}
+@media(max-width:560px){
+  .content-tools{display:grid;grid-template-columns:1fr;gap:9px}
+  .content-tools form,.content-tools .btn{width:100%}
+  .material-actions,.organized-actions,.manage-actions{width:100%;display:grid;grid-template-columns:1fr 1fr}
+  .material-actions form,.organized-actions form,.manage-actions form,.material-actions .btn,.organized-actions .btn,.manage-actions .btn{width:100%}
+  .reference-section-head{gap:12px;flex-wrap:wrap}
+  .reference-section-head > .btn{width:100%;justify-content:center}
+  .admin-hero .actions .btn{min-height:46px}
+}
+@media(max-width:360px){
+  .material-actions,.organized-actions,.manage-actions{grid-template-columns:1fr}
+}
+
+/* A tela de autenticação é independente do painel. */
+.auth-page .topbar,
+.auth-page .site-footer{display:none !important}
+.auth-page .site-main{min-height:100vh !important;padding:0 !important}
+.auth-page .login-page{min-height:100vh}
