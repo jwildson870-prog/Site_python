@@ -27,9 +27,16 @@ def save_uploaded_file(file, required_extension=None):
     except StorageError as exc:
         current_app.logger.warning('Falha no upload do material: %s | %s', exc.message, exc.technical)
         return exc, None
-    except Exception:
+    except Exception as exc:
         current_app.logger.exception('Falha inesperada no upload do material')
-        return 'storage_error', None
+        # Nunca esconda um erro de runtime atrás da mensagem genérica: transforme-o
+        # em StorageError para que o administrador saiba qual componente falhou.
+        detail = str(exc).strip() or exc.__class__.__name__
+        return StorageError(
+            f'Falha inesperada ao enviar o arquivo ({exc.__class__.__name__}). Detalhes: {detail}',
+            code='storage_unexpected',
+            technical=detail,
+        ), None
     return filename, original
 
 def notify_students(message, link=None):

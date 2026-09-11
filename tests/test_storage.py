@@ -60,5 +60,11 @@ def test_upload_uses_put_object(monkeypatch):
     with Flask(__name__).app_context():
         key = storage.upload(F(), 'teste.pdf', 'application/pdf')
     assert key.startswith('materials/')
-    assert fake.calls[0]['Bucket'] == 'SitPython'
+    assert fake.calls[0]['Bucket'] == 'sitpython'
     assert fake.calls[0]['ContentType'] == 'application/pdf'
+
+
+def test_b2_bucket_name_is_normalized_for_s3_compatibility(monkeypatch):
+    import app.storage as storage
+    monkeypatch.setenv('B2_BUCKET_NAME', 'SitPython')
+    assert storage._bucket() == 'sitpython'

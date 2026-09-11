@@ -85,7 +85,15 @@ def _bucket():
             'O nome do bucket do Backblaze não foi configurado. Verifique B2_BUCKET_NAME.',
             code='storage_config',
         )
-    return bucket
+
+    # O nome do bucket pode aparecer com maiúsculas no painel do B2, mas a
+    # documentação atual do Backblaze exige que buckets acessados pela API
+    # S3-Compatible sigam as regras de nomes do S3, que permitem somente
+    # letras minúsculas, números, pontos e hífens. Os nomes de buckets do B2
+    # são case-insensitive, portanto normalizar para minúsculas preserva o
+    # bucket existente (por exemplo, "SitPython" -> "sitpython") e evita que
+    # o S3-Compatible API rejeite o nome antes mesmo do PutObject.
+    return bucket.lower()
 
 
 def _friendly_b2_error(exc, action='acessar o arquivo'):
@@ -170,8 +178,19 @@ def upload(file_storage, original_filename, content_type=None):
             except (AttributeError, OSError):
                 pass
             client.put_object(Bucket=bucket, Key=key, Body=stream, **extra)
+        except StorageError:
+            raise
         except (BotoCoreError, ClientError) as exc:
             raise _friendly_b2_error(exc, 'enviar o arquivo') from exc
+        except Exception as exc:
+            # Boto3 pode falhar antes de produzir ClientError (por exemplo,
+            # problemas de stream/serialização). Preserve o tipo do erro para
+            # diagnóstico em vez de mascará-lo como 'arquivo não encontrado'.
+            raise StorageError(
+                f'Falha inesperada ao enviar o arquivo ({exc.__class__.__name__}). Detalhes: {exc}',
+                code='storage_unexpected',
+                technical=str(exc),
+            ) from exc
         return key
 
     folder = Path(current_app.config['UPLOAD_FOLDER'])
@@ -216,7 +235,7 @@ def get_file(key):
         status = getattr(exc, 'response', {}).get('ResponseMetadata', {}).get('HTTPStatusCode')
         # Arquivos criados pelo antigo Portal JM podem continuar referenciados
         # no banco. Fazemos uma leitura de compatibilidade, mas novos uploads
-        # continuam indo exclusivamente para B2_BUCKET_NAME (SitPython).
+        # continuam indo exclusivamente para B2_BUCKET_NAME.
         legacy_bucket = _env('B2_LEGACY_BUCKET_NAME') or 'PortalJm'
         if key and legacy_bucket and legacy_bucket != _bucket() and (code in {'NoSuchKey', 'NotFound', '404'} or status == 404):
             try:
