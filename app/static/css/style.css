@@ -2001,3 +2001,188 @@ body.app-authenticated .site-footer{
 .smart-alert-dashboard-list{display:grid;gap:7px}.smart-alert-mini{display:flex;align-items:center;gap:10px;padding:10px 11px;border:1px solid rgba(86,146,198,.13);border-radius:12px;background:rgba(5,20,34,.32);text-decoration:none;color:inherit;transition:border-color .15s ease,background .15s ease}.smart-alert-mini:hover{border-color:rgba(56,189,248,.28);background:rgba(56,189,248,.04)}.smart-alert-mini.priority-high{border-left:3px solid rgba(239,68,68,.65)}.smart-alert-mini.priority-medium{border-left:3px solid rgba(245,158,11,.6)}.smart-alert-mini>span:nth-child(2){min-width:0;flex:1}.smart-alert-mini strong{display:block;color:#e8f3fa;font-size:.73rem;line-height:1.35}.smart-alert-mini small{display:block;margin-top:3px;color:#718ba3;font-size:.62rem}.smart-alert-mini b{color:#67c8ee;font-size:1.2rem}.alert-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:0 0 auto}.alert-dot.high{background:#ef4444;box-shadow:0 0 0 3px rgba(239,68,68,.1)}.alert-dot.medium{background:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,.1)}.smart-alerts-page{display:grid;gap:14px}.smart-alert-summary{min-width:150px;display:grid;place-items:center;align-content:center;padding:18px;border:1px solid rgba(86,146,198,.2);border-radius:18px;background:rgba(5,20,34,.45)}.smart-alert-summary strong{font-size:2rem;color:#f4f8fb}.smart-alert-summary span{font-size:.7rem;color:#839db5}.alert-priority-guide{display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:10px 13px;border:1px solid rgba(86,146,198,.13);border-radius:12px;background:rgba(5,20,34,.3);color:#7f98ae;font-size:.7rem}.alert-priority-guide span{display:inline-flex;align-items:center;gap:7px}.smart-alert-list{display:grid;gap:9px}.smart-alert-card{display:flex;gap:13px;padding:16px;border:1px solid rgba(86,146,198,.18);border-radius:16px;background:linear-gradient(145deg,#0d253f,#0a1c30);box-shadow:0 8px 20px rgba(0,0,0,.1)}.smart-alert-card.priority-high{border-color:rgba(239,68,68,.22)}.smart-alert-card.priority-medium{border-color:rgba(245,158,11,.18)}.smart-alert-icon{width:40px;height:40px;display:grid;place-items:center;border-radius:12px;background:rgba(56,189,248,.09);border:1px solid rgba(56,189,248,.12);flex:0 0 auto}.smart-alert-icon img{width:19px;height:19px}.smart-alert-body{min-width:0;flex:1}.smart-alert-meta{display:flex;justify-content:space-between;gap:10px;color:#6f89a1;font-size:.62rem;letter-spacing:.05em}.smart-alert-meta span{font-weight:850}.priority-high .smart-alert-meta span{color:#fca5a5}.priority-medium .smart-alert-meta span{color:#f7c66b}.smart-alert-meta time{letter-spacing:0;text-transform:none}.smart-alert-body h2{margin:6px 0 12px;color:#eaf4fb;font-size:.9rem;line-height:1.45}.smart-alert-actions{display:flex;gap:7px;flex-wrap:wrap}.smart-alert-actions form{margin:0}.professor-empty-state{text-align:center;padding:36px 20px}.professor-empty-state strong{display:block;color:#eaf4fb;font-size:1rem}.professor-empty-state p{margin:6px 0 0;color:#7e98b0;font-size:.76rem}
 @media(max-width:600px){.smart-alert-summary{min-width:0}.smart-alert-card{padding:13px}.alert-priority-guide{gap:10px}.smart-alert-meta{align-items:flex-start;flex-direction:column;gap:4px}.smart-alert-actions .btn{flex:1}.smart-alert-actions form{display:flex;flex:1}.smart-alert-actions form .btn{width:100%}}
 @media(prefers-reduced-motion:reduce){.smart-alert-mini,.smart-alert-card{transition:none}}
+
+/* =========================================================
+   POLIMENTO VISUAL — UI UX PRO MAX
+   Apenas apresentação: sem alteração de rotas, regras ou dados.
+   Mantém a navegação lateral e a identidade Portal Python.
+========================================================= */
+:root{
+  --pjm-bg:#07111f;
+  --pjm-bg-2:#0a1728;
+  --pjm-surface:#0d1c2e;
+  --pjm-surface-2:#11253b;
+  --pjm-surface-3:#162d45;
+  --pjm-primary:#38bdf8;
+  --pjm-primary-2:#3b82f6;
+  --pjm-accent:#2dd4bf;
+  --pjm-text:#f5f9ff;
+  --pjm-text-soft:#dce8f5;
+  --pjm-muted:#9aafc3;
+  --pjm-border:#24415e;
+  --pjm-border-soft:rgba(142,181,216,.18);
+  --pjm-radius:16px;
+  --pjm-radius-sm:11px;
+  --pjm-shadow:0 10px 28px rgba(0,0,0,.22);
+  --pjm-shadow-soft:0 6px 18px rgba(0,0,0,.16);
+}
+
+body{
+  background:var(--pjm-bg);
+  color:var(--pjm-text);
+}
+
+/* Área de conteúdo: mais respiro e leitura */
+.app-authenticated .site-main{padding-top:94px;padding-bottom:40px}
+.site-footer{padding:26px 20px;color:#7890a8}
+
+/* Cabeçalhos */
+h1,h2,h3,h4{color:#f7fbff}
+.eyebrow{color:#67d7f6;letter-spacing:.13em}
+.muted,p{color:var(--pjm-text-soft)}
+
+/* Superfícies mais planas, contrastadas e consistentes */
+.card,.panel,.box,.content-card,.dashboard-card,
+.student-panel,.student-stat,.admin-stat,.admin-action-card,
+.smart-alert-card,.publisher-card,.material-row,.reference-section{
+  background:#0d1e31;
+  border-color:rgba(103,151,193,.23);
+  box-shadow:var(--pjm-shadow-soft);
+}
+.card:hover,.content-card:hover,.dashboard-card:hover{border-color:rgba(56,189,248,.34)}
+
+/* Hero sem excesso visual */
+.admin-hero,.student-hero{
+  background:#0d2238;
+  border-color:rgba(76,155,211,.32);
+  box-shadow:var(--pjm-shadow);
+}
+.admin-hero::after,.student-hero::after{opacity:.55}
+
+/* Navegação interna: mais limpa */
+.teacher-nav-item{
+  background:#0c1c2e;
+  border-color:rgba(103,151,193,.24);
+  box-shadow:none;
+}
+.teacher-nav-item.active{
+  background:#123b5c;
+  border-color:rgba(56,189,248,.48);
+  box-shadow:none;
+}
+
+/* Botões: estados claros, sem aparência pesada */
+.btn{
+  background:#1976d2;
+  border-color:#38bdf8;
+  box-shadow:0 5px 14px rgba(25,118,210,.18);
+}
+.btn:hover{background:#2388e6;box-shadow:0 7px 18px rgba(25,118,210,.22)}
+.btn.secondary{
+  background:#102238;
+  border-color:#31506d;
+  color:#dceafa;
+  box-shadow:none;
+}
+.btn.secondary:hover{background:#16304a;border-color:#4385b8}
+button.primary,button[type="submit"],input[type="submit"]{background:#1976d2;border-color:#38bdf8}
+
+/* Campos: contraste AA e foco evidente */
+input,select,textarea{
+  background:#091827 !important;
+  border-color:#31506d !important;
+  color:#f5f9ff !important;
+}
+input:hover,select:hover,textarea:hover{border-color:#477091 !important}
+input:focus,select:focus,textarea:focus{
+  border-color:#38bdf8 !important;
+  box-shadow:0 0 0 3px rgba(56,189,248,.15) !important;
+  background:#0b1d30 !important;
+}
+input::placeholder,textarea::placeholder{color:#8197ac}
+
+/* Tabelas mais legíveis */
+table{background:#0b1b2c;border-color:#294863}
+th{background:#132a42 !important;color:#eef7ff}
+th,td{padding:13px 14px;border-bottom-color:rgba(122,161,195,.14)}
+td{color:#d2dfec}
+tbody tr:hover{background:#10283f}
+
+/* Cards de estatística */
+.admin-stat strong,.student-stat strong{color:#f8fbff}
+.admin-stat small,.student-stat small{color:#9bb0c4}
+.admin-stat span,.student-stat-icon{
+  background:#102d49;
+  border-color:rgba(56,189,248,.20);
+}
+
+/* Links e estados */
+a{color:#67d7f6}
+a:hover{color:#a4e8ff}
+.badge{background:#10304a;color:#9be5fb;border-color:#275b7d}
+.badge-success{background:#0d332c;color:#a7f3d0;border-color:#24604f}
+.flash{background:#0e2237;border-color:#294863}
+
+/* Listas e quick actions */
+.student-list-item:hover,.student-notice:hover,.student-grade-row:hover{background:#10283f}
+.student-quick-grid a{background:#0a1a2b;border-color:rgba(103,151,193,.20)}
+.student-quick-grid a:hover{background:#102a43;border-color:rgba(56,189,248,.36)}
+
+/* Filtros e cabeçalhos de página */
+.student-filter,.report-filter{
+  background:#0b1b2c;
+  border-color:rgba(103,151,193,.24);
+  box-shadow:none;
+}
+.student-results-head,.report-note{color:#93a9bd}
+
+/* Relatórios: leitura visual mais objetiva */
+.report-grid-two{gap:14px}
+.report-chart-track{background:repeating-linear-gradient(to top,transparent 0,transparent 17px,rgba(103,151,193,.08) 18px)}
+.report-chart-track i{background:#2fb8e9}
+.report-insights div{background:#0a1a2a;border-color:rgba(103,151,193,.18)}
+.report-tip{background:#0b2537;border-left-color:#38bdf8}
+
+/* Alertas: prioridade evidente sem poluir */
+.smart-alert-dashboard-panel{border-color:rgba(245,158,11,.26)}
+.smart-alert-mini,.smart-alert-card{background:#0d1e31}
+.smart-alert-mini.priority-high,.smart-alert-card.priority-high{border-left-color:#ef6a6a}
+.smart-alert-mini.priority-medium,.smart-alert-card.priority-medium{border-left-color:#e9ad42}
+.smart-alert-summary{background:#0a1a2a;border-color:rgba(103,151,193,.22)}
+.alert-priority-guide{background:#0a1a2a;border-color:rgba(103,151,193,.18)}
+
+/* Acessibilidade: foco sempre visível */
+:focus-visible{
+  outline:2px solid #67d7f6;
+  outline-offset:2px;
+}
+
+/* Microinterações discretas — 150–200ms */
+.btn,.teacher-nav-item,.student-stat,.student-action-card,.admin-action-card,
+.tile,.smart-alert-mini,.smart-alert-card,.student-quick-grid a{
+  transition:transform .17s ease,border-color .17s ease,background .17s ease,box-shadow .17s ease;
+}
+
+@media(max-width:900px){
+  .app-authenticated .site-main{padding-top:88px}
+  .admin-hero,.student-hero{padding:24px}
+}
+
+@media(max-width:600px){
+  .app-authenticated .site-main{padding-top:82px;padding-left:12px!important;padding-right:12px!important}
+  .card{padding:18px}
+  .admin-hero,.student-hero{border-radius:16px;padding:20px 17px}
+  .admin-hero h1,.student-hero h1{font-size:clamp(1.75rem,9vw,2.25rem)}
+  .admin-page-head,.section-head,.student-page-head{align-items:flex-start;flex-direction:column;gap:12px}
+  .teacher-nav{gap:7px;margin-bottom:18px}
+  .teacher-nav-item{min-height:42px;padding:8px 11px}
+  .student-panel{padding:16px}
+  table{font-size:.82rem}
+  th,td{padding:10px 11px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .btn,.teacher-nav-item,.student-stat,.student-action-card,.admin-action-card,
+  .tile,.smart-alert-mini,.smart-alert-card,.student-quick-grid a{transition:none}
+}
