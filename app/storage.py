@@ -65,7 +65,7 @@ def _client():
         endpoint_url=endpoint,
         aws_access_key_id=_key_id(),
         aws_secret_access_key=_env('B2_APPLICATION_KEY'),
-        region_name=_env('B2_REGION') or 'us-east-1',
+        region_name=_env('B2_REGION') or 'us-east-005',
     )
 
 
