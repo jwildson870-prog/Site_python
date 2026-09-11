@@ -3,7 +3,7 @@ from pathlib import Path
 
 import boto3
 from botocore.config import Config
-from botocore.exceptions import BotoCoreError, ClientError
+from botocore.exceptions import BotoCoreError, ClientError, EndpointConnectionError, ConnectTimeoutError, ReadTimeoutError
 from flask import current_app
 
 
@@ -27,8 +27,9 @@ def _key_id():
 
 
 def _endpoint():
-    # O bucket SitPython está na região US East 005. Pode ser sobrescrito no Render.
-    return _env('B2_ENDPOINT') or 'https://s3.us-east-005.backblazeb2.com'
+    # O endpoint deve ser o endpoint S3 da região, sem o nome do bucket.
+    endpoint = _env('B2_ENDPOINT') or 'https://s3.us-east-005.backblazeb2.com'
+    return endpoint.rstrip('/')
 
 
 def b2_enabled():
@@ -61,9 +62,8 @@ def _client():
             code='storage_config',
         )
 
-    # O Backblaze B2 é compatível com S3. Forçamos S3 v4 e path-style para
-    # evitar problemas de DNS/certificado com nomes de bucket e garantimos que
-    # o endpoint informado pelo Render seja usado literalmente.
+    # O Backblaze B2 S3 exige assinatura V4. Path-style também é suportado
+    # pelo B2 e evita problemas de DNS/certificado com nomes de bucket.
     return boto3.client(
         's3',
         endpoint_url=endpoint.rstrip('/'),
@@ -130,15 +130,23 @@ def _friendly_b2_error(exc, action='acessar o arquivo'):
             technical=f'{code}: {message}' if code or message else str(exc),
         )
 
-    if isinstance(exc, BotoCoreError):
+    if isinstance(exc, (EndpointConnectionError, ConnectTimeoutError, ReadTimeoutError)):
         return StorageError(
-            f'Não foi possível {action} porque o serviço de armazenamento não respondeu corretamente. Tente novamente em alguns instantes.',
+            f'Não foi possível {action} porque o Render não conseguiu conectar ao endpoint do Backblaze B2. Confira B2_ENDPOINT e B2_REGION.',
             code='storage_unavailable',
             technical=str(exc),
         )
 
+    if isinstance(exc, BotoCoreError):
+        return StorageError(
+            f'Não foi possível {action} porque o serviço de armazenamento não respondeu corretamente. Confira o endpoint do Backblaze B2.',
+            code='storage_unavailable',
+            technical=str(exc),
+        )
+
+    safe_detail = code or message or exc.__class__.__name__
     return StorageError(
-        f'Não foi possível {action} no momento. Verifique a configuração do Backblaze B2 no servidor.',
+        f'Não foi possível {action} no momento. O Backblaze retornou: {safe_detail}. Confira B2_KEY_ID, B2_APPLICATION_KEY, B2_BUCKET_NAME, B2_ENDPOINT e B2_REGION no Render.',
         code='storage_error',
         technical=f'{code}: {message}' if code or message else str(exc),
     )
@@ -152,7 +160,16 @@ def upload(file_storage, original_filename, content_type=None):
         key = f'materials/{uuid.uuid4().hex}-{safe_name}'
         extra = {'ContentType': content_type or 'application/octet-stream'}
         try:
-            _client().upload_fileobj(file_storage, _bucket(), key, ExtraArgs=extra)
+            client = _client()
+            bucket = _bucket()
+            stream = getattr(file_storage, 'stream', file_storage)
+            # PutObject é suficiente para os arquivos do portal (limite de 25 MB)
+            # e evita que o boto3 escolha multipart upload automaticamente.
+            try:
+                stream.seek(0)
+            except (AttributeError, OSError):
+                pass
+            client.put_object(Bucket=bucket, Key=key, Body=stream, **extra)
         except (BotoCoreError, ClientError) as exc:
             raise _friendly_b2_error(exc, 'enviar o arquivo') from exc
         return key
