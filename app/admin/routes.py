@@ -3,6 +3,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, current_app, send_from_directory, Response
 from flask_login import login_required, current_user
+from sqlalchemy import or_
 from werkzeug.utils import secure_filename
 from ..storage import upload as storage_upload, delete as storage_delete, get_file, b2_enabled, StorageError
 from ..extensions import db
@@ -113,8 +114,20 @@ def admin_guard():
 
 @admin_bp.get('/')
 def dashboard():
-    recent_contents = Content.query.order_by(Content.id.desc()).limit(4).all()
-    return render_template('admin/dashboard.html', series=Series.query.count(), series_list=Series.query.order_by(Series.id).all(), subjects=Subject.query.count(), contents=Content.query.count(), users=User.query.count(), activities=Activity.query.count(), experiments=Experiment.query.count(), recent_contents=recent_contents)
+    recent_contents = Content.query.order_by(Content.id.desc()).limit(5).all()
+    students = User.query.filter_by(role='student').order_by(User.id.desc()).all()
+    recent_attempts = ActivityAttempt.query.order_by(ActivityAttempt.id.desc()).limit(8).all()
+    unread_notifications = Notification.query.filter_by(read=False).count()
+    total_attempts = ActivityAttempt.query.count()
+    average_score = db.session.query(db.func.avg(ActivityAttempt.score)).scalar()
+    average_score = round(float(average_score), 1) if average_score is not None else 0
+    return render_template('admin/dashboard.html',
+        series=Series.query.count(), series_list=Series.query.order_by(Series.id).all(),
+        subjects=Subject.query.count(), contents=Content.query.count(), users=User.query.count(),
+        students_count=len(students), activities=Activity.query.count(), experiments=Experiment.query.count(),
+        recent_contents=recent_contents, recent_attempts=recent_attempts,
+        total_attempts=total_attempts, average_score=average_score,
+        unread_notifications=unread_notifications)
 
 @admin_bp.route('/series', methods=['GET','POST'])
 def series_list():
@@ -292,7 +305,12 @@ def file(filename):
 
 @admin_bp.get('/users')
 def users():
-    return render_template('admin/users.html', users=User.query.order_by(User.id).all())
+    q = request.args.get('q', '').strip()
+    query = User.query
+    if q:
+        like = f'%{q}%'
+        query = query.filter(or_(User.name.ilike(like), User.email.ilike(like)))
+    return render_template('admin/users.html', users=query.order_by(User.id.desc()).all(), q=q)
 
 @admin_bp.post('/users/<int:id>/delete')
 def user_delete(id):
@@ -429,6 +447,38 @@ def experiment_edit(id):
 @admin_bp.post('/experiments/<int:id>/delete')
 def experiment_delete(id):
     e=Experiment.query.get_or_404(id); db.session.delete(e); db.session.commit(); flash('Experimento excluído.','success'); return redirect(url_for('admin.experiments'))
+
+@admin_bp.get('/activities/<int:id>/resultados')
+def activity_results(id):
+    activity = Activity.query.get_or_404(id)
+    attempts = ActivityAttempt.query.filter_by(activity_id=id).order_by(ActivityAttempt.score.desc(), ActivityAttempt.id.desc()).all()
+    return render_template('admin/activity_results.html', activity=activity, attempts=attempts)
+
+@admin_bp.route('/avisos', methods=['GET', 'POST'])
+def announcements():
+    students = User.query.filter_by(role='student').order_by(User.name).all()
+    if request.method == 'POST':
+        message = request.form.get('message', '').strip()
+        link = request.form.get('link', '').strip()
+        if not message or len(message) > 500:
+            flash('O aviso precisa ter entre 1 e 500 caracteres.', 'error')
+        elif link and not valid_url(link):
+            flash('O link do aviso precisa ser uma URL http(s) válida.', 'error')
+        else:
+            notify_students(message, link or None)
+            db.session.commit()
+            flash(f'Aviso enviado para {len(students)} aluno(s).', 'success')
+            return redirect(url_for('admin.announcements'))
+    recent = Notification.query.order_by(Notification.id.desc()).limit(30).all()
+    return render_template('admin/announcements.html', students=students, recent=recent)
+
+@admin_bp.get('/relatorios')
+def reports():
+    students = User.query.filter_by(role='student').count()
+    attempts = ActivityAttempt.query.count()
+    average = db.session.query(db.func.avg(ActivityAttempt.score)).scalar()
+    best = ActivityAttempt.query.order_by(ActivityAttempt.score.desc()).first()
+    return render_template('admin/reports.html', students=students, attempts=attempts, average=round(float(average),1) if average is not None else 0, best=best)
 
 @admin_bp.get('/settings')
 def settings(): return render_template('admin/settings.html')

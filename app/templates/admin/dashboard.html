@@ -1,55 +1,26 @@
 {% extends 'base.html' %}
 {% block title %}Painel do Professor · Portal Python{% endblock %}
 {% block content %}
-<section class="admin-shell reference-dashboard" id="relatorios">
-  <div class="admin-hero reference-hero">
-    <div class="hero-copy">
-      <span class="eyebrow">ÁREA DO PROFESSOR</span>
-      <h1>Olá, {{ current_user.name }} <span class="wave">👋</span></h1>
-      <p>Organize aulas, exercícios, projetos e materiais de Python para todas as séries.</p>
-      <a class="btn admin-primary hero-cta" href="{{ url_for('admin.content_new') }}"><span class="icon-svg"><img src="{{ url_for('static',filename='icons/ui/plus.svg') }}" alt=""></span> Adicionar material</a>
-    </div>
-    <div class="hero-python-art" aria-hidden="true">
-      <img class="python-art-logo" src="{{ url_for('static',filename='icons/python.svg') }}" alt="">
-      <div class="hero-code"><span>def aprender():</span><br><span>    return "Futuro"</span><br><b>&gt;&gt;&gt;</b></div>
-    </div>
+<section class="admin-shell professor-dashboard" id="relatorios">
+  <div class="admin-hero reference-hero"><div class="hero-copy"><span class="eyebrow">ÁREA DO PROFESSOR</span><h1>Olá, {{ current_user.name }} <span class="wave">👋</span></h1><p>Tenha uma visão rápida das suas turmas, conteúdos, atividades e desempenho dos alunos.</p><a class="btn admin-primary hero-cta" href="{{url_for('admin.content_new')}}">＋ Adicionar material</a></div><div class="hero-python-art" aria-hidden="true"><img class="python-art-logo" src="{{url_for('static',filename='icons/python.svg')}}" alt=""><div class="hero-code"><span>def ensinar():</span><br><span>    return "Conhecimento"</span><br><b>&gt;&gt;&gt;</b></div></div></div>
+  <div class="professor-metrics">
+    <a class="professor-metric" href="{{url_for('admin.users')}}"><span class="professor-metric-icon"><img src="{{url_for('static',filename='icons/ui/users.svg')}}" alt=""></span><span><strong>{{students_count}}</strong><small>Alunos cadastrados</small></span></a>
+    <a class="professor-metric" href="{{url_for('admin.contents')}}"><span class="professor-metric-icon"><img src="{{url_for('static',filename='icons/ui/file.svg')}}" alt=""></span><span><strong>{{contents}}</strong><small>Materiais publicados</small></span></a>
+    <a class="professor-metric" href="{{url_for('admin.activities')}}"><span class="professor-metric-icon"><img src="{{url_for('static',filename='icons/ui/check.svg')}}" alt=""></span><span><strong>{{activities}}</strong><small>Atividades criadas</small></span></a>
+    <a class="professor-metric" href="{{url_for('admin.reports')}}"><span class="professor-metric-icon"><img src="{{url_for('static',filename='icons/ui/chart.svg')}}" alt=""></span><span><strong>{{average_score}}</strong><small>Média das tentativas</small></span></a>
   </div>
-
-  <div class="reference-stats">
-    <a class="reference-stat" href="{{ url_for('admin.series_list') }}"><span class="stat-icon icon-blue"><img src="{{ url_for('static',filename='icons/ui/layers.svg') }}" alt=""></span><span><strong>{{ series }}</strong><b>Séries</b><small>1º, 2º, 3º e 4º ano</small></span><i><img src="{{ url_for('static',filename='icons/ui/arrow.svg') }}" alt=""></i></a>
-    <a class="reference-stat" href="{{ url_for('admin.subjects_list') }}"><span class="stat-icon icon-yellow"><img src="{{ url_for('static',filename='icons/ui/code-yellow.svg') }}" alt=""></span><span><strong>{{ subjects }}</strong><b>Matérias</b><small>Organize o conteúdo</small></span><i><img src="{{ url_for('static',filename='icons/ui/arrow.svg') }}" alt=""></i></a>
-    <a class="reference-stat" href="{{ url_for('admin.contents') }}"><span class="stat-icon icon-purple"><img src="{{ url_for('static',filename='icons/ui/file-purple.svg') }}" alt=""></span><span><strong>{{ contents }}</strong><b>Materiais publicados</b><small>Apostilas, exercícios e projetos</small></span><i><img src="{{ url_for('static',filename='icons/ui/arrow.svg') }}" alt=""></i></a>
-    <a class="reference-stat" href="{{ url_for('admin.users') }}"><span class="stat-icon icon-blue"><img src="{{ url_for('static',filename='icons/ui/users.svg') }}" alt=""></span><span><strong>{{ users }}</strong><b>Usuários</b><small>Professores e alunos</small></span><i><img src="{{ url_for('static',filename='icons/ui/arrow.svg') }}" alt=""></i></a>
-    <a class="reference-stat" href="{{ url_for('admin.activities') }}"><span class="stat-icon icon-green"><img src="{{ url_for('static',filename='icons/ui/check-green.svg') }}" alt=""></span><span><strong>{{ activities }}</strong><b>Atividades</b><small>Crie e acompanhe</small></span><i><img src="{{ url_for('static',filename='icons/ui/arrow.svg') }}" alt=""></i></a>
-    <a class="reference-stat" href="{{ url_for('admin.experiments') }}"><span class="stat-icon icon-cyan"><img src="{{ url_for('static',filename='icons/ui/terminal-cyan.svg') }}" alt=""></span><span><strong>{{ experiments }}</strong><b>Projetos práticos</b><small>Desafios e projetos em Python</small></span><i><img src="{{ url_for('static',filename='icons/ui/arrow.svg') }}" alt=""></i></a>
+  <div class="professor-grid">
+    <div class="professor-panel"><div class="professor-panel-head"><div><span class="eyebrow">ACESSO RÁPIDO</span><h2>O que você quer fazer?</h2><p>As principais ações do professor em um só lugar.</p></div></div><div class="professor-action-grid">
+      <a class="professor-action" href="{{url_for('admin.content_new')}}"><img src="{{url_for('static',filename='icons/ui/plus.svg')}}" alt=""><span><strong>Novo material</strong><small>Publicar conteúdo</small></span></a>
+      <a class="professor-action" href="{{url_for('admin.activities')}}"><img src="{{url_for('static',filename='icons/ui/check.svg')}}" alt=""><span><strong>Nova atividade</strong><small>Criar avaliação</small></span></a>
+      <a class="professor-action" href="{{url_for('admin.experiments')}}"><img src="{{url_for('static',filename='icons/ui/terminal.svg')}}" alt=""><span><strong>Novo projeto</strong><small>Publicar experimento</small></span></a>
+      <a class="professor-action" href="{{url_for('admin.users')}}"><img src="{{url_for('static',filename='icons/ui/users.svg')}}" alt=""><span><strong>Alunos</strong><small>Pesquisar contas</small></span></a>
+      <a class="professor-action" href="{{url_for('admin.announcements')}}"><img src="{{url_for('static',filename='icons/ui/bell.svg')}}" alt=""><span><strong>Enviar aviso</strong><small>Comunicar a turma</small></span></a>
+      <a class="professor-action" href="{{url_for('admin.reports')}}"><img src="{{url_for('static',filename='icons/ui/chart.svg')}}" alt=""><span><strong>Relatórios</strong><small>Ver desempenho</small></span></a>
+    </div></div>
+    <div class="professor-panel"><div class="professor-panel-head"><div><span class="eyebrow">DESEMPENHO</span><h2>Últimas tentativas</h2><p>{{total_attempts}} tentativa(s) registrada(s).</p></div><a class="text-link" href="{{url_for('admin.reports')}}">Ver tudo</a></div><div class="professor-table-wrap"><table class="professor-table"><thead><tr><th>Aluno</th><th>Atividade</th><th>Nota</th></tr></thead><tbody>{% for attempt in recent_attempts %}<tr><td>{{attempt.user.name}}</td><td>{{attempt.activity.title}}</td><td class="professor-score">{{'%.1f'|format(attempt.score)}}</td></tr>{% else %}<tr><td colspan="3">Nenhuma tentativa registrada ainda.</td></tr>{% endfor %}</tbody></table></div></div>
   </div>
-
-  <div class="reference-section">
-    <div class="reference-section-head"><div class="section-head-icon"><span class="section-symbol"><img src="{{ url_for('static',filename='icons/ui/file.svg') }}" alt=""></span><div><h2>Publicar conteúdo</h2><p>Adicione apostilas, exercícios, projetos e outros materiais para seus alunos.</p></div></div><a class="btn secondary" href="{{ url_for('admin.contents') }}">Ver todos <span>→</span></a></div>
-    <div class="publish-types">
-      <a href="{{ url_for('admin.content_new') }}"><span class="type-icon"><img src="{{ url_for('static',filename='icons/ui/file.svg') }}" alt=""></span><b>Apostila</b></a>
-      <a href="{{ url_for('admin.content_new') }}"><span class="type-icon code"><img src="{{ url_for('static',filename='icons/ui/code-green.svg') }}" alt=""></span><b>Exercício</b></a>
-      <a href="{{ url_for('admin.experiments') }}"><span class="type-icon terminal"><img src="{{ url_for('static',filename='icons/ui/terminal-purple.svg') }}" alt=""></span><b>Projeto</b></a>
-      <a href="{{ url_for('admin.content_new') }}"><span class="type-icon image"><img src="{{ url_for('static',filename='icons/ui/image-teal.svg') }}" alt=""></span><b>Imagem</b></a>
-      <a href="{{ url_for('admin.content_new') }}"><span class="type-icon video"><img src="{{ url_for('static',filename='icons/ui/video-purple.svg') }}" alt=""></span><b>Vídeo</b></a>
-      <a href="{{ url_for('admin.content_new') }}"><span class="type-icon more"><img src="{{ url_for('static',filename='icons/ui/more.svg') }}" alt=""></span><b>Outro</b></a>
-    </div>
-  </div>
-
-  <div class="reference-section materials-preview">
-    <div class="reference-section-head"><div class="section-head-icon"><span class="section-symbol folder"><img src="{{ url_for('static',filename='icons/ui/folder-yellow.svg') }}" alt=""></span><div><h2>Meus materiais</h2><p>Veja tudo o que já foi publicado no portal.</p></div></div><a class="btn secondary" href="{{ url_for('admin.contents') }}"><img src="{{ url_for('static',filename='icons/ui/settings.svg') }}" alt=""> Gerenciar</a></div>
-    <div class="material-preview-list">
-      {% for c in recent_contents %}
-      <a class="material-preview-row" href="{{ url_for('admin.content_edit', id=c.id) }}"><span class="preview-kind"><img src="{{ url_for('static',filename='icons/ui/' ~ ('file' if c.kind in ['pdf','file','explanation'] else 'code' if c.kind == 'slide' else 'video' if c.kind == 'video' else 'link' if c.kind == 'link' else 'file') ~ '.svg') }}" alt=""></span><strong>{{ c.title }}</strong><span class="badge">{{ {'file':'Arquivo','pdf':'Apostila','slide':'Slides','video':'Vídeo','link':'Link','explanation':'Explicação'}.get(c.kind,'Material') }}</span><span class="preview-series">{{ c.series.name }}</span><span class="preview-date">{{ c.created_at.strftime('%d/%m/%Y') }}</span><span class="preview-arrow"><img src="{{ url_for('static',filename='icons/ui/arrow.svg') }}" alt=""></span></a>
-      {% else %}
-      <div class="empty-preview">Nenhum material publicado ainda.</div>
-      {% endfor %}
-    </div>
-  </div>
-
-  <div class="reference-section quick-publish">
-    <div class="reference-section-head"><div class="section-head-icon"><span class="section-symbol lightning"><img src="{{ url_for('static',filename='icons/ui/bolt-purple.svg') }}" alt=""></span><div><h2>Publicação rápida</h2><p>Adicione um arquivo ou cole um link para compartilhar com seus alunos.</p></div></div><a class="btn secondary" href="{{ url_for('admin.content_new') }}"><img src="{{ url_for('static',filename='icons/ui/plus.svg') }}" alt=""> Nova publicação</a></div>
-    <a class="quick-link" href="{{ url_for('admin.content_new') }}"><span><img src="{{ url_for('static',filename='icons/ui/link.svg') }}" alt=""></span> Cole o link do arquivo ou insira uma descrição... <b><img src="{{ url_for('static',filename='icons/ui/arrow.svg') }}" alt=""></b></a>
-  </div>
+  <div class="professor-panel"><div class="professor-panel-head"><div><span class="eyebrow">PUBLICAÇÕES</span><h2>Materiais recentes</h2><p>Últimos conteúdos disponibilizados aos alunos.</p></div><a class="text-link" href="{{url_for('admin.contents')}}">Gerenciar materiais</a></div><div class="material-preview-list">{% for c in recent_contents %}<a class="material-preview-row" href="{{url_for('admin.content_edit',id=c.id)}}"><span class="preview-kind"><img src="{{url_for('static',filename='icons/ui/file.svg')}}" alt=""></span><strong>{{c.title}}</strong><span class="badge">{{c.series.name}}</span><span class="preview-date">{{c.created_at.strftime('%d/%m/%Y')}}</span><span class="preview-arrow">→</span></a>{% else %}<div class="professor-empty">Nenhum material publicado ainda.</div>{% endfor %}</div></div>
+  <div class="professor-panel"><div class="professor-panel-head"><div><span class="eyebrow">COMUNICAÇÃO</span><h2>Fale com os alunos</h2><p>Envie um aviso geral para todos os alunos cadastrados.</p></div><a class="btn secondary" href="{{url_for('admin.announcements')}}">Abrir avisos</a></div><p class="professor-empty">{{unread_notifications}} notificação(ões) ainda não lidas no portal.</p></div>
 </section>
 {% endblock %}
