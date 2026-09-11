@@ -1600,7 +1600,8 @@ body.app-authenticated{
 .side-link.active{position:relative;background:linear-gradient(90deg,rgba(14,115,222,.45),rgba(17,75,139,.34));border-color:rgba(48,148,244,.22);box-shadow:none}
 .side-link.active::before{content:"";position:absolute;left:-10px;top:0;bottom:0;width:3px;border-radius:0 4px 4px 0;background:#2ea8ff}
 .side-link.active .nav-icon img{filter:brightness(1.8)}
-.side-install{display:none!important}
+/* Botão PWA: visível no menu lateral quando o navegador permitir/indicar instalação. */
+.side-install{display:flex!important}
 .side-bottom{padding:12px 13px 17px;border-top:1px solid rgba(70,132,191,.12);background:transparent}
 .side-python-quote{display:grid;justify-items:start;margin:0 10px 17px;line-height:1.25}
 .side-python-quote img{width:58px;height:58px;margin-bottom:2px}
