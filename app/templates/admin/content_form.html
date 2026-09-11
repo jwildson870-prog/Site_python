@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}{{ 'Editar' if content else 'Adicionar' }} material · Portal JM{% endblock %}
+{% block title %}{{ 'Editar' if content else 'Adicionar' }} material · Portal Python{% endblock %}
 {% block content %}
 <section class="admin-shell workspace-shell">
   <div class="workspace-head">
@@ -13,7 +13,7 @@
         <div class="publisher-card form-section">
           <div class="form-section-head"><div class="step-number">1</div><div><span class="eyebrow">INFORMAÇÕES</span><h2>Dados do material</h2><p>Defina o título, série, matéria e tipo.</p></div></div>
           <div class="form-grid tidy-grid">
-            <label class="field-block full">Título<input name="title" value="{{content.title if content else ''}}" placeholder="Ex.: Ligações químicas" required></label>
+            <label class="field-block full">Título<input name="title" value="{{content.title if content else ''}}" placeholder="Ex.: Ligações Pythons" required></label>
             <label class="field-block">Série<select name="series_id" required>{% for s in series %}<option value="{{s.id}}" {% if content and content.series_id==s.id %}selected{% endif %}>{{s.name}}</option>{% endfor %}</select></label>
             <label class="field-block">Matéria<select name="subject_id" required>{% for s in subjects %}<option value="{{s.id}}" {% if content and content.subject_id==s.id %}selected{% endif %}>{{s.series.name}} · {{s.name}}</option>{% endfor %}</select></label>
             <label class="field-block full">Tipo de material<select name="kind" required>{% for value,label in [('file','Arquivo'),('pdf','PDF'),('slide','Slides'),('video','Vídeo'),('link','Link externo'),('explanation','Explicação')] %}<option value="{{value}}" {% if content and content.kind==value %}selected{% endif %}>{{label}}</option>{% endfor %}</select></label>

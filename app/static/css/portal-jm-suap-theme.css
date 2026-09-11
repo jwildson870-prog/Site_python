@@ -122,3 +122,6 @@ tbody tr:hover{background:rgba(56,189,248,.045)}
 .teacher-nav{display:none!important}
 @media(max-width:760px){.topbar{height:64px}.menu-toggle{width:44px!important;height:44px!important;flex-basis:44px}.app-authenticated .site-main{min-height:calc(100vh - 64px);padding:80px 14px 26px}.admin-hero{display:block;min-height:0;padding:22px 20px;border-radius:20px}.admin-hero .btn{width:100%;margin-top:18px}.admin-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.admin-actions-grid{grid-template-columns:1fr;gap:10px}}
 @media(max-width:430px){.topbar-brand span{display:none}.side-menu{width:88vw;max-width:330px}.app-authenticated .site-main{padding-left:12px;padding-right:12px}}
+
+/* Portal Python compatibility */
+:root{--portal-primary:#3776AB;--portal-accent:#FFD343;}

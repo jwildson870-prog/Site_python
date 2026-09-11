@@ -1,14 +1,15 @@
 {% extends 'base.html' %}
-{% block title %}Login · Portal JM{% endblock %}
+{% block title %}Login · Portal Python{% endblock %}
 {% block content %}
-<section class="login-page">
-    <div class="login-atmosphere atom-orbit orbit-one"></div>
-    <div class="login-atmosphere atom-orbit orbit-two"></div>
+<section class="login-page python-login">
+    <div class="code-float code-one">print("Olá, mundo!")</div>
+    <div class="code-float code-two">for item in lista:</div>
+    <div class="code-float code-three">if aprovado:</div>
     <div class="login-card">
         <div class="login-brand">
-            <div class="atom-logo" aria-hidden="true"><span class="nucleus">⚛</span><i></i><i></i><i></i></div>
-            <span class="eyebrow">PORTAL JM</span>
-            <h1>Química</h1>
+            <div class="python-login-logo" aria-hidden="true"><img src="{{ url_for('static',filename='icons/python.svg') }}" alt=""></div>
+            <span class="eyebrow">PORTAL PYTHON</span>
+            <h1>Programação</h1>
             <p>Entre para acessar seu espaço de aprendizagem.</p>
         </div>
         <form method="post" class="login-form">
@@ -21,8 +22,5 @@
         <div class="login-divider"><span>ou</span></div>
         <p class="login-register">Ainda não tem conta? <a href="{{url_for('auth.register')}}">Criar uma conta</a></p>
     </div>
-    <div class="chem-bubble bubble-a">H₂O</div>
-    <div class="chem-bubble bubble-b">CO₂</div>
-    <div class="chem-bubble bubble-c">NaCl</div>
 </section>
 {% endblock %}

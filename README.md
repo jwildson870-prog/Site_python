@@ -1,4 +1,4 @@
-# Portal JM – Química
+# Portal Python
 
 Sistema educacional em Flask com cadastro, login, sessões, separação real entre PROFESSOR e ALUNO, quatro turmas oficiais (1º, 2º, 3º e 4º ano), CRUD de séries/matérias/conteúdos, uploads, explicações, PDFs, slides, vídeo-aulas, links externos e Google OAuth opcional.
 
@@ -70,14 +70,14 @@ Senhas são armazenadas somente como hash; CSRF é aplicado aos POST; rotas admi
 
 ## Publicação de materiais — painel do professor
 
-O painel do professor mantém a interface do Portal JM e oferece uma área de publicação rápida com quatro fontes:
+O painel do professor mantém a interface do Portal Python e oferece uma área de publicação rápida com quatro fontes:
 
 - **Meu dispositivo:** abre o seletor de arquivos do computador/celular e aceita PDF, imagens, PowerPoint, Word e TXT, até 25 MB.
-- **Google Drive:** abre o Drive em uma nova aba para o professor escolher o arquivo e colar o link de compartilhamento no Portal JM.
+- **Google Drive:** abre o Drive em uma nova aba para o professor escolher o arquivo e colar o link de compartilhamento no Portal Python.
 - **Outro lugar:** aceita links HTTP/HTTPS de OneDrive, Dropbox, sites e outros serviços.
 - **Escrever aqui:** permite publicar uma explicação diretamente no portal.
 
-A integração do seletor oficial do Google Drive (Picker dentro do próprio Portal JM) exige credenciais/API do Google Cloud e pode ser adicionada em uma etapa posterior. O fluxo por link já funciona sem expor credenciais do Drive.
+A integração do seletor oficial do Google Drive (Picker dentro do próprio Portal Python) exige credenciais/API do Google Cloud e pode ser adicionada em uma etapa posterior. O fluxo por link já funciona sem expor credenciais do Drive.
 
 Cada fonte também tem um campo **Tipo de material**:
 - Meu dispositivo → Arquivo ou PDF (PDF exige que o arquivo enviado seja realmente `.pdf`).
@@ -101,23 +101,23 @@ A suíte em `tests/test_app.py` cobre isolamento professor/aluno, redirecionamen
 
 ## Recursos adicionados nesta versão
 - Atividades interativas de múltipla escolha com correção automática e nota de 0 a 10.
-- Experimentos de Química com objetivo, materiais, passo a passo, segurança e conclusão.
+- Projetos práticos de Python com objetivo, materiais, passo a passo, segurança e conclusão.
 - Favoritos por aluno.
 - Marcação de conteúdos concluídos.
-- Notificações para alunos quando materiais, atividades e experimentos são publicados.
-- Busca de conteúdos, atividades e experimentos.
+- Notificações para alunos quando materiais, atividades e projetos práticos são publicados.
+- Busca de conteúdos, atividades e projetos práticos.
 - Gerenciamento de alunos pelo professor (exclusão de contas de aluno).
 - Visualização de PDF diretamente na página de conteúdo.
 - Botão de exclusão de materiais corrigido.
 - Dashboard do professor e do aluno ampliados.
 
 ### Google Drive
-O Portal JM mantém o fluxo seguro de compartilhar links do Google Drive. Um Google Drive Picker totalmente integrado exige credenciais OAuth/Picker configuradas no Google Cloud e não deve usar uma chave pública embutida no código.
+O Portal Python mantém o fluxo seguro de compartilhar links do Google Drive. Um Google Drive Picker totalmente integrado exige credenciais OAuth/Picker configuradas no Google Cloud e não deve usar uma chave pública embutida no código.
 
 
 ## Uploads persistentes no Render
 
-O Portal JM salva os arquivos enviados em `UPLOAD_FOLDER`. Em desenvolvimento, o padrão continua sendo `uploads/`. No Render, configure `UPLOAD_FOLDER` para o mesmo caminho usado como **Mount Path** de um Persistent Disk, por exemplo `/var/data/uploads`.
+O Portal Python salva os arquivos enviados em `UPLOAD_FOLDER`. Em desenvolvimento, o padrão continua sendo `uploads/`. No Render, configure `UPLOAD_FOLDER` para o mesmo caminho usado como **Mount Path** de um Persistent Disk, por exemplo `/var/data/uploads`.
 
 O Render informa que o filesystem normal do serviço é efêmero; somente os arquivos dentro do Mount Path do Persistent Disk são preservados entre reinícios e deploys. Persistent Disk exige serviço pago e mantém o serviço em uma única instância.
 
@@ -130,6 +130,6 @@ Esta versão não usa JavaScript no site. A interface é feita com HTML e CSS e 
 
 Em produção, os uploads podem ser armazenados no Backblaze B2. Configure no Render as variáveis `B2_APPLICATION_KEY_ID`, `B2_APPLICATION_KEY`, `B2_BUCKET_NAME`, `B2_ENDPOINT` e opcionalmente `B2_REGION`.
 
-Quando as quatro primeiras estiverem preenchidas, novos arquivos enviados pelo painel do professor são gravados no B2. O banco continua guardando a referência do arquivo e o Portal JM gera URLs temporárias assinadas para abrir os arquivos com segurança, sem expor a Application Key ao navegador.
+Quando as quatro primeiras estiverem preenchidas, novos arquivos enviados pelo painel do professor são gravados no B2. O banco continua guardando a referência do arquivo e o Portal Python gera URLs temporárias assinadas para abrir os arquivos com segurança, sem expor a Application Key ao navegador.
 
 Se as variáveis B2 não estiverem configuradas, o sistema continua usando `UPLOAD_FOLDER` como armazenamento local, mantendo compatibilidade com desenvolvimento e com instalações que usam Persistent Disk.

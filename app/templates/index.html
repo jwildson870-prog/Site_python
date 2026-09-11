@@ -1,1 +1,17 @@
-{% extends 'base.html' %}{% block content %}<section class="hero"><div class="card center"><div class="atom">⚛</div><h1>Portal JM – Química</h1><p>Aprenda Química com conteúdos organizados, materiais e aulas.</p><h2>Você já possui uma conta?</h2><div class="actions"><a class="btn" href="{{url_for('auth.login')}}">Já tenho uma conta</a><a class="btn secondary" href="{{url_for('auth.register')}}">Ainda não tenho uma conta</a></div></div></section>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Portal Python · Aprenda programação{% endblock %}
+{% block content %}
+<section class="hero python-home">
+  <div class="card center">
+    <div class="python-mark">🐍</div>
+    <span class="eyebrow">PROGRAMAÇÃO</span>
+    <h1>Portal Python</h1>
+    <p>Aprenda Python com conteúdos organizados, atividades, projetos e materiais para cada etapa.</p>
+    <h2>Você já possui uma conta?</h2>
+    <div class="actions">
+      <a class="btn" href="{{url_for('auth.login')}}">Já tenho uma conta</a>
+      <a class="btn secondary" href="{{url_for('auth.register')}}">Ainda não tenho uma conta</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

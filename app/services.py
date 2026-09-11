@@ -9,22 +9,22 @@ CANONICAL_SERIES = {
     '4º ano': ['4º ano', '4ª Série', '4º Série'],
 }
 INITIAL_SUBJECTS = {
-    '1º ano': ['Química Geral'],
-    '2º ano': ['Química Orgânica'],
-    '3º ano': ['Físico-Química'],
-    '4º ano': ['Química Aplicada'],
+    '1º ano': ['Python Básico'],
+    '2º ano': ['Programação com Python'],
+    '3º ano': ['Estruturas de Dados'],
+    '4º ano': ['Projetos Python'],
 }
 TOPICS = {
-    ('1º ano', 'Química Geral'): ['Estrutura Atômica', 'Prótons, nêutrons e elétrons', 'Tabela Periódica', 'Ligações Químicas'],
-    ('2º ano', 'Química Orgânica'): ['Funções Orgânicas', 'Hidrocarbonetos'],
-    ('3º ano', 'Físico-Química'): ['Eletroquímica', 'Termoquímica'],
-    ('4º ano', 'Química Aplicada'): ['Química Ambiental', 'Química no Cotidiano'],
+    ('1º ano', 'Python Básico'): ['Variáveis e tipos de dados', 'Entrada e saída de dados', 'Condicionais if, elif e else', 'Laços for e while'],
+    ('2º ano', 'Programação com Python'): ['Funções', 'Listas e dicionários', 'Tratamento de erros', 'Módulos e bibliotecas'],
+    ('3º ano', 'Estruturas de Dados'): ['Listas e tuplas', 'Dicionários e conjuntos', 'Listas de dicionários', 'Programação orientada a objetos'],
+    ('4º ano', 'Projetos Python'): ['APIs e requisições', 'Flask e aplicações web', 'Banco de dados', 'Deploy e boas práticas'],
 }
 
 def ensure_admin():
-    email = os.getenv('ADMIN_EMAIL', 'professor@portaljm.com').strip().lower()
-    password = os.getenv('ADMIN_PASSWORD', 'PortalJM@2026')
-    name = os.getenv('ADMIN_NAME', 'Professor JM').strip() or 'Professor JM'
+    email = os.getenv('ADMIN_EMAIL', 'professor@portalpython.local').strip().lower()
+    password = os.getenv('ADMIN_PASSWORD', 'PortalPython@2026')
+    name = os.getenv('ADMIN_NAME', 'Professor Python').strip() or 'Professor Python'
     if not email or not password:
         return None, False
 
@@ -79,7 +79,7 @@ def seed_initial_content():
                         title=title,
                         description=f'Conteúdo introdutório de {title}.',
                         kind='explanation',
-                        body=f'<p><strong>{title}</strong></p><p>Material inicial de demonstração do Portal JM – Química. O professor pode editar este conteúdo pelo painel do professor.</p>',
+                        body=f'<p><strong>{title}</strong></p><p>Material inicial de demonstração do Portal Python. O professor pode editar este conteúdo pelo painel do professor.</p>',
                         series_id=s.id, subject_id=sub.id
                     ))
     db.session.commit()

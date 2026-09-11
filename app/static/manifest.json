@@ -1,7 +1,7 @@
 {
-  "name": "Portal JM – Química",
-  "short_name": "Portal JM",
-  "description": "Portal JM – Química: materiais, conteúdos e área do aluno e professor.",
+  "name": "Portal Python",
+  "short_name": "Portal Python",
+  "description": "Portal Python: materiais, conteúdos e área do aluno e professor.",
   "lang": "pt-BR",
   "start_url": "/",
   "scope": "/",

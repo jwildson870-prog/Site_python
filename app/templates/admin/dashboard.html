@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Painel do Professor · Portal JM{% endblock %}
+{% block title %}Painel do Professor · Portal Python{% endblock %}
 {% block content %}
 <section class="admin-shell">
     <div class="admin-hero">
@@ -24,7 +24,7 @@
         <div class="admin-stat"><span>📚</span><strong>{{ series }}</strong><small>Séries</small></div>
         <div class="admin-stat"><span>🧪</span><strong>{{ subjects }}</strong><small>Matérias</small></div>
         <div class="admin-stat"><span>📦</span><strong>{{ contents }}</strong><small>Materiais publicados</small></div>
-        <div class="admin-stat"><span>👥</span><strong>{{ users }}</strong><small>Usuários</small></div><div class="admin-stat"><span>📝</span><strong>{{ activities }}</strong><small>Atividades</small></div><div class="admin-stat"><span>🧪</span><strong>{{ experiments }}</strong><small>Experimentos</small></div>
+        <div class="admin-stat"><span>👥</span><strong>{{ users }}</strong><small>Usuários</small></div><div class="admin-stat"><span>📝</span><strong>{{ activities }}</strong><small>Atividades</small></div><div class="admin-stat"><span>🧪</span><strong>{{ experiments }}</strong><small>Projetos práticos</small></div>
     </div>
 
     <div class="admin-section-title">
@@ -50,7 +50,7 @@
             <div><h3>Matérias</h3><p>Organize as matérias de cada série.</p></div>
             <span class="arrow">→</span>
         </a>
-        <a class="admin-action-card" href="{{ url_for('admin.activities') }}"><div class="action-icon">📝</div><div><h3>Atividades</h3><p>Crie questões e correção automática.</p></div><span class="arrow">→</span></a><a class="admin-action-card" href="{{ url_for('admin.experiments') }}"><div class="action-icon">🧪</div><div><h3>Experimentos</h3><p>Publique roteiros de laboratório.</p></div><span class="arrow">→</span></a><a class="admin-action-card" href="{{ url_for('admin.users') }}"><div class="action-icon">👥</div><div><h3>Usuários</h3><p>Veja e gerencie contas de alunos.</p></div><span class="arrow">→</span></a><a class="admin-action-card" href="{{ url_for('admin.series_list') }}">
+        <a class="admin-action-card" href="{{ url_for('admin.activities') }}"><div class="action-icon">📝</div><div><h3>Atividades</h3><p>Crie questões e correção automática.</p></div><span class="arrow">→</span></a><a class="admin-action-card" href="{{ url_for('admin.experiments') }}"><div class="action-icon">🧪</div><div><h3>Projetos práticos</h3><p>Publique roteiros de projeto Python.</p></div><span class="arrow">→</span></a><a class="admin-action-card" href="{{ url_for('admin.users') }}"><div class="action-icon">👥</div><div><h3>Usuários</h3><p>Veja e gerencie contas de alunos.</p></div><span class="arrow">→</span></a><a class="admin-action-card" href="{{ url_for('admin.series_list') }}">
             <div class="action-icon">🎓</div>
             <div><h3>Séries</h3><p>Configure 1º, 2º, 3º e 4º ano.</p></div>
             <span class="arrow">→</span>

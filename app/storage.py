@@ -20,13 +20,18 @@ def _env(name):
     return os.getenv(name, '').strip()
 
 
+def _key_id():
+    # Aceita o nome usado no Render e o nome tradicional do projeto.
+    return _env('B2_APPLICATION_KEY_ID') or _env('B2_KEY_ID')
+
+
+def _endpoint():
+    # O bucket SitPython está na região US East 005. Pode ser sobrescrito no Render.
+    return _env('B2_ENDPOINT') or 'https://s3.us-east-005.backblazeb2.com'
+
+
 def b2_enabled():
-    return all(_env(name) for name in (
-        'B2_APPLICATION_KEY_ID',
-        'B2_APPLICATION_KEY',
-        'B2_BUCKET_NAME',
-        'B2_ENDPOINT',
-    ))
+    return bool(_key_id() and _env('B2_APPLICATION_KEY') and _env('B2_BUCKET_NAME'))
 
 
 def b2_configuration_message():
@@ -34,10 +39,9 @@ def b2_configuration_message():
     if not b2_enabled():
         missing = [
             name for name in (
-                'B2_APPLICATION_KEY_ID',
+                'B2_APPLICATION_KEY_ID/B2_KEY_ID',
                 'B2_APPLICATION_KEY',
                 'B2_BUCKET_NAME',
-                'B2_ENDPOINT',
             ) if not _env(name)
         ]
         return f'Backblaze B2 não está configurado corretamente. Variáveis ausentes: {", ".join(missing)}.'
@@ -49,7 +53,7 @@ def _client():
     if message:
         raise StorageError(message, code='storage_config')
 
-    endpoint = _env('B2_ENDPOINT')
+    endpoint = _endpoint()
     if not endpoint.startswith(('http://', 'https://')):
         raise StorageError(
             'O endereço do Backblaze B2 está configurado incorretamente. Verifique B2_ENDPOINT.',
@@ -59,7 +63,7 @@ def _client():
     return boto3.client(
         's3',
         endpoint_url=endpoint,
-        aws_access_key_id=_env('B2_APPLICATION_KEY_ID'),
+        aws_access_key_id=_key_id(),
         aws_secret_access_key=_env('B2_APPLICATION_KEY'),
         region_name=_env('B2_REGION') or 'us-east-1',
     )
@@ -84,21 +88,21 @@ def _friendly_b2_error(exc, action='acessar o arquivo'):
 
     if code in {'AccessDenied', 'UnauthorizedAccess', 'AllAccessDisabled', '403'} or status == 403:
         return StorageError(
-            'O Portal JM não conseguiu acessar o Backblaze. O bucket pode estar privado sem uma chave com permissão para ler os arquivos, ou as credenciais do Render podem estar incorretas.',
+            'O Portal Python não conseguiu acessar o Backblaze. O bucket pode estar privado sem uma chave com permissão para ler os arquivos, ou as credenciais do Render podem estar incorretas.',
             code='storage_unauthorized',
             technical=f'{code}: {message}' if code or message else str(exc),
         )
 
     if code in {'NoSuchBucket', 'NotFound', 'NoSuchKey', '404'} or status == 404:
         return StorageError(
-            'O arquivo não foi encontrado no armazenamento do Portal JM. Ele pode ter sido removido ou o caminho do arquivo pode estar incorreto.',
+            'O arquivo não foi encontrado no armazenamento do Portal Python. Ele pode ter sido removido ou o caminho do arquivo pode estar incorreto.',
             code='storage_not_found',
             technical=f'{code}: {message}' if code or message else str(exc),
         )
 
     if code in {'InvalidAccessKeyId', 'SignatureDoesNotMatch', 'InvalidToken', 'ExpiredToken'}:
         return StorageError(
-            'As credenciais do Backblaze usadas pelo Portal JM são inválidas ou expiraram. Confira B2_APPLICATION_KEY_ID e B2_APPLICATION_KEY no Render.',
+            'As credenciais do Backblaze usadas pelo Portal Python são inválidas ou expiraram. Confira B2_KEY_ID/B2_APPLICATION_KEY_ID e B2_APPLICATION_KEY no Render.',
             code='storage_credentials',
             technical=f'{code}: {message}' if code or message else str(exc),
         )
@@ -166,7 +170,7 @@ def get_file(key):
     """Obtém um arquivo do B2 e devolve o objeto de resposta do S3.
 
     A leitura é feita pelo backend para que erros de permissão/configuração sejam
-    tratados pelo Portal JM, em vez de o navegador exibir o XML do Backblaze.
+    tratados pelo Portal Python, em vez de o navegador exibir o XML do Backblaze.
     """
     if not b2_enabled():
         return None
@@ -179,7 +183,7 @@ def get_file(key):
 def presigned_url(key, expires=900):
     """Mantido para compatibilidade com integrações existentes.
 
-    Para páginas do Portal JM, prefira get_file(), pois ele permite tratar no
+    Para páginas do Portal Python, prefira get_file(), pois ele permite tratar no
     servidor os erros de acesso ao bucket privado.
     """
     if b2_enabled():

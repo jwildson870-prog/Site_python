@@ -1,11 +1,11 @@
-{% extends 'base.html' %}{% block title %}Materiais · Portal JM{% endblock %}{% block content %}
+{% extends 'base.html' %}{% block title %}Materiais · Portal Python{% endblock %}{% block content %}
 <section class="admin-shell workspace-shell">
   <div class="workspace-head"><div><span class="eyebrow">BIBLIOTECA</span><h1>Meus materiais</h1><p>Encontre, abra, edite ou exclua tudo o que já foi publicado.</p></div><a class="btn admin-primary" href="{{url_for('admin.content_new')}}">＋ Adicionar material</a></div>
   <div class="library-toolbar"><div><strong>{{ contents|length }}</strong><span>material(is) publicado(s)</span></div><div class="library-hint">📦 Biblioteca do professor</div></div>
   <div class="material-list organized-list">{% for c in contents %}
     <article class="material-row organized-material">
       <div class="material-icon large-icon">{{ {'file':'📎','pdf':'📄','slide':'📊','video':'🎬','link':'🔗','explanation':'✍️'}[c.kind] }}</div>
-      <div class="material-main"><div class="material-meta"><span class="badge">{{c.series.name}}</span><span class="badge subtle-badge">{{c.subject.name}}</span><span class="type-label">{{ {'file':'Arquivo','pdf':'PDF','slide':'Slides','video':'Vídeo','link':'Link','explanation':'Explicação'}[c.kind] }}</span></div><h3>{{c.title}}</h3><p>{{c.description or 'Material de estudo publicado no Portal JM.'}}</p></div>
+      <div class="material-main"><div class="material-meta"><span class="badge">{{c.series.name}}</span><span class="badge subtle-badge">{{c.subject.name}}</span><span class="type-label">{{ {'file':'Arquivo','pdf':'PDF','slide':'Slides','video':'Vídeo','link':'Link','explanation':'Explicação'}[c.kind] }}</span></div><h3>{{c.title}}</h3><p>{{c.description or 'Material de estudo publicado no Portal Python.'}}</p></div>
       <div class="material-actions organized-actions"><a class="btn secondary" href="{{url_for('admin.content_edit',id=c.id)}}">✏️ Editar</a>{% if c.kind in ['file','pdf'] and c.file_name %}<a class="btn secondary" href="{{url_for('admin.file',filename=c.file_name)}}" target="_blank">↗ Abrir</a>{% elif c.external_url %}<a class="btn secondary" href="{{c.external_url}}" target="_blank" rel="noopener noreferrer">↗ Abrir</a>{% endif %}<form method="post" action="{{url_for('admin.content_delete',id=c.id)}}"><input type="hidden" name="csrf_token" value="{{csrf_token()}}"><button class="btn danger" type="submit">🗑 Excluir</button></form></div>
     </article>
   {% else %}<div class="publisher-card empty-state"><span>📦</span><h2>Nenhum material ainda</h2><p>Publique seu primeiro material para começar.</p><a class="btn admin-primary" href="{{url_for('admin.content_new')}}">＋ Adicionar material</a></div>{% endfor %}</div>
