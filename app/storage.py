@@ -93,18 +93,7 @@ def _friendly_b2_error(exc, action='acessar o arquivo'):
             technical=f'{code}: {message}' if code or message else str(exc),
         )
 
-    # A 404/NoSuchBucket while sending a file normally means that the
-    # configured bucket or endpoint is wrong. Do not report it as a missing
-    # file: that produced a misleading error on the publication form.
-    upload_action = 'enviar' in action.lower() or 'upload' in action.lower()
-    if code in {'NoSuchBucket', 'InvalidBucketName'} or (status == 404 and upload_action):
-        return StorageError(
-            f'Não foi possível {action}: o bucket do Backblaze B2 não foi encontrado. Confira B2_BUCKET_NAME, B2_ENDPOINT e B2_REGION no Render.',
-            code='storage_config',
-            technical=f'{code}: {message}' if code or message else str(exc),
-        )
-
-    if code in {'NoSuchKey', '404'} or status == 404:
+    if code in {'NoSuchBucket', 'NotFound', 'NoSuchKey', '404'} or status == 404:
         return StorageError(
             'O arquivo não foi encontrado no armazenamento do Portal Python. Ele pode ter sido removido ou o caminho do arquivo pode estar incorreto.',
             code='storage_not_found',

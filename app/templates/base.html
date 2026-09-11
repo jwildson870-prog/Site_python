@@ -15,18 +15,23 @@
 <body class="{% if current_user.is_authenticated %}app-authenticated{% else %}public-page{% endif %}">
 <input class="menu-check" id="menuCheck" type="checkbox" aria-hidden="true">
 <header class="topbar">
-  <label class="menu-toggle" for="menuCheck" aria-label="Abrir menu" title="Abrir menu"><span></span><span></span><span></span></label>
+  {% if current_user.is_authenticated %}<label class="menu-toggle" for="menuCheck" aria-label="Abrir menu" title="Abrir menu"><span></span><span></span><span></span></label>{% endif %}
   <div class="topbar-brand"><img src="{{ url_for('static',filename='icons/python.svg') }}" alt="Python"><strong>Portal <span>Python</span></strong></div>
   <div class="topbar-spacer"></div>
   <div class="topbar-search" aria-label="Buscar no portal"><img src="{{ url_for('static',filename='icons/ui/search.svg') }}" alt=""><span>Buscar no portal...</span></div>
   <div class="topbar-bell" aria-label="Notificações"><img src="{{ url_for('static',filename='icons/ui/bell.svg') }}" alt=""><i></i></div>
+  {% if current_user.is_authenticated %}
   <div class="topbar-avatar">{{ current_user.name[:1]|upper }}</div>
+  {% else %}
+  <a class="topbar-avatar" href="{{ url_for('auth.login') }}" aria-label="Entrar">P</a>
+  {% endif %}
 </header>
+{% if current_user.is_authenticated %}
 <aside class="side-menu" aria-label="Menu principal">
   <div class="side-brand"><div class="side-logo"><img src="{{ url_for('static',filename='icons/python.svg') }}" alt="Python"></div><div class="side-brand-text"><strong>Portal Python</strong><small>Programação</small></div><label class="menu-close" for="menuCheck" aria-label="Fechar menu">×</label></div>
-  <div class="side-area">{% if current_user.is_admin %}ÁREA DO PROFESSOR{% else %}ÁREA DO ALUNO{% endif %}</div>
+  <div class="side-area">{% if current_user.is_authenticated and current_user.is_admin %}ÁREA DO PROFESSOR{% else %}ÁREA DO ALUNO{% endif %}</div>
   <nav class="side-nav">
-  {% if current_user.is_admin %}
+  {% if current_user.is_authenticated and current_user.is_admin %}
     <a class="side-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}" href="{{url_for('admin.dashboard')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/home.svg') }}" alt=""></span><b>Início</b></a>
     <a class="side-link {% if request.endpoint in ['admin.series_list','admin.series_edit','admin.series_detail'] %}active{% endif %}" href="{{url_for('admin.series_list')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/layers.svg') }}" alt=""></span><b>Séries</b></a>
     <a class="side-link {% if request.endpoint in ['admin.subjects_list','admin.subject_edit'] %}active{% endif %}" href="{{url_for('admin.subjects_list')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/code.svg') }}" alt=""></span><b>Matérias</b></a>
@@ -48,12 +53,13 @@
   </nav>
   <button class="side-link side-install" id="pwaInstallButton" type="button" hidden><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/plus.svg') }}" alt=""></span><b>Baixar aplicativo</b></button>
   <div class="side-bottom">
-    {% if current_user.is_admin %}<div class="side-python-quote"><img src="{{ url_for('static',filename='icons/python.svg') }}" alt="Python"><strong>Python</strong><span>é mais que uma linguagem,<br>é uma forma de pensar.</span></div>{% endif %}
+    {% if current_user.is_authenticated and current_user.is_admin %}<div class="side-python-quote"><img src="{{ url_for('static',filename='icons/python.svg') }}" alt="Python"><strong>Python</strong><span>é mais que uma linguagem,<br>é uma forma de pensar.</span></div>{% endif %}
     <div class="side-user"><div class="user-avatar">{{current_user.name[:1]|upper}}</div><div class="side-user-text"><strong>{{current_user.name}}</strong><small>{{'Professor' if current_user.is_admin else 'Aluno'}}</small></div></div>
     <form method="post" action="{{url_for('auth.logout')}}"><input type="hidden" name="csrf_token" value="{{csrf_token()}}"><button class="side-logout" type="submit"><span>↪</span> Sair</button></form>
   </div>
 </aside>
 <label class="menu-overlay" for="menuCheck" aria-label="Fechar menu"></label>
+{% endif %}
 <main class="site-main">
 {% with messages=get_flashed_messages(with_categories=true) %}{% for category,msg in messages %}<div class="flash {{category}}">{{msg}}</div>{% endfor %}{% endwith %}
 {% block content %}{% endblock %}

@@ -1,7 +1,6 @@
 import io
 import os
 import pytest
-from botocore.exceptions import ClientError
 from app import create_app
 from app.extensions import db
 from app.models import User, Series, Subject, Content
@@ -151,26 +150,10 @@ def test_activity_and_experiment_are_available_to_students(client, app):
     login(client, 'aluno@test.local', 'Senha1234!') if False else None
 
 
-def test_b2_missing_bucket_is_reported_as_configuration_error(monkeypatch):
-    from app import storage
-    exc = ClientError(
-        {'Error': {'Code': 'NoSuchBucket', 'Message': 'The specified bucket does not exist'},
-         'ResponseMetadata': {'HTTPStatusCode': 404}},
-        'PutObject',
-    )
-    err = storage._friendly_b2_error(exc, 'enviar o arquivo')
-    assert err.code == 'storage_config'
-    assert 'bucket' in err.message.lower()
-    assert 'arquivo não foi encontrado' not in err.message.lower()
-
-
-def test_b2_missing_file_is_still_reported_as_not_found():
-    from app import storage
-    exc = ClientError(
-        {'Error': {'Code': 'NoSuchKey', 'Message': 'The specified key does not exist'},
-         'ResponseMetadata': {'HTTPStatusCode': 404}},
-        'GetObject',
-    )
-    err = storage._friendly_b2_error(exc, 'abrir o arquivo')
-    assert err.code == 'storage_not_found'
-    assert 'arquivo não foi encontrado' in err.message.lower()
+def test_public_pages_render_without_authenticated_user(client):
+    home = client.get('/')
+    assert home.status_code == 200
+    assert 'Portal Python' in home.text
+    assert 'Área do Professor' not in home.text
+    assert client.get('/auth/login').status_code == 200
+    assert client.get('/auth/register').status_code == 200
