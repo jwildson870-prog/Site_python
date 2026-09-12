@@ -5,7 +5,8 @@ from ..extensions import db
 from ..models import Series,Subject,Content,Activity,ActivityAttempt,Experiment,Favorite,Progress,Notification
 from ..storage import get_file, b2_enabled, StorageError
 import json
-from datetime import datetime
+from datetime import datetime, date, timedelta
+import calendar as pycalendar
 student_bp=Blueprint('student',__name__,url_prefix='/aluno')
 
 SAFE_INLINE_TYPES = {'pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp'}
@@ -49,18 +50,29 @@ def dashboard():
     activities = Activity.query.order_by(Activity.id.desc()).all()
     attempts = ActivityAttempt.query.filter_by(user_id=current_user.id).order_by(ActivityAttempt.id.desc()).all()
     attempted_ids = {a.activity_id for a in attempts}
-    pending_activities = sum(1 for a in activities if a.id not in attempted_ids)
+    pending_activities = sum(1 for a in activities if a.id not in attempted_ids and not (a.due_at and datetime.utcnow() > a.due_at))
     average = round(sum(a.score for a in attempts) / len(attempts), 1) if attempts else None
     recent_contents = Content.query.order_by(Content.id.desc()).limit(5).all()
     recent_activities = activities[:5]
     recent_attempts = attempts[:5]
     recent_notifications = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.id.desc()).limit(4).all()
+    completed_ids = {p.content_id for p in Progress.query.filter_by(user_id=current_user.id).all()}
+    continue_content = next((c for c in recent_contents if c.id not in completed_ids), None)
+    if continue_content is None:
+        continue_content = Content.query.filter(~Content.id.in_(completed_ids)).order_by(Content.id.desc()).first() if total_contents else None
+    upcoming = [a for a in activities if a.due_at and a.due_at >= datetime.utcnow() and a.id not in attempted_ids]
+    upcoming = sorted(upcoming, key=lambda a: a.due_at)[:4]
+    achievement_count = sum([
+        completed >= 1, completed >= 5, len(attempts) >= 1, len(attempts) >= 5,
+        any(round(a.score, 1) >= 10 for a in attempts), percent >= 100
+    ])
     return render_template(
         'student/dashboard.html', series=series, favorites=favorite_count, completed=completed,
         notifications=unread_count, total_contents=total_contents, percent=percent,
         activities_count=len(activities), pending_activities=pending_activities, average=average,
         recent_contents=recent_contents, recent_activities=recent_activities,
-        recent_attempts=recent_attempts, attempted_ids=attempted_ids, recent_notifications=recent_notifications
+        recent_attempts=recent_attempts, attempted_ids=attempted_ids, recent_notifications=recent_notifications,
+        continue_content=continue_content, upcoming=upcoming, achievement_count=achievement_count
     )
 
 @student_bp.get('/materiais')
@@ -185,6 +197,50 @@ def progress():
     total=Content.query.count(); completed=Progress.query.filter_by(user_id=current_user.id).count(); percent=round(completed/total*100) if total else 0
     attempts=ActivityAttempt.query.filter_by(user_id=current_user.id).order_by(ActivityAttempt.id.desc()).all()
     return render_template('student/progress.html',total=total,completed=completed,percent=percent,attempts=attempts)
+@student_bp.get('/calendario')
+def calendar_view():
+    today = datetime.utcnow().date()
+    try:
+        year = int(request.args.get('year', today.year))
+        month = int(request.args.get('month', today.month))
+        if month < 1 or month > 12: raise ValueError
+    except (TypeError, ValueError):
+        year, month = today.year, today.month
+    first_weekday, days_in_month = pycalendar.monthrange(year, month)
+    # Monday=0 -> grid starts Monday and keeps six full weeks when needed.
+    leading = first_weekday
+    cells = []
+    for i in range(leading): cells.append(None)
+    for day in range(1, days_in_month + 1): cells.append(date(year, month, day))
+    while len(cells) % 7: cells.append(None)
+    while len(cells) < 35: cells.append(None)
+    events = {}
+    for activity in Activity.query.filter(Activity.due_at.isnot(None)).all():
+        d = activity.due_at.date()
+        if d.year == year and d.month == month:
+            events.setdefault(d, []).append(activity)
+    prev_year, prev_month = (year - 1, 12) if month == 1 else (year, month - 1)
+    next_year, next_month = (year + 1, 1) if month == 12 else (year, month + 1)
+    return render_template('student/calendar.html', year=year, month=month, month_name=pycalendar.month_name[month],
+                           cells=cells, events=events, today=today, prev_year=prev_year, prev_month=prev_month,
+                           next_year=next_year, next_month=next_month)
+
+@student_bp.get('/conquistas')
+def achievements():
+    completed = Progress.query.filter_by(user_id=current_user.id).count()
+    total = Content.query.count()
+    attempts = ActivityAttempt.query.filter_by(user_id=current_user.id).all()
+    definitions = [
+        ('Primeiro passo', 'Conclua seu primeiro material.', completed >= 1, '1 material concluído'),
+        ('Ritmo de estudo', 'Conclua 5 materiais.', completed >= 5, '5 materiais concluídos'),
+        ('Primeira atividade', 'Responda sua primeira atividade.', len(attempts) >= 1, '1 atividade respondida'),
+        ('Constância', 'Responda 5 atividades.', len(attempts) >= 5, '5 atividades respondidas'),
+        ('Nota máxima', 'Alcance 10 em uma atividade.', any(round(a.score, 1) >= 10 for a in attempts), 'Nota 10'),
+        ('Curso completo', 'Conclua todos os materiais disponíveis.', bool(total) and completed >= total, f'{total} materiais concluídos'),
+    ]
+    unlocked = sum(1 for _, _, ok, _ in definitions if ok)
+    return render_template('student/achievements.html', achievements=definitions, unlocked=unlocked, total=len(definitions))
+
 @student_bp.route('/notificacoes', methods=['GET', 'POST'])
 def notifications():
     if request.method == 'POST':

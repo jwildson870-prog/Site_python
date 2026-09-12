@@ -8,7 +8,7 @@ from sqlalchemy import or_
 from werkzeug.utils import secure_filename
 from ..storage import upload as storage_upload, delete as storage_delete, get_file, b2_enabled, StorageError
 from ..extensions import db
-from ..models import Series, Subject, Content, User, Activity, ActivityAttempt, Experiment, Notification, Alert
+from ..models import Series, Subject, Content, User, Activity, ActivityAttempt, Experiment, Notification, Alert, QuestionBank
 from ..pptx_preview import convert_pptx_to_images
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -583,6 +583,59 @@ def user_delete(id):
         flash('Aluno excluído.', 'success')
     return redirect(url_for('admin.users'))
 
+@admin_bp.route('/question-bank', methods=['GET', 'POST'])
+def question_bank():
+    series = Series.query.order_by(Series.id).all()
+    subjects = Subject.query.order_by(Subject.name).all()
+    if request.method == 'POST':
+        question = request.form.get('question', '').strip()
+        options = [request.form.get(f'option_{letter}', '').strip() for letter in ('a','b','c','d')]
+        correct_index = request.form.get('correct', '').strip()
+        difficulty = request.form.get('difficulty', 'medio').strip().lower()
+        sid = request.form.get('series_id', '').strip(); subid = request.form.get('subject_id', '').strip()
+        ser = Series.query.get(int(sid)) if sid.isdigit() else None
+        sub = Subject.query.get(int(subid)) if subid.isdigit() else None
+        if not question or len(question) > 1000 or sum(bool(x) for x in options) < 2 or correct_index not in {'0','1','2','3'}:
+            flash('Preencha a questão, pelo menos duas alternativas e a resposta correta.', 'error')
+        elif not ser or not sub or sub.series_id != ser.id:
+            flash('Selecione uma série e matéria válidas.', 'error')
+        elif not options[int(correct_index)]:
+            flash('A resposta correta precisa estar preenchida.', 'error')
+        elif any(options[i] and not options[i-1] for i in range(1,4)):
+            flash('Preencha as alternativas em sequência.', 'error')
+        else:
+            item = QuestionBank(question=question, correct=options[int(correct_index)], difficulty=difficulty if difficulty in {'facil','medio','dificil'} else 'medio', series_id=ser.id, subject_id=sub.id)
+            item.set_options([x for x in options if x])
+            db.session.add(item); db.session.commit()
+            flash('Questão adicionada ao banco.', 'success')
+            return redirect(url_for('admin.question_bank'))
+    items = QuestionBank.query.order_by(QuestionBank.id.desc()).all()
+    return render_template('admin/question_bank.html', items=items, series=series, subjects=subjects)
+
+@admin_bp.post('/question-bank/<int:id>/delete')
+def question_bank_delete(id):
+    item = QuestionBank.query.get_or_404(id)
+    db.session.delete(item); db.session.commit()
+    flash('Questão removida do banco.', 'success')
+    return redirect(url_for('admin.question_bank'))
+
+@admin_bp.post('/activities/<int:id>/import-questions')
+def activity_import_questions(id):
+    activity = Activity.query.get_or_404(id)
+    ids = [int(x) for x in request.form.getlist('question_ids') if x.isdigit()]
+    current = activity.get_questions()
+    added = 0
+    for qid in ids:
+        if len(current) >= 20: break
+        item = QuestionBank.query.get(qid)
+        if not item or item.series_id != activity.series_id or item.subject_id != activity.subject_id: continue
+        opts = item.get_options()
+        current.append({'question': item.question, 'options': opts, 'correct': item.correct})
+        added += 1
+    activity.set_questions(current); db.session.commit()
+    flash(f'{added} questão(ões) importada(s) para a atividade.', 'success' if added else 'error')
+    return redirect(url_for('admin.activity_edit', id=id))
+
 @admin_bp.route('/activities', methods=['GET', 'POST'])
 def activities():
     q = request.args.get('q', '').strip()
@@ -692,9 +745,9 @@ def activity_edit(id):
             questions.append({'question': q, 'options': opts, 'correct': opts[int(correct)] if correct.isdigit() and int(correct) < len(opts) else ''})
         while questions and not questions[-1].get('question') and not any(questions[-1].get('options', [])):
             questions.pop()
-        return render_template('admin/activity_form.html', activity=a, questions=questions, due_raw=due_raw)
+        return render_template('admin/activity_form.html', activity=a, questions=questions, due_raw=due_raw, bank_items=QuestionBank.query.filter_by(series_id=a.series_id, subject_id=a.subject_id).order_by(QuestionBank.id.desc()).all())
     due_raw = a.due_at.strftime('%Y-%m-%dT%H:%M') if a.due_at else ''
-    return render_template('admin/activity_form.html', activity=a, questions=a.get_questions(), due_raw=due_raw)
+    return render_template('admin/activity_form.html', activity=a, questions=a.get_questions(), due_raw=due_raw, bank_items=QuestionBank.query.filter_by(series_id=a.series_id, subject_id=a.subject_id).order_by(QuestionBank.id.desc()).all())
 
 @admin_bp.post('/activities/<int:id>/delete')
 def activity_delete(id):

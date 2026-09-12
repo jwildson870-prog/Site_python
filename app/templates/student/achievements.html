@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block title %}Conquistas · Portal Python{% endblock %}
+{% block content %}
+<section class="student-shell achievements-page">
+  <div class="student-page-head"><div><span class="eyebrow">MOTIVAÇÃO</span><h1>Minhas conquistas</h1><p>Pequenas metas para transformar frequência em progresso.</p></div><div class="achievement-total"><strong>{{unlocked}}</strong><span>/ {{total}} desbloqueadas</span></div></div>
+  <div class="achievement-grid">{% for name,description,ok,goal in achievements %}<article class="achievement-card {% if ok %}unlocked{% else %}locked{% endif %}"><div class="achievement-mark"><img src="{{url_for('static',filename='icons/ui/bolt.svg')}}" alt=""></div><div><span class="achievement-status">{% if ok %}DESBLOQUEADA{% else %}EM PROGRESSO{% endif %}</span><h2>{{name}}</h2><p>{{description}}</p><small>{{goal}}</small></div></article>{% endfor %}</div>
+</section>
+{% endblock %}

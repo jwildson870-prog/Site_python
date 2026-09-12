@@ -110,6 +110,8 @@ def create_app(test_config=None):
                     conn.execute(text('ALTER TABLE activities ADD COLUMN IF NOT EXISTS due_at TIMESTAMP'))
                 elif db.engine.dialect.name == 'sqlite':
                     conn.execute(text('ALTER TABLE activities ADD COLUMN due_at DATETIME'))
+        # O banco de questões é aditivo e não altera tabelas existentes.
+        db.create_all()
         from .services import ensure_admin,seed_initial_content,migrate_legacy_python_subjects
         ensure_admin(); seed_initial_content(); migrate_legacy_python_subjects()
     return app

@@ -10,6 +10,7 @@
 <label class="field-block">Prazo de entrega<input type="datetime-local" name="due_at" value="{{due_raw or ''}}"><small>Deixe vazio para remover o prazo.</small></label>
 <label class="field-block full">Descrição<textarea name="description" maxlength="5000">{{activity.description or ''}}</textarea></label>
 </div></div>
+{% if bank_items %}<section class="publisher-card bank-import-card"><div class="question-editor-head"><span class="question-number">+</span><div><span class="eyebrow">BANCO DE QUESTÕES</span><h2>Reutilizar questões</h2><p>Selecione questões da mesma série e matéria para adicionar à atividade.</p></div></div><form method="post" action="{{url_for('admin.activity_import_questions',id=activity.id)}}"><input type="hidden" name="csrf_token" value="{{csrf_token()}}"><div class="bank-import-list">{% for item in bank_items %}<label class="bank-import-item"><input type="checkbox" name="question_ids" value="{{item.id}}"><span><strong>{{item.question}}</strong><small>{{item.difficulty|capitalize}} · {{item.get_options()|length}} alternativas</small></span></label>{% endfor %}</div><button class="btn secondary" type="submit">Adicionar selecionadas</button></form></section>{% endif %}
 {% set qs = questions if questions else [{}] %}
 {% for i in range(20) %}{% set q = qs[i] if i < qs|length else {} %}{% set opts = q.get('options', []) %}
 <div class="question-editor publisher-card"><div class="question-editor-head"><span class="question-number">{{i+1}}</span><div><span class="eyebrow">QUESTÃO {{i+1}}</span><h2>Enunciado e alternativas</h2></div></div>

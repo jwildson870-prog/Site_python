@@ -17,6 +17,22 @@
     </div>
   </div>
 
+  <div class="student-continue-grid">
+    <section class="student-panel continue-study-card">
+      <div class="student-panel-head"><div><span class="eyebrow">CONTINUAR ESTUDANDO</span><h2>Volte de onde parou</h2></div><span class="continue-chip">{{ percent }}% do portal</span></div>
+      {% if continue_content %}
+      <a class="continue-study-link" href="{{ url_for('student.content', id=continue_content.id) }}">
+        <span class="continue-icon"><img src="{{ url_for('static',filename='icons/ui/file.svg') }}" alt=""></span>
+        <span><strong>{{ continue_content.title }}</strong><small>{{ continue_content.series.name }} · {{ continue_content.subject.name }}</small></span><b>Continuar →</b>
+      </a>
+      {% else %}<div class="student-empty">Você já concluiu todos os materiais disponíveis.</div>{% endif %}
+    </section>
+    <section class="student-panel upcoming-card">
+      <div class="student-panel-head"><div><span class="eyebrow">AGENDA</span><h2>Próximos prazos</h2></div><a class="text-link" href="{{ url_for('student.calendar_view') }}">Calendário →</a></div>
+      {% for a in upcoming %}<a class="upcoming-row" href="{{ url_for('student.activity', id=a.id) }}"><span class="upcoming-date"><strong>{{ a.due_at.strftime('%d') }}</strong><small>{{ a.due_at.strftime('%b')|upper }}</small></span><span><strong>{{ a.title }}</strong><small>Entrega até {{ a.due_at.strftime('%d/%m às %H:%M') }}</small></span></a>{% else %}<div class="student-empty">Nenhum prazo futuro pendente.</div>{% endfor %}
+    </section>
+  </div>
+
   <div class="student-stats-grid">
     <a class="student-stat" href="{{ url_for('student.progress') }}"><span class="student-stat-icon"><img src="{{ url_for('static',filename='icons/ui/chart.svg') }}" alt=""></span><span><strong>{{ completed }}</strong><small>Conteúdos concluídos</small></span></a>
     <a class="student-stat" href="{{ url_for('student.activities') }}"><span class="student-stat-icon"><img src="{{ url_for('static',filename='icons/ui/check.svg') }}" alt=""></span><span><strong>{{ pending_activities }}</strong><small>Atividades pendentes</small></span></a>
@@ -70,6 +86,10 @@
     </section>
   </div>
 
+  <section class="student-panel student-achievement-strip">
+    <div><span class="eyebrow">CONQUISTAS</span><h2>{{ achievement_count }} de 6 desbloqueadas</h2><p>Transforme constância em pequenas metas de estudo.</p></div><a class="btn secondary" href="{{ url_for('student.achievements') }}">Ver conquistas</a>
+  </section>
+
   <section class="student-panel student-quick-panel">
     <div class="student-panel-head"><div><span class="eyebrow">ACESSO RÁPIDO</span><h2>Onde você quer ir?</h2></div></div>
     <div class="student-quick-grid">
@@ -77,6 +97,8 @@
       <a href="{{ url_for('student.grades') }}"><img src="{{ url_for('static',filename='icons/ui/chart.svg') }}" alt=""><span><strong>Notas</strong><small>Seu desempenho</small></span><b>→</b></a>
       <a href="{{ url_for('student.performance') }}"><img src="{{ url_for('static',filename='icons/ui/chart.svg') }}" alt=""><span><strong>Desempenho</strong><small>Evolução e progresso</small></span><b>→</b></a>
       <a href="{{ url_for('student.progress') }}"><img src="{{ url_for('static',filename='icons/ui/check.svg') }}" alt=""><span><strong>Progresso</strong><small>Acompanhe sua evolução</small></span><b>→</b></a>
+      <a href="{{ url_for('student.calendar_view') }}"><img src="{{ url_for('static',filename='icons/ui/calendar.svg') }}" alt=""><span><strong>Calendário</strong><small>Veja seus prazos</small></span><b>→</b></a>
+      <a href="{{ url_for('student.achievements') }}"><img src="{{ url_for('static',filename='icons/ui/bolt.svg') }}" alt=""><span><strong>Conquistas</strong><small>Metas de estudo</small></span><b>→</b></a>
       <a href="{{ url_for('student.profile') }}"><img src="{{ url_for('static',filename='icons/ui/users.svg') }}" alt=""><span><strong>Meu perfil</strong><small>Dados da sua conta</small></span><b>→</b></a>
     </div>
   </section>

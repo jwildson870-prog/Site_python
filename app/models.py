@@ -30,6 +30,7 @@ class Series(db.Model):
     contents = db.relationship('Content', backref='series', cascade='all, delete-orphan')
     activities = db.relationship('Activity', backref='series', cascade='all, delete-orphan')
     experiments = db.relationship('Experiment', backref='series', cascade='all, delete-orphan')
+    question_bank = db.relationship('QuestionBank', backref='series', cascade='all, delete-orphan')
 
 class Subject(db.Model):
     __tablename__ = 'subjects'
@@ -39,6 +40,7 @@ class Subject(db.Model):
     contents = db.relationship('Content', backref='subject', cascade='all, delete-orphan')
     activities = db.relationship('Activity', backref='subject', cascade='all, delete-orphan')
     experiments = db.relationship('Experiment', backref='subject', cascade='all, delete-orphan')
+    question_bank = db.relationship('QuestionBank', backref='subject', cascade='all, delete-orphan')
     __table_args__ = (db.UniqueConstraint('name', 'series_id', name='uq_subject_series'),)
 
 class Content(db.Model):
@@ -74,6 +76,23 @@ class Activity(db.Model):
         try: return json.loads(self.questions_json or '[]')
         except (TypeError, ValueError): return []
     def set_questions(self, questions): self.questions_json = json.dumps(questions, ensure_ascii=False)
+
+
+class QuestionBank(db.Model):
+    __tablename__ = 'question_bank'
+    id = db.Column(db.Integer, primary_key=True)
+    question = db.Column(db.String(1000), nullable=False)
+    options_json = db.Column(db.Text, nullable=False, default='[]')
+    correct = db.Column(db.String(500), nullable=False)
+    difficulty = db.Column(db.String(20), nullable=False, default='medio')
+    series_id = db.Column(db.Integer, db.ForeignKey('series.id'), nullable=False)
+    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    def get_options(self):
+        try: return json.loads(self.options_json or '[]')
+        except (TypeError, ValueError): return []
+    def set_options(self, options):
+        self.options_json = json.dumps(options, ensure_ascii=False)
 
 class ActivityAttempt(db.Model):
     __tablename__ = 'activity_attempts'
