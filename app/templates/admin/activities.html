@@ -4,8 +4,8 @@
 <section class="admin-shell workspace-shell activity-manager">
   <div class="workspace-head"><div><span class="eyebrow">AVALIAÇÃO</span><h1>Atividades</h1><p>Crie, organize e acompanhe atividades com prazo e correção automática.</p></div></div>
   <div class="activity-tabs" role="tablist" aria-label="Gerenciamento de atividades">
-    <a class="activity-tab active" href="{{url_for('admin.activities')}}"><span>✦</span> Minhas atividades</a>
-    <a class="activity-tab" href="{{url_for('admin.ready_activities')}}"><span>⚡</span> Atividades prontas <b>9</b></a>
+    <a class="activity-tab active" href="{{url_for('admin.activities')}}"><span class="uiverse-inline-card"><img src="{{url_for('static', filename='icons/ui/code.svg')}}" alt=""></span> Minhas atividades</a>
+    <a class="activity-tab" href="{{url_for('admin.ready_activities')}}"><span class="uiverse-inline-card"><img src="{{url_for('static', filename='icons/ui/bolt.svg')}}" alt=""></span> Atividades prontas <b>9</b></a>
   </div>
   <form class="publisher-card form-section" method="post">
     <input type="hidden" name="csrf_token" value="{{csrf_token()}}">

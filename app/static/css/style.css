@@ -3542,3 +3542,46 @@ a.card:active,a.tile:active,a.student-material-card:active,a.student-summary-car
  .card:hover,.panel:hover,.box:hover,.content-card:hover,.dashboard-card:hover,.publisher-card:hover,.material-row:hover,.admin-stat:hover,.admin-action-card:hover,.reference-section:hover,.reference-stat:hover,.student-panel:hover,.student-stat:hover,.student-material-card:hover,.student-summary-card:hover,.student-profile-card:hover,.tile:hover,.calendar-card:hover,.achievement-card:hover,.smart-alert-mini:hover,.smart-alert-card:hover,.ready-activity-card:hover,.professor-metric:hover,.professor-action:hover,.notification-card:hover,.performance-summary-card:hover,.progress-hero-card:hover,.pptx-viewer-card:hover,.manage-card:hover{transform:translateY(-2px)}
 }
 @media(prefers-reduced-motion:reduce){.card,.panel,.box,.content-card,.dashboard-card,.publisher-card,.material-row,.admin-stat,.admin-action-card,.reference-section,.reference-stat,.student-panel,.student-stat,.student-material-card,.student-summary-card,.student-profile-card,.tile,.calendar-card,.achievement-card,.smart-alert-mini,.smart-alert-card,.ready-activity-card,.professor-metric,.professor-action,.notification-card,.performance-summary-card,.progress-hero-card,.pptx-viewer-card,.manage-card{transition:none!important}}
+
+
+/* ==========================================================
+   UIVERSE CARD ICONS — replace emoji UI with real components
+   ========================================================== */
+.uiverse-inline-card,
+.uiverse-feature-card,
+.uiverse-result-card,
+.uiverse-error-card,
+.uiverse-avatar-card {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(103,232,249,.28);
+  border-radius: 10px;
+  background: linear-gradient(145deg, rgba(18,67,101,.82), rgba(4,24,43,.72));
+  box-shadow: 0 5px 0 rgba(2,12,24,.42), inset 0 1px 0 rgba(255,255,255,.10), 0 0 16px rgba(34,211,238,.06);
+  vertical-align: middle;
+}
+.uiverse-inline-card { width: 27px; height: 27px; border-radius: 8px; margin-right: 7px; }
+.uiverse-feature-card { width: 54px; height: 54px; border-radius: 15px; margin-bottom: 10px; }
+.uiverse-result-card, .uiverse-error-card { width: 64px; height: 64px; border-radius: 18px; margin: 0 auto 12px; }
+.uiverse-avatar-card { width: 42px; height: 42px; border-radius: 13px; }
+.uiverse-delete-card { color: #c9faff; font-weight: 800; font-size: 20px; line-height: 1; }
+.uiverse-letter-card { color: #dffbff; font-weight: 800; font-size: 20px; }
+.uiverse-inline-card img,
+.uiverse-feature-card img,
+.uiverse-result-card img,
+.uiverse-error-card img,
+.uiverse-avatar-card img { width: 62%; height: 62%; object-fit: contain; filter: drop-shadow(0 3px 5px rgba(0,0,0,.28)); }
+
+/* Buttons containing icon cards keep a single clean baseline. */
+.btn .uiverse-inline-card { box-shadow: 0 3px 0 rgba(2,12,24,.35), inset 0 1px 0 rgba(255,255,255,.09); }
+.btn:active .uiverse-inline-card { transform: translateY(2px); box-shadow: inset 0 2px 5px rgba(0,0,0,.20); }
+
+@media (max-width:760px) {
+  .uiverse-inline-card { width: 25px; height: 25px; margin-right: 6px; }
+  .uiverse-feature-card { width: 48px; height: 48px; }
+  .uiverse-result-card, .uiverse-error-card { width: 56px; height: 56px; }
+}

@@ -24,7 +24,7 @@
           <div class="form-section-head"><div class="step-number">2</div><div><span class="eyebrow">ARQUIVO / LINK</span><h2>Fonte do material</h2><p>Envie um arquivo ou informe um endereço externo.</p></div></div>
           <div class="field-block"><label>Arquivo do dispositivo<input class="file-input" name="file" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.ppt,.pptx,.doc,.docx,.txt"></label></div>
           <p class="field-help">PowerPoint <strong>.pptx</strong> é convertido automaticamente em imagens para leitura dentro do portal.</p>
-          {% if content and content.file_name %}<div class="source-note">📎 Arquivo atual: <strong>{{content.file_name.split("-")[-1] if content.file_name else ""}}</strong><br><span>Sem novo envio, o arquivo atual será mantido.</span></div>{% endif %}
+          {% if content and content.file_name %}<div class="source-note"><span class="uiverse-inline-card"><img src="{{url_for('static', filename='icons/ui/file.svg')}}" alt=""></span>Arquivo atual: <strong>{{content.file_name.split("-")[-1] if content.file_name else ""}}</strong><br><span>Sem novo envio, o arquivo atual será mantido.</span></div>{% endif %}
           <div class="field-block"><label>Link externo / Google Drive / vídeo<input name="external_url" type="url" value="{{content.external_url if content else ''}}" placeholder="https://..."></label></div>
           <a class="btn secondary compact-btn" href="https://drive.google.com/drive/my-drive" target="_blank" rel="noopener noreferrer">↗ Abrir Google Drive</a>
         </div>
@@ -34,8 +34,8 @@
         </div>
       </div>
       <aside class="workspace-side">
-        <div class="publish-summary"><span class="summary-icon">✓</span><h3>Pronto para publicar?</h3><p>Revise os dados antes de salvar. Você poderá editar o material depois.</p><button class="btn admin-primary publish-btn" type="submit">{{'Salvar alterações' if content else 'Publicar material'}}</button></div>
-        <div class="workspace-help"><strong>💡 Dica</strong><p>Use títulos curtos e uma descrição objetiva. Links do Drive, YouTube e outros serviços podem ser usados.</p></div>
+        <div class="publish-summary"><span class="summary-icon uiverse-feature-card"><img src="{{url_for('static', filename='icons/ui/check-green.svg')}}" alt=""></span><h3>Pronto para publicar?</h3><p>Revise os dados antes de salvar. Você poderá editar o material depois.</p><button class="btn admin-primary publish-btn" type="submit">{{'Salvar alterações' if content else 'Publicar material'}}</button></div>
+        <div class="workspace-help"><strong><span class="uiverse-inline-card"><img src="{{url_for('static', filename='icons/ui/code-yellow.svg')}}" alt=""></span>Dica</strong><p>Use títulos curtos e uma descrição objetiva. Links do Drive, YouTube e outros serviços podem ser usados.</p></div>
       </aside>
     </div>
   </form>
