@@ -4,8 +4,8 @@
 <section class="student-shell student-dashboard">
   <div class="student-hero">
     <div class="student-hero-copy">
-      <span class="eyebrow">PAINEL DO ALUNO</span>
-      <h1>Olá, {{ current_user.name }}</h1>
+      <span class="eyebrow">PAINEL DO ALUNO <span class="hero-live"><i></i> AO VIVO</span></span>
+      <h1>Olá, {{ current_user.name }}<span class="hero-title-mark">.</span></h1>
       <p>Continue seus estudos, acompanhe seu progresso e encontre rapidamente o que precisa.</p>
       <div class="student-hero-actions">
         <a class="btn" href="{{ url_for('student.materials') }}"><img src="{{ url_for('static',filename='icons/ui/file.svg') }}" alt=""> Ver materiais</a>

@@ -3028,3 +3028,178 @@ input:focus,select:focus,textarea:focus{
   .card,.panel,.student-panel,.student-stat,.student-material-card,.student-summary-card,.tile,.calendar-card,.achievement-card{transition:none!important}
   .card:hover,.panel:hover,.student-panel:hover,.student-stat:hover,.student-material-card:hover,.student-summary-card:hover,.tile:hover,.calendar-card:hover,.achievement-card:hover{transform:none}
 }
+
+
+/* =========================================================
+   PORTAL PYTHON — VISUAL SYSTEM 3.0
+   Sidebar + topbar + hero refinados com hierarquia, glass e 3D.
+========================================================= */
+:root{
+  --portal-blue:#2196f3;
+  --portal-cyan:#22d3ee;
+  --portal-teal:#14b8a6;
+  --portal-navy:#06111f;
+  --portal-glass:rgba(7,29,49,.52);
+  --portal-line:rgba(111,211,255,.20);
+}
+
+body.app-authenticated{
+  background:
+    radial-gradient(900px 500px at 75% -10%,rgba(33,150,243,.12),transparent 65%),
+    radial-gradient(700px 480px at 10% 92%,rgba(20,184,166,.08),transparent 68%),
+    #06111f;
+}
+
+/* Topbar: aparência de painel flutuante, sem perder espaço útil. */
+.topbar{
+  height:68px!important;
+  padding:0 18px!important;
+  gap:12px!important;
+  background:linear-gradient(180deg,rgba(4,17,31,.82),rgba(4,17,31,.58))!important;
+  border-bottom:1px solid rgba(99,205,255,.18)!important;
+  box-shadow:0 14px 42px rgba(0,0,0,.30),inset 0 -1px 0 rgba(255,255,255,.025)!important;
+}
+.topbar-brand{
+  position:relative;
+  min-width:205px;
+  gap:10px!important;
+}
+.topbar-brand::after{
+  content:"";
+  position:absolute;
+  right:-10px;top:7px;width:1px;height:34px;
+  background:linear-gradient(180deg,transparent,rgba(105,205,255,.25),transparent);
+}
+.topbar-brand img{width:42px!important;height:42px!important;filter:drop-shadow(0 7px 15px rgba(33,150,243,.28))!important}
+.topbar-brand strong{font-size:1.04rem!important}
+.topbar-brand span{color:#67e8f9!important}
+.topbar-context{
+  display:flex;align-items:center;gap:7px;
+  padding:7px 11px;border:1px solid rgba(45,212,191,.16);
+  border-radius:999px;background:rgba(10,46,55,.34);
+  color:#a7d9df;font-size:.69rem;font-weight:700;letter-spacing:.03em;
+  white-space:nowrap;
+}
+.status-dot,.side-area-dot,.hero-live i{
+  width:7px;height:7px;border-radius:50%;display:inline-block;
+  background:#2dd4bf;box-shadow:0 0 12px rgba(45,212,191,.8);
+}
+.topbar-search{
+  min-width:220px;max-width:430px;height:40px!important;
+  border-radius:13px!important;
+  background:rgba(5,25,43,.52)!important;
+  border-color:rgba(96,204,255,.17)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 7px 20px rgba(0,0,0,.10)!important;
+}
+.topbar-search:hover{border-color:rgba(96,204,255,.35)!important;box-shadow:0 0 22px rgba(34,211,238,.07)!important}
+.topbar-user{display:flex;align-items:center;gap:9px;margin-left:2px}
+.topbar-user-copy{display:flex;flex-direction:column;line-height:1.1;min-width:80px}
+.topbar-user-copy strong{font-size:.76rem;color:#eef8ff;white-space:nowrap}
+.topbar-user-copy small{margin-top:3px;color:#7894a9;font-size:.64rem}
+.topbar-avatar{width:40px!important;height:40px!important;flex:0 0 40px!important;border-radius:13px!important;background:linear-gradient(145deg,rgba(31,122,214,.9),rgba(13,70,112,.86))!important;border-color:rgba(102,210,255,.28)!important;box-shadow:0 8px 20px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.20)!important}
+
+/* Sidebar: trilho visual e estado ativo mais evidente. */
+.side-menu{
+  top:68px!important;
+  width:266px!important;
+  background:
+    radial-gradient(350px 420px at 0% 85%,rgba(20,184,166,.08),transparent 65%),
+    linear-gradient(180deg,rgba(4,19,34,.90),rgba(2,11,22,.96))!important;
+  border-right:1px solid rgba(91,203,255,.17)!important;
+  box-shadow:20px 0 65px rgba(0,0,0,.38),inset -1px 0 rgba(255,255,255,.025)!important;
+}
+.side-brand{padding:18px 17px!important;border-bottom-color:rgba(105,205,255,.11)!important}
+.side-logo{width:44px!important;height:44px!important;border-radius:14px!important;background:linear-gradient(145deg,rgba(10,46,75,.78),rgba(3,20,35,.70))!important;border-color:rgba(92,203,255,.25)!important;box-shadow:0 12px 28px rgba(0,0,0,.25),0 0 25px rgba(33,150,243,.09)!important}
+.side-logo img{width:34px!important;height:34px!important}
+.side-brand-text strong{font-size:.88rem!important;letter-spacing:-.02em}
+.side-brand-text small{color:#6fa0bb!important}
+.side-area{margin:12px 12px 8px!important;padding:8px 10px!important;border-radius:10px!important;display:flex;align-items:center;gap:7px;background:rgba(12,54,65,.28)!important;border-color:rgba(45,212,191,.14)!important;color:#83b9c1!important;font-size:.62rem!important;letter-spacing:.10em!important}
+.side-area-dot{width:5px;height:5px;box-shadow:none}
+.side-nav{padding:5px 10px!important}
+.side-link{min-height:44px!important;margin:3px 0!important;padding:9px 11px!important;border-radius:12px!important;gap:10px!important;color:#8da9bd!important}
+.side-link b{font-size:.76rem!important;font-weight:650!important}
+.side-link .nav-icon{width:32px!important;height:32px!important;border-radius:9px!important;background:rgba(255,255,255,.018);display:grid;place-items:center}
+.side-link .nav-icon img{width:17px!important;height:17px!important;opacity:.72;transition:filter .2s ease,opacity .2s ease}
+.side-link:hover{transform:translateX(4px)!important;background:linear-gradient(90deg,rgba(33,150,243,.10),rgba(34,211,238,.035))!important;border-color:rgba(75,190,255,.16)!important;color:#d6f3ff!important}
+.side-link:hover .nav-icon{background:rgba(34,211,238,.08)}
+.side-link:hover .nav-icon img{opacity:1;filter:drop-shadow(0 0 7px rgba(34,211,238,.22))}
+.side-link.active{background:linear-gradient(100deg,rgba(25,123,211,.24),rgba(34,211,238,.065))!important;border-color:rgba(80,195,255,.24)!important;box-shadow:inset 3px 0 0 #38bdf8,0 9px 25px rgba(0,70,130,.13)!important;color:#f1fbff!important}
+.side-link.active .nav-icon{background:rgba(34,211,238,.11);box-shadow:inset 0 1px rgba(255,255,255,.06)}
+.side-link.active .nav-icon img{opacity:1;filter:drop-shadow(0 0 7px rgba(56,189,248,.30))}
+.side-bottom{border-top:1px solid rgba(105,205,255,.08)!important;padding:12px!important}
+.side-user{background:rgba(6,29,48,.35)!important;border:1px solid rgba(95,192,237,.10)!important;border-radius:13px!important;padding:9px!important}
+
+/* Conteúdo: cria uma coluna limpa e uma sensação de profundidade. */
+.main-content{padding-top:26px!important}
+.admin-shell,.student-shell{animation:portalContentIn .55s cubic-bezier(.16,1,.3,1) both}
+@keyframes portalContentIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* Hero do aluno e professor. */
+.admin-hero,.student-hero{
+  min-height:220px!important;
+  border-radius:24px!important;
+  padding:30px!important;
+  background:
+    radial-gradient(420px 260px at 88% 10%,rgba(33,150,243,.24),transparent 68%),
+    radial-gradient(430px 260px at 18% 105%,rgba(20,184,166,.12),transparent 70%),
+    linear-gradient(135deg,rgba(10,42,69,.72),rgba(3,18,33,.48))!important;
+  border-color:rgba(103,208,255,.23)!important;
+  box-shadow:0 28px 75px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.08),inset 0 -1px rgba(0,0,0,.16)!important;
+}
+.admin-hero::after,.student-hero::after{
+  content:"";position:absolute;inset:auto -90px -190px auto;width:430px;height:430px;border-radius:50%;
+  border:1px solid rgba(34,211,238,.14);box-shadow:0 0 0 30px rgba(34,211,238,.025),0 0 0 68px rgba(34,211,238,.018),0 0 80px rgba(33,150,243,.08);pointer-events:none;
+}
+.hero-copy,.student-hero-copy{max-width:700px!important}
+.eyebrow{letter-spacing:.13em!important;font-size:.64rem!important;color:#73bdd4!important}
+.hero-live{display:inline-flex;align-items:center;gap:5px;margin-left:7px;padding:4px 7px;border:1px solid rgba(45,212,191,.18);border-radius:999px;background:rgba(20,184,166,.07);color:#71d9ca;font-size:.54rem;vertical-align:middle;letter-spacing:.09em}
+.hero-live i{width:5px;height:5px}
+.admin-hero h1,.student-hero h1{font-size:clamp(2.2rem,4.8vw,3.15rem)!important;letter-spacing:-.055em!important;line-height:1.03!important;margin:10px 0 10px!important}
+.hero-title-mark{color:#22d3ee;text-shadow:0 0 18px rgba(34,211,238,.35)}
+.admin-hero p,.student-hero p{font-size:.92rem!important;color:#a9c2d5!important;max-width:620px;line-height:1.65!important}
+.hero-cta{margin-top:21px!important}
+.hero-python-art{transform:translateY(-50%)!important;filter:drop-shadow(0 25px 32px rgba(0,0,0,.24))}
+.hero-python-art .python-art-logo{filter:drop-shadow(0 18px 30px rgba(0,0,0,.34)) drop-shadow(0 0 26px rgba(34,211,238,.18))!important}
+.student-hero-art{right:8%!important;width:205px!important;height:205px!important}
+.student-hero-art::before{width:165px!important;height:165px!important;box-shadow:0 0 35px rgba(34,211,238,.20),0 0 0 25px rgba(34,211,238,.035)!important}
+.student-hero-art img{width:145px!important;height:145px!important}
+
+/* Métricas e painéis com ritmo vertical mais claro. */
+.professor-metric,.student-stat{border-radius:16px!important}
+.professor-metric:hover,.student-stat:hover{transform:translateY(-5px)!important}
+.professor-panel,.student-panel{border-radius:18px!important}
+.professor-panel-head h2,.student-panel-head h2{letter-spacing:-.035em!important}
+.text-link{font-weight:750!important;color:#67d9ef!important}
+
+/* Botões ainda mais físicos, mas sem exagerar no efeito. */
+.btn,.student-hero-actions .btn,button.primary,button[type="submit"],input[type="submit"]{
+  border-radius:11px!important;
+  min-height:42px;
+  box-shadow:0 5px 0 rgba(2,34,57,.82),0 12px 24px rgba(0,83,155,.20),inset 0 1px 0 rgba(255,255,255,.24),inset 0 -2px 0 rgba(0,45,90,.20)!important;
+}
+.btn:hover,.student-hero-actions .btn:hover,button.primary:hover,button[type="submit"]:hover,input[type="submit"]:hover{transform:translateY(-3px)!important}
+.btn:active,.student-hero-actions .btn:active,button.primary:active,button[type="submit"]:active,input[type="submit"]:active{transform:translateY(3px)!important;box-shadow:0 2px 0 rgba(2,34,57,.82),0 5px 12px rgba(0,83,155,.18),inset 0 2px 5px rgba(0,0,0,.18)!important}
+
+@media(max-width:900px){
+  .topbar-context,.topbar-user-copy{display:none}
+  .topbar-brand{min-width:0!important}
+  .topbar-search{margin-left:auto;min-width:150px}
+}
+@media(max-width:680px){
+  .topbar{height:64px!important;padding:0 10px!important}
+  .topbar-brand img{width:36px!important;height:36px!important}
+  .topbar-brand strong{font-size:.98rem!important}
+  .topbar-brand::after{display:none}
+  .side-menu{top:64px!important;width:min(292px,88vw)!important}
+  .main-content{padding-top:18px!important}
+  .admin-hero,.student-hero{min-height:0!important;padding:23px 19px!important;border-radius:18px!important}
+  .admin-hero h1,.student-hero h1{font-size:clamp(1.85rem,9vw,2.35rem)!important}
+  .admin-hero p,.student-hero p{font-size:.83rem!important;max-width:85%}
+  .student-hero-art{right:-25px!important;bottom:-28px!important;top:auto!important;width:145px!important;height:145px!important;opacity:.27}
+  .student-hero-art img{width:100px!important;height:100px!important}
+  .student-hero-art::before{width:112px!important;height:112px!important}
+  .hero-python-art{opacity:.35;right:-25px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .admin-shell,.student-shell{animation:none!important}
+}
