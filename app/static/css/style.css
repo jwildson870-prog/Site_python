@@ -3280,3 +3280,234 @@ body.app-authenticated{
 @media(prefers-reduced-motion:reduce){
   .side-link:hover,.btn:hover,.professor-metric:hover,.student-stat:hover{transform:none!important}
 }
+
+/* ==========================================================
+   PORTAL PYTHON — MENU MOBILE EM GAVETA / SOBREPOSIÇÃO
+   O conteúdo nunca é empurrado quando a gaveta abre.
+   ========================================================== */
+@media (max-width: 760px){
+  html,body{overflow-x:hidden}
+
+  body.app-authenticated .site-main{
+    position:relative!important;
+    z-index:1!important;
+    margin-left:0!important;
+    width:100%!important;
+    max-width:none!important;
+    box-sizing:border-box!important;
+  }
+
+  body.app-authenticated .side-menu{
+    position:fixed!important;
+    top:64px!important;
+    left:0!important;
+    bottom:0!important;
+    width:min(286px,86vw)!important;
+    max-width:none!important;
+    margin:0!important;
+    transform:translate3d(-105%,0,0)!important;
+    z-index:1200!important;
+    visibility:hidden!important;
+    opacity:0!important;
+    transition:transform .28s cubic-bezier(.16,1,.3,1),opacity .2s ease,visibility 0s linear .28s!important;
+    box-shadow:24px 0 70px rgba(0,0,0,.48),inset -1px 0 rgba(125,211,252,.06)!important;
+  }
+
+  body.app-authenticated .menu-check:checked ~ .side-menu{
+    transform:translate3d(0,0,0)!important;
+    visibility:visible!important;
+    opacity:1!important;
+    transition:transform .28s cubic-bezier(.16,1,.3,1),opacity .2s ease,visibility 0s!important;
+  }
+
+  body.app-authenticated .menu-overlay{
+    position:fixed!important;
+    inset:64px 0 0!important;
+    z-index:1150!important;
+    background:rgba(1,7,14,.58)!important;
+    backdrop-filter:blur(3px)!important;
+    -webkit-backdrop-filter:blur(3px)!important;
+  }
+
+  body.app-authenticated .menu-check:checked ~ .menu-overlay{
+    opacity:1!important;
+    visibility:visible!important;
+    pointer-events:auto!important;
+  }
+
+  body.app-authenticated.menu-open{overflow:hidden!important}
+
+  .menu-toggle{
+    z-index:1250!important;
+    flex:0 0 42px!important;
+    width:42px!important;
+    height:42px!important;
+  }
+
+  /* O painel continua no lugar; apenas a gaveta passa na frente. */
+  .admin-shell,.student-shell,.professor-dashboard{position:relative;z-index:1}
+
+  /* Mais espaço visual para o conteúdo depois que a gaveta é fechada. */
+  .admin-hero,.student-hero{position:relative;z-index:1}
+}
+
+@media (prefers-reduced-motion: reduce){
+  body.app-authenticated .side-menu{transition:none!important}
+  body.app-authenticated .menu-overlay{transition:none!important}
+}
+
+
+/* ==========================================================
+   PORTAL PYTHON — MOBILE FINAL
+   A gaveta fica realmente fora do fluxo da página.
+   Ao abrir, ela sobrepõe o conteúdo; ao fechar, o conteúdo
+   ocupa novamente 100% da largura e começa logo abaixo da topbar.
+   ========================================================== */
+
+@media (max-width: 760px), (min-width: 761px) and (max-width: 1100px) and (pointer: coarse) {
+  html, body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* A topbar permanece no fluxo; o conteúdo não precisa de
+     um "espaço reservado" para a sidebar. */
+  body.app-authenticated .topbar {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1300 !important;
+  }
+
+  body.app-authenticated .site-main {
+    position: relative !important;
+    z-index: 1 !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 16px 12px 28px !important;
+    box-sizing: border-box !important;
+  }
+
+  body.app-authenticated .site-footer {
+    width: 100% !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Gaveta: fixa no viewport, nunca participa do layout do main. */
+  body.app-authenticated .side-menu {
+    position: fixed !important;
+    top: 64px !important;
+    left: 0 !important;
+    right: auto !important;
+    bottom: 0 !important;
+    height: auto !important;
+    max-height: calc(100dvh - 64px) !important;
+    width: min(292px, 88vw) !important;
+    max-width: none !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    transform: translate3d(-110%, 0, 0) !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    z-index: 1250 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    overscroll-behavior: contain !important;
+    -webkit-overflow-scrolling: touch !important;
+    transition:
+      transform .28s cubic-bezier(.16,1,.3,1),
+      opacity .20s ease,
+      visibility 0s linear .28s !important;
+  }
+
+  body.app-authenticated .menu-check:checked ~ .side-menu {
+    transform: translate3d(0, 0, 0) !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    transition:
+      transform .28s cubic-bezier(.16,1,.3,1),
+      opacity .20s ease,
+      visibility 0s !important;
+  }
+
+  /* O overlay também fica fora do fluxo e abaixo da gaveta. */
+  body.app-authenticated .menu-overlay {
+    position: fixed !important;
+    top: 64px !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    z-index: 1200 !important;
+    display: block !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    background: rgba(1, 7, 14, .58) !important;
+    backdrop-filter: blur(3px) !important;
+    -webkit-backdrop-filter: blur(3px) !important;
+    transition: opacity .20s ease, visibility .20s ease !important;
+  }
+
+  body.app-authenticated .menu-check:checked ~ .menu-overlay {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
+
+  /* O botão continua acima de tudo para poder fechar/reabrir. */
+  body.app-authenticated .menu-toggle {
+    position: relative !important;
+    z-index: 1400 !important;
+  }
+
+  /* Hero e cards voltam a aparecer imediatamente no topo do conteúdo. */
+  body.app-authenticated .admin-shell,
+  body.app-authenticated .student-shell,
+  body.app-authenticated .professor-dashboard,
+  body.app-authenticated .reference-dashboard {
+    position: relative !important;
+    z-index: 1 !important;
+    width: 100% !important;
+    max-width: 1180px !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+  }
+
+  body.app-authenticated .admin-hero,
+  body.app-authenticated .student-hero,
+  body.app-authenticated .reference-hero {
+    margin-top: 0 !important;
+  }
+
+  /* No mobile, a arte não pode empurrar nem esconder o texto. */
+  body.app-authenticated .hero-python-art,
+  body.app-authenticated .student-hero-art {
+    pointer-events: none !important;
+  }
+}
+
+@media (max-width: 430px) {
+  body.app-authenticated .site-main {
+    padding: 12px 10px 24px !important;
+  }
+
+  body.app-authenticated .side-menu {
+    width: min(286px, 88vw) !important;
+  }
+
+  body.app-authenticated .admin-hero,
+  body.app-authenticated .student-hero,
+  body.app-authenticated .reference-hero {
+    margin-top: 0 !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.app-authenticated .side-menu,
+  body.app-authenticated .menu-overlay {
+    transition: none !important;
+  }
+}
