@@ -16,7 +16,7 @@
   <link rel="manifest" href="{{ url_for('static',filename='manifest.json') }}">
   <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static',filename='icons/icon-192.png') }}">
   <title>{% block title %}Portal Python{% endblock %}</title>
-  <link rel="stylesheet" href="{{ url_for('static',filename='css/style.css', v='20260912-cards-1') }}">
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/style.css', v='20260912-spatial-1') }}">
 </head>
 <body class="{% if current_user.is_authenticated %}app-authenticated{% else %}public-page{% endif %}">
 <div class="page-loader" id="pageLoader" aria-hidden="false" role="status" aria-live="polite">
@@ -61,7 +61,7 @@
     <a class="side-link {% if request.endpoint in ['student.materials','student.series','student.subject','student.content'] %}active{% endif %}" href="{{url_for('student.materials')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/file.svg') }}" alt=""></span><b>Materiais</b></a>
     <a class="side-link {% if request.endpoint in ['student.activities','student.activity'] %}active{% endif %}" href="{{url_for('student.activities')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/check.svg') }}" alt=""></span><b>Atividades</b></a>
     <a class="side-link {% if request.endpoint in ['student.experiments','student.experiment'] %}active{% endif %}" href="{{url_for('student.experiments')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/terminal.svg') }}" alt=""></span><b>Projetos Python</b></a>
-    <a class="side-link {% if request.endpoint == 'student.favorites' %}active{% endif %}" href="{{url_for('student.favorites')}}"><span class="nav-icon">★</span><b>Favoritos</b></a>
+    <a class="side-link {% if request.endpoint == 'student.favorites' %}active{% endif %}" href="{{url_for('student.favorites')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/folder-yellow.svg') }}" alt=""></span><b>Favoritos</b></a>
     <a class="side-link {% if request.endpoint == 'student.progress' %}active{% endif %}" href="{{url_for('student.progress')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/chart.svg') }}" alt=""></span><b>Progresso</b></a>
     <a class="side-link {% if request.endpoint == 'student.calendar_view' %}active{% endif %}" href="{{url_for('student.calendar_view')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/calendar.svg') }}" alt=""></span><b>Calendário</b></a>
     <a class="side-link {% if request.endpoint == 'student.achievements' %}active{% endif %}" href="{{url_for('student.achievements')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/bolt.svg') }}" alt=""></span><b>Conquistas</b></a>
@@ -86,6 +86,6 @@
 </main>
 <footer class="site-footer">Portal Python <span>•</span> Aprender <span>•</span> Praticar <span>•</span> Evoluir</footer>
 <script src="{{ url_for('static',filename='js/pwa.js') }}" defer></script>
-<script src="{{ url_for('static',filename='js/loading.js', v='20260912-cards-1') }}" defer></script>
+<script src="{{ url_for('static',filename='js/loading.js', v='20260912-spatial-1') }}" defer></script>
 </body>
 </html>
