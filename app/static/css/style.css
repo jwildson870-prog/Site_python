@@ -3511,3 +3511,34 @@ body.app-authenticated{
     transition: none !important;
   }
 }
+/* test */
+
+/* ==========================================================
+   UIVERSE-INSPIRED CARDS — Portal Python
+   Cards modernos, profundos e interativos, adaptados à
+   identidade azul/ciano/teal do Portal Python.
+   ========================================================== */
+.card,.panel,.box,.content-card,.dashboard-card,.publisher-card,.material-row,.admin-stat,.admin-action-card,.reference-section,.reference-stat,.student-panel,.student-stat,.student-material-card,.student-summary-card,.student-profile-card,.tile,.calendar-card,.achievement-card,.smart-alert-mini,.smart-alert-card,.ready-activity-card,.professor-metric,.professor-action,.notification-card,.performance-summary-card,.progress-hero-card,.pptx-viewer-card,.manage-card{
+  position:relative;isolation:isolate;overflow:hidden;border:1px solid rgba(87,206,255,.22)!important;border-radius:20px!important;
+  background:radial-gradient(180px 110px at 100% 0%,rgba(34,211,238,.12),transparent 72%),linear-gradient(145deg,rgba(14,48,78,.70),rgba(3,19,35,.56))!important;
+  box-shadow:0 18px 40px rgba(0,0,0,.24),0 4px 0 rgba(2,12,24,.42),inset 0 1px 0 rgba(255,255,255,.075),inset 0 -1px 0 rgba(0,0,0,.18)!important;
+  backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);
+  transition:transform .25s cubic-bezier(.16,1,.3,1),box-shadow .25s ease,border-color .25s ease,background .25s ease!important;
+}
+.card::before,.panel::before,.box::before,.content-card::before,.dashboard-card::before,.publisher-card::before,.material-row::before,.admin-stat::before,.admin-action-card::before,.reference-section::before,.reference-stat::before,.student-panel::before,.student-stat::before,.student-material-card::before,.student-summary-card::before,.student-profile-card::before,.tile::before,.calendar-card::before,.achievement-card::before,.smart-alert-mini::before,.smart-alert-card::before,.ready-activity-card::before,.professor-metric::before,.professor-action::before,.notification-card::before,.performance-summary-card::before,.progress-hero-card::before,.pptx-viewer-card::before,.manage-card::before{
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;border-radius:inherit;background:linear-gradient(115deg,rgba(255,255,255,.075),transparent 24%),radial-gradient(240px 150px at 8% 105%,rgba(20,184,166,.09),transparent 70%);opacity:.9;
+}
+.card::after,.panel::after,.box::after,.content-card::after,.dashboard-card::after,.publisher-card::after,.material-row::after,.admin-stat::after,.admin-action-card::after,.reference-section::after,.reference-stat::after,.student-panel::after,.student-stat::after,.student-material-card::after,.student-summary-card::after,.student-profile-card::after,.tile::after,.calendar-card::after,.achievement-card::after,.smart-alert-mini::after,.smart-alert-card::after,.ready-activity-card::after,.professor-metric::after,.professor-action::after,.notification-card::after,.performance-summary-card::after,.progress-hero-card::after,.pptx-viewer-card::after,.manage-card::after{
+  content:"";position:absolute;top:0;left:12%;width:76%;height:1px;z-index:2;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(103,232,249,.55),transparent);opacity:.7;
+}
+.card:hover,.panel:hover,.box:hover,.content-card:hover,.dashboard-card:hover,.publisher-card:hover,.material-row:hover,.admin-stat:hover,.admin-action-card:hover,.reference-section:hover,.reference-stat:hover,.student-panel:hover,.student-stat:hover,.student-material-card:hover,.student-summary-card:hover,.student-profile-card:hover,.tile:hover,.calendar-card:hover,.achievement-card:hover,.smart-alert-mini:hover,.smart-alert-card:hover,.ready-activity-card:hover,.professor-metric:hover,.professor-action:hover,.notification-card:hover,.performance-summary-card:hover,.progress-hero-card:hover,.pptx-viewer-card:hover,.manage-card:hover{
+  transform:translateY(-5px);border-color:rgba(91,214,255,.44)!important;background:radial-gradient(220px 130px at 100% 0%,rgba(34,211,238,.16),transparent 72%),linear-gradient(145deg,rgba(17,57,91,.76),rgba(4,22,40,.62))!important;
+  box-shadow:0 26px 55px rgba(0,0,0,.32),0 7px 0 rgba(2,12,24,.36),0 0 28px rgba(34,211,238,.08),inset 0 1px 0 rgba(255,255,255,.10)!important;
+}
+a.card:active,a.tile:active,a.student-material-card:active,a.student-summary-card:active,a.student-activity-card:active,a.professor-metric:active,a.professor-action:active{transform:translateY(1px) scale(.995)!important;box-shadow:0 8px 18px rgba(0,0,0,.25),inset 0 3px 8px rgba(0,0,0,.20)!important}
+.card img,.tile img,.student-material-card img,.student-summary-card img,.student-activity-card img,.professor-metric img,.professor-action img,.notification-card img,.manage-card img{filter:drop-shadow(0 4px 8px rgba(0,0,0,.20))}
+@media(max-width:760px){
+ .card,.panel,.box,.content-card,.dashboard-card,.publisher-card,.material-row,.admin-stat,.admin-action-card,.reference-section,.reference-stat,.student-panel,.student-stat,.student-material-card,.student-summary-card,.student-profile-card,.tile,.calendar-card,.achievement-card,.smart-alert-mini,.smart-alert-card,.ready-activity-card,.professor-metric,.professor-action,.notification-card,.performance-summary-card,.progress-hero-card,.pptx-viewer-card,.manage-card{border-radius:17px!important;box-shadow:0 14px 30px rgba(0,0,0,.22),0 3px 0 rgba(2,12,24,.36),inset 0 1px 0 rgba(255,255,255,.07)!important}
+ .card:hover,.panel:hover,.box:hover,.content-card:hover,.dashboard-card:hover,.publisher-card:hover,.material-row:hover,.admin-stat:hover,.admin-action-card:hover,.reference-section:hover,.reference-stat:hover,.student-panel:hover,.student-stat:hover,.student-material-card:hover,.student-summary-card:hover,.student-profile-card:hover,.tile:hover,.calendar-card:hover,.achievement-card:hover,.smart-alert-mini:hover,.smart-alert-card:hover,.ready-activity-card:hover,.professor-metric:hover,.professor-action:hover,.notification-card:hover,.performance-summary-card:hover,.progress-hero-card:hover,.pptx-viewer-card:hover,.manage-card:hover{transform:translateY(-2px)}
+}
+@media(prefers-reduced-motion:reduce){.card,.panel,.box,.content-card,.dashboard-card,.publisher-card,.material-row,.admin-stat,.admin-action-card,.reference-section,.reference-stat,.student-panel,.student-stat,.student-material-card,.student-summary-card,.student-profile-card,.tile,.calendar-card,.achievement-card,.smart-alert-mini,.smart-alert-card,.ready-activity-card,.professor-metric,.professor-action,.notification-card,.performance-summary-card,.progress-hero-card,.pptx-viewer-card,.manage-card{transition:none!important}}
