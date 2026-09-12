@@ -110,6 +110,13 @@ def create_app(test_config=None):
                     conn.execute(text('ALTER TABLE activities ADD COLUMN IF NOT EXISTS due_at TIMESTAMP'))
                 elif db.engine.dialect.name == 'sqlite':
                     conn.execute(text('ALTER TABLE activities ADD COLUMN due_at DATETIME'))
+        inspector = inspect(db.engine)
+        if 'activities' in inspector.get_table_names() and 'difficulty' not in {c['name'] for c in inspector.get_columns('activities')}:
+            with db.engine.begin() as conn:
+                if db.engine.dialect.name == 'postgresql':
+                    conn.execute(text("ALTER TABLE activities ADD COLUMN IF NOT EXISTS difficulty VARCHAR(20) DEFAULT 'medio'"))
+                elif db.engine.dialect.name == 'sqlite':
+                    conn.execute(text("ALTER TABLE activities ADD COLUMN difficulty VARCHAR(20) DEFAULT 'medio'"))
         # O banco de questões é aditivo e não altera tabelas existentes.
         db.create_all()
         from .services import ensure_admin,seed_initial_content,migrate_legacy_python_subjects

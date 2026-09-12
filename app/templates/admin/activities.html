@@ -3,6 +3,10 @@
 {% block content %}
 <section class="admin-shell workspace-shell activity-manager">
   <div class="workspace-head"><div><span class="eyebrow">AVALIAÇÃO</span><h1>Atividades</h1><p>Crie, organize e acompanhe atividades com prazo e correção automática.</p></div></div>
+  <div class="activity-tabs" role="tablist" aria-label="Gerenciamento de atividades">
+    <a class="activity-tab active" href="{{url_for('admin.activities')}}"><span>✦</span> Minhas atividades</a>
+    <a class="activity-tab" href="{{url_for('admin.ready_activities')}}"><span>⚡</span> Atividades prontas <b>9</b></a>
+  </div>
   <form class="publisher-card form-section" method="post">
     <input type="hidden" name="csrf_token" value="{{csrf_token()}}">
     <div class="form-section-head"><div class="step-number">1</div><div><span class="eyebrow">NOVA ATIVIDADE</span><h2>Dados da atividade</h2><p>Defina a turma e, se quiser, um prazo de entrega.</p></div></div>
@@ -10,6 +14,7 @@
       <label class="field-block full">Título<input name="title" maxlength="200" placeholder="Ex.: Revisão de ligações químicas" required></label>
       <label class="field-block">Série<select name="series_id" required>{% for s in series %}<option value="{{s.id}}">{{s.name}}</option>{% endfor %}</select></label>
       <label class="field-block">Matéria<select name="subject_id" required>{% for s in series %}{% for sub in s.subjects %}<option value="{{sub.id}}">{{s.name}} · {{sub.name}}</option>{% endfor %}{% endfor %}</select></label>
+      <label class="field-block">Nível<select name="difficulty"><option value="facil">Fácil</option><option value="medio" selected>Médio</option><option value="dificil">Difícil</option></select></label>
       <label class="field-block">Prazo de entrega<input type="datetime-local" name="due_at"><small>Opcional. Deixe vazio para uma atividade sem prazo.</small></label>
       <label class="field-block full">Descrição<textarea name="description" maxlength="5000" placeholder="Explique o objetivo da atividade."></textarea></label>
     </div>
@@ -21,7 +26,8 @@
     <label><span>Série</span><select name="series_id"><option value="">Todas</option>{% for s in series %}<option value="{{s.id}}" {% if series_id==s.id|string %}selected{% endif %}>{{s.name}}</option>{% endfor %}</select></label>
     <label><span>Matéria</span><select name="subject_id"><option value="">Todas</option>{% for s in subjects %}<option value="{{s.id}}" {% if subject_id==s.id|string %}selected{% endif %}>{{s.name}}</option>{% endfor %}</select></label>
     <label><span>Prazo</span><select name="status"><option value="">Todas</option><option value="pending" {% if status=='pending' %}selected{% endif %}>Em aberto</option><option value="expired" {% if status=='expired' %}selected{% endif %}>Encerradas</option></select></label>
-    <button class="btn" type="submit">Filtrar</button>{% if q or series_id or subject_id or status %}<a class="btn secondary" href="{{url_for('admin.activities')}}">Limpar</a>{% endif %}
+    <label><span>Nível</span><select name="difficulty"><option value="">Todos</option><option value="facil" {% if difficulty=='facil' %}selected{% endif %}>Fácil</option><option value="medio" {% if difficulty=='medio' %}selected{% endif %}>Médio</option><option value="dificil" {% if difficulty=='dificil' %}selected{% endif %}>Difícil</option></select></label>
+    <button class="btn" type="submit">Filtrar</button>{% if q or series_id or subject_id or status or difficulty %}<a class="btn secondary" href="{{url_for('admin.activities')}}">Limpar</a>{% endif %}
   </form>
   <div class="library-toolbar"><div><strong>{{activities|length}}</strong><span>atividade(s) encontrada(s)</span></div><div class="library-hint">Organização por turma e prazo</div></div>
 
@@ -30,7 +36,7 @@
     {% set total = a.get_questions()|length %}
     <article class="activity-admin-card">
       <div class="activity-admin-main">
-        <div class="material-meta"><span class="badge">{{a.series.name}}</span><span class="badge subtle-badge">{{a.subject.name}}</span>{% if a.due_at %}<span class="deadline-badge">Prazo {{a.due_at.strftime('%d/%m %H:%M')}}</span>{% else %}<span class="badge subtle-badge">Sem prazo</span>{% endif %}</div>
+        <div class="material-meta"><span class="badge">{{a.series.name}}</span><span class="badge subtle-badge">{{a.subject.name}}</span><span class="difficulty-badge difficulty-{{a.difficulty or 'medio'}}">{{'Fácil' if a.difficulty=='facil' else 'Difícil' if a.difficulty=='dificil' else 'Médio'}}</span>{% if a.due_at %}<span class="deadline-badge">Prazo {{a.due_at.strftime('%d/%m %H:%M')}}</span>{% else %}<span class="badge subtle-badge">Sem prazo</span>{% endif %}</div>
         <h2>{{a.title}}</h2><p>{{a.description or 'Sem descrição.'}}</p>
         <div class="activity-admin-meta"><span>{{total}} questão(ões)</span><span>{{a.attempts|length}} tentativa(s)</span></div>
       </div>

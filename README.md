@@ -161,3 +161,8 @@ Defina também uma `SECRET_KEY` aleatória e, em HTTPS, use `SESSION_COOKIE_SECU
 - Rotas de professor e aluno possuem verificação de papel no servidor.
 - Arquivos administrativos precisam estar vinculados a um material existente, evitando navegação arbitrária pelo bucket.
 - Em produção, mantenha `SECRET_KEY`, `DATABASE_URL` e credenciais do B2 somente nas variáveis de ambiente do Render.
+
+## Atividades prontas
+
+A área do professor inclui uma biblioteca de 9 atividades prontas sobre laços de repetição em Python, divididas em níveis fácil, médio e difícil. Cada modelo já possui questões objetivas, alternativas e respostas corretas. O professor escolhe série, matéria e prazo, cria uma cópia da atividade e pode editá-la antes de publicar.
+
