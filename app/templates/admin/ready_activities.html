@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Atividades prontas · Portal Python{% endblock %}
+{% block content %}
+<section class="admin-shell workspace-shell ready-activities-page">
+  <div class="workspace-head"><div><span class="eyebrow">BIBLIOTECA DIDÁTICA</span><h1>Atividades prontas</h1><p>Escolha uma atividade já montada, defina a turma e publique. Você também pode editar as questões depois.</p></div><a class="btn secondary" href="{{url_for('admin.activities')}}">← Minhas atividades</a></div>
+  <div class="activity-tabs" role="tablist" aria-label="Gerenciamento de atividades"><a class="activity-tab" href="{{url_for('admin.activities')}}"><span>✦</span> Minhas atividades</a><a class="activity-tab active" href="{{url_for('admin.ready_activities')}}"><span>⚡</span> Atividades prontas <b>{{all_templates|length}}</b></a></div>
+  <div class="ready-intro publisher-card"><div class="ready-intro-icon">⚡</div><div><strong>Escolha por nível</strong><p>As atividades abaixo já vêm com perguntas e respostas corretas. O professor só precisa escolher a série, a matéria e, se quiser, o prazo.</p></div></div>
+  <form class="ready-filter" method="get"><label><span>Nível</span><select name="difficulty"><option value="">Todos os níveis</option><option value="facil" {% if difficulty=='facil' %}selected{% endif %}>Fácil</option><option value="medio" {% if difficulty=='medio' %}selected{% endif %}>Médio</option><option value="dificil" {% if difficulty=='dificil' %}selected{% endif %}>Difícil</option></select></label><button class="btn secondary" type="submit">Filtrar</button>{% if difficulty %}<a class="btn secondary" href="{{url_for('admin.ready_activities')}}">Limpar</a>{% endif %}</form>
+  <div class="ready-activity-grid">
+  {% for item in templates %}
+    <article class="ready-activity-card">
+      <div class="ready-card-top"><span class="difficulty-badge difficulty-{{item.difficulty}}">{{'Fácil' if item.difficulty=='facil' else 'Difícil' if item.difficulty=='dificil' else 'Médio'}}</span><span class="ready-question-count">{{item.questions|length}} questões</span></div>
+      <h2>{{item.title}}</h2><p>{{item.description}}</p>
+      <div class="ready-topic-list">{% for q in item.questions[:3] %}<span>✓ {{q.question}}</span>{% endfor %}{% if item.questions|length > 3 %}<span>＋ mais {{item.questions|length - 3}} questão(ões)</span>{% endif %}</div>
+      <details class="ready-preview"><summary>Ver questões antes de usar</summary><ol>{% for q in item.questions %}<li><strong>{{q.question}}</strong><small>Resposta: {{q.correct}}</small></li>{% endfor %}</ol></details>
+      <form method="post" class="ready-use-form"><input type="hidden" name="csrf_token" value="{{csrf_token()}}"><input type="hidden" name="template_slug" value="{{item.slug}}">
+        <div class="ready-form-grid"><label>Série<select name="series_id" required>{% for s in series %}<option value="{{s.id}}">{{s.name}}</option>{% endfor %}</select></label><label>Matéria<select name="subject_id" required>{% for s in series %}{% for sub in s.subjects %}<option value="{{sub.id}}">{{s.name}} · {{sub.name}}</option>{% endfor %}{% endfor %}</select></label><label class="ready-due">Prazo (opcional)<input type="datetime-local" name="due_at"></label></div>
+        <button class="btn admin-primary" type="submit">Usar esta atividade →</button>
+      </form>
+    </article>
+  {% else %}<div class="publisher-card empty-state"><h2>Nenhuma atividade neste nível</h2><p>Escolha outro nível de dificuldade.</p></div>{% endfor %}
+  </div>
+</section>
+{% endblock %}

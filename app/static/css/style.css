@@ -2446,3 +2446,82 @@ html.is-loading body{
 @media(max-width:900px){.student-continue-grid{grid-template-columns:1fr}.achievement-grid{grid-template-columns:1fr 1fr}.calendar-day{min-height:90px}.question-bank-row{grid-template-columns:1fr}.bank-import-list{grid-template-columns:1fr 1fr}}
 @media(max-width:640px){.student-achievement-strip{align-items:flex-start;flex-direction:column}.student-achievement-strip .btn{width:100%}.progress-hero-card{grid-template-columns:1fr}.progress-ring-small{margin-left:auto}.progress-next-grid{grid-template-columns:1fr}.calendar-card{padding:10px}.calendar-weekdays,.calendar-grid{gap:4px}.calendar-day{min-height:76px;padding:5px;border-radius:10px}.calendar-day>a{padding:5px;margin-top:4px}.calendar-day>a span{font-size:.59rem}.calendar-day>a small{font-size:.56rem}.calendar-day>strong{width:24px;height:24px;font-size:.68rem}.achievement-grid{grid-template-columns:1fr}.achievement-card{min-height:120px}.question-bank-options-preview{grid-template-columns:1fr}.continue-study-link{grid-template-columns:44px minmax(0,1fr)}.continue-icon{width:44px;height:44px}.continue-study-link b{grid-column:2}.calendar-head h2{font-size:1.05rem}}
 @media(prefers-reduced-motion:reduce){.continue-study-link,.progress-next,.achievement-card{transition:none}.continue-study-link:hover,.progress-next:hover{transform:none}}
+
+/* =========================================================
+   PORTAL PYTHON — REFINAMENTO COMBINADO DAS SKILLS
+   UI/UX Pro Max + Impeccable + Skills for Designers/Engineers.
+   Regra deste passe: identidade e paleta existentes preservadas.
+   Apenas hierarquia, acessibilidade, responsividade e microinterações.
+========================================================= */
+:root{
+  --pjm-ease-out:cubic-bezier(.23,1,.32,1);
+  --pjm-ease-in-out:cubic-bezier(.77,0,.175,1);
+  --pjm-motion-fast:140ms;
+  --pjm-motion-ui:180ms;
+}
+
+/* Superfícies do navegador também pertencem ao sistema visual. */
+::selection{background:rgba(56,189,248,.28);color:#fff}
+html{scrollbar-color:#31506d var(--pjm-bg)}
+body{scrollbar-gutter:stable}
+img,svg{max-width:100%}
+
+/* Foco consistente e realmente perceptível em teclado. */
+:where(a,button,input,select,textarea,summary,[tabindex]:not([tabindex="-1"])):focus-visible{
+  outline:2px solid #67d7f6;
+  outline-offset:3px;
+}
+
+/* Press feedback: rápido, pequeno e sem deslocar o layout. */
+:where(button,.btn,.side-link,.tile,.teacher-nav-item,.professor-metric,.professor-action,.student-quick-grid a):active{
+  transform:scale(.98);
+}
+
+/* Hover é reservado a ponteiro real; toque não recebe falso hover. */
+@media (hover:none), (pointer:coarse){
+  .btn:hover,.tile:hover,.professor-metric:hover,.professor-action:hover,
+  .student-quick-grid a:hover,.student-list-item:hover,.student-notice:hover,
+  .student-grade-row:hover{transform:none}
+}
+
+/* Textos longos não quebram a composição do painel. */
+.admin-shell,.student-shell,.professor-dashboard,.professor-panel,.card,.panel,
+.content-card,.dashboard-card,.material-row,.activity-admin-card,.student-activity-card{
+  min-width:0;
+}
+:is(h1,h2,h3,h4){text-wrap:balance}
+:is(p,td,th,.professor-action,.professor-metric,.side-link,.material-row){overflow-wrap:anywhere}
+
+/* Movimento de interface: curvas fortes e curtas, sem "ease-in". */
+.btn,.tile,.teacher-nav-item,.professor-metric,.professor-action,
+.student-quick-grid a,.smart-alert-mini,.smart-alert-card{
+  transition-property:transform,border-color,background-color,box-shadow,color;
+  transition-duration:var(--pjm-motion-ui);
+  transition-timing-function:var(--pjm-ease-out);
+}
+
+/* Loader: saída rápida e previsível; a animação contínua permanece limitada ao loader. */
+.page-loader{transition-property:opacity,visibility;transition-duration:220ms;transition-timing-function:var(--pjm-ease-out)}
+
+/* Não deixe controles compactos demais no toque. */
+@media (pointer:coarse){
+  .btn,.menu-toggle,.menu-close,.side-link,.teacher-nav-item,
+  .student-quick-grid a,.professor-action{min-height:44px}
+}
+
+/* Em telas pequenas, a leitura vem antes da densidade. */
+@media (max-width:600px){
+  .professor-panel-head h2{line-height:1.25}
+  .professor-panel-head p{line-height:1.45}
+  .professor-action-grid{gap:9px}
+  .professor-action{min-height:48px}
+  .side-nav{padding-bottom:18px}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .btn,.tile,.teacher-nav-item,.professor-metric,.professor-action,
+  .student-quick-grid a,.smart-alert-mini,.smart-alert-card,.page-loader{
+    transition-duration:.01ms !important;
+    transition-timing-function:linear !important;
+  }
+}
