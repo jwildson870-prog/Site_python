@@ -1,1 +1,53 @@
-{% extends 'base.html' %}{% block title %}{{subject.name}} · Portal Python{% endblock %}{% block content %}<section class="student-shell"><p><a class="back-link" href="{{url_for('student.series',id=subject.series.id)}}">← {{subject.series.name}}</a></p><span class="eyebrow">ÁREA DO ALUNO · MATÉRIA</span><h1>{{subject.name}}</h1><h2>Materiais</h2><div class="list">{% for c in subject.contents %}<a class="card row" href="{{url_for('student.content',id=c.id)}}"><div><h3>{{c.title}}</h3><p>{{c.description or 'Material de estudo'}}</p></div><span class="badge">{{c.kind}}</span></a>{% else %}<div class="card">Nenhum conteúdo cadastrado.</div>{% endfor %}</div>{% if activities %}<h2>Atividades</h2><div class="grid">{% for a in activities %}<a class="card tile" href="{{url_for('student.activity',id=a.id)}}"><span>📝</span><h3>{{a.title}}</h3></a>{% endfor %}</div>{% endif %}{% if experiments %}<h2>Projetos práticos</h2><div class="grid">{% for e in experiments %}<a class="card tile" href="{{url_for('student.experiment',id=e.id)}}"><span>&gt;_</span><h3>{{e.title}}</h3></a>{% endfor %}</div>{% endif %}</section>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}{{subject.name}} · Portal Python{% endblock %}
+{% block content %}
+<section class="student-shell student-subject-page">
+  <p><a class="back-link" href="{{url_for('student.series',id=subject.series.id)}}">← {{subject.series.name}}</a></p>
+  <div class="student-page-head subject-page-head">
+    <div><span class="eyebrow">ÁREA DO ALUNO · MATÉRIA</span><h1>{{subject.name}}</h1><p>Escolha um conteúdo para continuar seus estudos.</p></div>
+  </div>
+
+  <section class="subject-resource-section">
+    <div class="subject-section-head"><div><span class="eyebrow">CONTEÚDOS</span><h2>Materiais</h2></div><span class="subject-count">{{ subject.contents|length }} item(ns)</span></div>
+    <div class="subject-resource-grid">
+      {% for c in subject.contents %}
+      <a class="subject-resource-card" href="{{url_for('student.content',id=c.id)}}">
+        <span class="subject-resource-icon material-icon-file"><img src="{{url_for('static',filename='icons/ui/file.svg')}}" alt=""></span>
+        <span class="subject-resource-body"><small>{{ {'file':'MATERIAL','pdf':'PDF','slide':'SLIDES','video':'VÍDEO','link':'LINK','explanation':'TEXTO'}.get(c.kind,c.kind)|upper }}</small><strong>{{c.title}}</strong><em>{{c.description or 'Material de estudo'}}</em></span>
+        <b class="subject-resource-arrow">→</b>
+      </a>
+      {% else %}<div class="subject-empty-card">Nenhum conteúdo cadastrado.</div>{% endfor %}
+    </div>
+  </section>
+
+  {% if activities %}
+  <section class="subject-resource-section">
+    <div class="subject-section-head"><div><span class="eyebrow">PRÁTICA</span><h2>Atividades</h2></div><span class="subject-count">{{ activities|length }} atividade(s)</span></div>
+    <div class="subject-resource-grid subject-action-grid">
+      {% for a in activities %}
+      <a class="subject-resource-card subject-action-card" href="{{url_for('student.activity',id=a.id)}}">
+        <span class="subject-resource-icon activity-icon"><img src="{{url_for('static',filename='icons/ui/check.svg')}}" alt=""></span>
+        <span class="subject-resource-body"><small>ATIVIDADE</small><strong>{{a.title}}</strong><em>Teste seus conhecimentos e acompanhe seu desempenho.</em></span>
+        <b class="subject-resource-arrow">→</b>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if experiments %}
+  <section class="subject-resource-section">
+    <div class="subject-section-head"><div><span class="eyebrow">DESAFIO</span><h2>Projetos práticos</h2></div><span class="subject-count">{{ experiments|length }} projeto(s)</span></div>
+    <div class="subject-resource-grid subject-action-grid">
+      {% for e in experiments %}
+      <a class="subject-resource-card subject-action-card" href="{{url_for('student.experiment',id=e.id)}}">
+        <span class="subject-resource-icon project-icon"><img src="{{url_for('static',filename='icons/ui/code.svg')}}" alt=""></span>
+        <span class="subject-resource-body"><small>PROJETO PYTHON</small><strong>{{e.title}}</strong><em>Coloque a programação em prática com um projeto.</em></span>
+        <b class="subject-resource-arrow">→</b>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+</section>
+{% endblock %}
