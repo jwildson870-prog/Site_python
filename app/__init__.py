@@ -27,6 +27,8 @@ def create_app(test_config=None):
         SECRET_KEY=secret_key,
         SQLALCHEMY_DATABASE_URI=dburl,
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        # Reutiliza conexões do PostgreSQL/Neon para reduzir a latência das páginas.
+        **({'SQLALCHEMY_ENGINE_OPTIONS': {'pool_pre_ping': True, 'pool_recycle': 300, 'pool_size': 5, 'max_overflow': 5, 'pool_timeout': 10}} if dburl.startswith('postgresql+') else {}),
         UPLOAD_FOLDER=str(upload_folder),
         MAX_CONTENT_LENGTH=25*1024*1024,
         MAX_FORM_MEMORY_SIZE=2*1024*1024,
@@ -56,6 +58,10 @@ def create_app(test_config=None):
         response.headers.setdefault('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
         response.headers.setdefault('Cross-Origin-Opener-Policy', 'same-origin-allow-popups')
         response.headers.setdefault('Content-Security-Policy', "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https:; script-src 'self' 'unsafe-inline' https:; font-src 'self' data: https:; frame-src 'self' https:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self' https://accounts.google.com")
+        # Arquivos estáticos são imutáveis do ponto de vista da página e já usam
+        # query strings de versão quando necessário; cache longo acelera visitas seguintes.
+        if request.path.startswith('/static/'):
+            response.headers.setdefault('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400')
         if request.is_secure or os.getenv('RENDER','').lower() == 'true':
             response.headers.setdefault('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
         return response

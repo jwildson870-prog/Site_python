@@ -1,7 +1,8 @@
-const CACHE_NAME = 'portal-python-static-v6';
+const CACHE_NAME = 'portal-python-static-v7';
 const STATIC_ASSETS = [
   '/static/css/style.css',
   '/static/js/ui.js',
+  '/static/js/loading.js',
   '/static/manifest.json',
   '/static/icons/icon-192.png',
   '/static/icons/icon-512.png',
