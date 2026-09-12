@@ -13,3 +13,5 @@ boto3>=1.35,<2
 bleach>=6.1,<7
 
 openpyxl>=3.1,<4
+
+PyMuPDF>=1.24,<2

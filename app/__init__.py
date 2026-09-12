@@ -98,6 +98,12 @@ def create_app(test_config=None):
         # Migração leve e retrocompatível para instalações existentes: adiciona
         # o prazo das atividades sem apagar nem recriar tabelas do Neon.
         inspector = inspect(db.engine)
+        if 'contents' in inspector.get_table_names() and 'preview_manifest' not in {c['name'] for c in inspector.get_columns('contents')}:
+            with db.engine.begin() as conn:
+                if db.engine.dialect.name == 'postgresql':
+                    conn.execute(text('ALTER TABLE contents ADD COLUMN IF NOT EXISTS preview_manifest TEXT'))
+                elif db.engine.dialect.name == 'sqlite':
+                    conn.execute(text('ALTER TABLE contents ADD COLUMN preview_manifest TEXT'))
         if 'activities' in inspector.get_table_names() and 'due_at' not in {c['name'] for c in inspector.get_columns('activities')}:
             with db.engine.begin() as conn:
                 if db.engine.dialect.name == 'postgresql':

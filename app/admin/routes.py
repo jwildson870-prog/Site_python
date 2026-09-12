@@ -1,4 +1,4 @@
-import os, uuid
+import os, uuid, io, json
 from datetime import datetime, timedelta
 from pathlib import Path
 from urllib.parse import urlparse
@@ -9,6 +9,7 @@ from werkzeug.utils import secure_filename
 from ..storage import upload as storage_upload, delete as storage_delete, get_file, b2_enabled, StorageError
 from ..extensions import db
 from ..models import Series, Subject, Content, User, Activity, ActivityAttempt, Experiment, Notification, Alert
+from ..pptx_preview import convert_pptx_to_images
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 ALLOWED_KINDS = {'explanation','file','pdf','slide','video','link'}
@@ -319,6 +320,38 @@ def contents():
 @admin_bp.get('/series/<int:id>')
 def series_detail(id): return render_template('admin/series_detail.html',series=Series.query.get_or_404(id))
 
+def _preview_files(content):
+    try:
+        data = json.loads(content.preview_manifest or '[]')
+        return data if isinstance(data, list) else []
+    except (TypeError, ValueError):
+        return []
+
+def _load_stored_bytes(key):
+    if b2_enabled():
+        obj = get_file(key)
+        if not obj:
+            raise RuntimeError('Não foi possível ler o arquivo enviado.')
+        return obj['Body'].read()
+    path = Path(current_app.config['UPLOAD_FOLDER']) / key
+    if not path.exists():
+        raise RuntimeError('O arquivo enviado não foi encontrado no armazenamento.')
+    return path.read_bytes()
+
+def _build_pptx_preview(key):
+    images = convert_pptx_to_images(_load_stored_bytes(key))
+    keys = []
+    try:
+        for slide_name, data in images:
+            upload_name = f'{Path(key).stem}-{slide_name}'
+            slide_key = storage_upload(io.BytesIO(data), upload_name, 'image/png')
+            keys.append(slide_key)
+        return keys
+    except Exception:
+        for slide_key in keys:
+            storage_delete(slide_key)
+        raise
+
 def content_form(content=None):
     series = Series.query.order_by(Series.id).all()
     subjects = Subject.query.order_by(Subject.id).all()
@@ -347,7 +380,9 @@ def content_form(content=None):
         return None, series, subjects
 
     old_file = content.file_name if content else None
+    old_preview = _preview_files(content) if content else []
     new_file = old_file
+    new_preview = old_preview
     if kind in {'file', 'pdf'}:
         uploaded, original = save_uploaded_file(
             request.files.get('file') or request.files.get('pdf'),
@@ -374,11 +409,22 @@ def content_form(content=None):
         if uploaded:
             new_file = uploaded
             desc = desc or f'Material enviado: {original}'
+            if Path(original).suffix.lower() == '.pptx':
+                try:
+                    new_preview = _build_pptx_preview(new_file)
+                except Exception as exc:
+                    storage_delete(new_file)
+                    current_app.logger.exception('Falha ao gerar pré-visualização do PPTX')
+                    flash(f'Não foi possível preparar a visualização do PowerPoint: {exc}', 'error')
+                    return None, series, subjects
+            else:
+                new_preview = []
         elif not old_file:
             flash('Escolha um arquivo do seu dispositivo.', 'error')
             return None, series, subjects
     else:
         new_file = None
+        new_preview = []
 
     if content is None:
         content = Content()
@@ -389,6 +435,7 @@ def content_form(content=None):
     content.body = body if kind == 'explanation' else None
     content.external_url = external_url if kind in {'slide', 'video', 'link'} else None
     content.file_name = new_file
+    content.preview_manifest = json.dumps(new_preview, ensure_ascii=False) if new_preview else None
     content.series_id = s.id
     content.subject_id = sub.id
     db.session.add(content)
@@ -396,6 +443,10 @@ def content_form(content=None):
 
     if old_file and old_file != new_file:
         storage_delete(old_file)
+    if old_preview and old_preview != new_preview:
+        for key in old_preview:
+            if key not in new_preview:
+                storage_delete(key)
     return content, None, None
 
 @admin_bp.route('/contents/new', methods=['GET', 'POST'])
@@ -421,10 +472,14 @@ def content_edit(id):
 def content_delete(id):
     content = Content.query.get_or_404(id)
     filename = content.file_name
+    preview_files = _preview_files(content)
     db.session.delete(content)
     db.session.commit()
     if filename:
         storage_delete(filename)
+    for key in preview_files:
+        if isinstance(key, str):
+            storage_delete(key)
     flash('Conteúdo excluído.', 'success')
     return redirect(url_for('admin.contents'))
 

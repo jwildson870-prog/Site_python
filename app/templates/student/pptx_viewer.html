@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}{{ content.title }} · Portal Python{% endblock %}
+{% block content %}
+<section class="student-shell pptx-viewer-shell">
+  <div class="pptx-viewer-head">
+    <a class="back-link" href="{{ url_for('student.content', id=content.id) }}">← Voltar ao material</a>
+    <div>
+      <span class="eyebrow">VISUALIZAÇÃO · POWERPOINT</span>
+      <h1>{{ content.title }}</h1>
+      <p>Slides convertidos para imagem para abrir diretamente no portal.</p>
+    </div>
+  </div>
+  <div class="pptx-viewer-card">
+    <div class="pptx-viewer-actions">
+      <a class="btn secondary" href="{{ url_for('student.content', id=content.id) }}">← Voltar</a>
+      <span class="badge">{{ slides|length }} slide{{ '' if slides|length == 1 else 's' }}</span>
+    </div>
+    <div class="pptx-slides" aria-label="Slides da apresentação">
+      {% for slide in slides %}
+      <figure class="pptx-slide">
+        <img src="{{ url_for('student.pptx_slide', id=content.id, slide=slide) }}" alt="Slide {{ slide + 1 }}" loading="{% if slide == 0 %}eager{% else %}lazy{% endif %}">
+        <figcaption>Slide {{ slide + 1 }} de {{ slides|length }}</figcaption>
+      </figure>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

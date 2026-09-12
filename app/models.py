@@ -50,6 +50,7 @@ class Content(db.Model):
     body = db.Column(db.Text)
     external_url = db.Column(db.String(1000))
     file_name = db.Column(db.String(255))
+    preview_manifest = db.Column(db.Text)  # JSON com imagens geradas para PPTX
     series_id = db.Column(db.Integer, db.ForeignKey('series.id'), nullable=False)
     subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)

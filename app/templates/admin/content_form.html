@@ -23,6 +23,7 @@
         <div class="publisher-card form-section">
           <div class="form-section-head"><div class="step-number">2</div><div><span class="eyebrow">ARQUIVO / LINK</span><h2>Fonte do material</h2><p>Envie um arquivo ou informe um endereço externo.</p></div></div>
           <div class="field-block"><label>Arquivo do dispositivo<input class="file-input" name="file" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.ppt,.pptx,.doc,.docx,.txt"></label></div>
+          <p class="field-help">PowerPoint <strong>.pptx</strong> é convertido automaticamente em imagens para leitura dentro do portal.</p>
           {% if content and content.file_name %}<div class="source-note">📎 Arquivo atual: <strong>{{content.file_name.split("-")[-1] if content.file_name else ""}}</strong><br><span>Sem novo envio, o arquivo atual será mantido.</span></div>{% endif %}
           <div class="field-block"><label>Link externo / Google Drive / vídeo<input name="external_url" type="url" value="{{content.external_url if content else ''}}" placeholder="https://..."></label></div>
           <a class="btn secondary compact-btn" href="https://drive.google.com/drive/my-drive" target="_blank" rel="noopener noreferrer">↗ Abrir Google Drive</a>

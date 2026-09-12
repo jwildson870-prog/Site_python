@@ -27,6 +27,13 @@ def safe_file_response(obj, filename, fallback_type='application/octet-stream'):
         'Cache-Control': 'private, no-store',
         'X-Content-Type-Options': 'nosniff',
     })
+def _preview_files(content):
+    try:
+        data = json.loads(content.preview_manifest or '[]')
+        return data if isinstance(data, list) else []
+    except (TypeError, ValueError):
+        return []
+
 @student_bp.before_request
 def guard():
     if not current_user.is_authenticated:return redirect(url_for('auth.login',next='/aluno/'))
@@ -125,7 +132,7 @@ def series(id): return render_template('student/series.html',series=Series.query
 def subject(id): return render_template('student/subject.html',subject=Subject.query.get_or_404(id),activities=Activity.query.filter_by(subject_id=id).order_by(Activity.id.desc()).all(),experiments=Experiment.query.filter_by(subject_id=id).order_by(Experiment.id.desc()).all())
 @student_bp.get('/conteudo/<int:id>')
 def content(id):
-    c=Content.query.get_or_404(id); fav=Favorite.query.filter_by(user_id=current_user.id,content_id=c.id).first(); done=Progress.query.filter_by(user_id=current_user.id,content_id=c.id).first(); return render_template('student/content.html',content=c,favorite=bool(fav),completed=bool(done))
+    c=Content.query.get_or_404(id); fav=Favorite.query.filter_by(user_id=current_user.id,content_id=c.id).first(); done=Progress.query.filter_by(user_id=current_user.id,content_id=c.id).first(); return render_template('student/content.html',content=c,favorite=bool(fav),completed=bool(done),pptx_preview=bool(_preview_files(c)))
 @student_bp.post('/conteudo/<int:id>/favoritar')
 def toggle_favorite(id):
     c=Content.query.get_or_404(id); f=Favorite.query.filter_by(user_id=current_user.id,content_id=c.id).first()
@@ -222,6 +229,32 @@ def search():
     return render_template('student/search.html', q=q, category=category, series_id=series_id, subject_id=subject_id,
                            series=Series.query.order_by(Series.id).all(), subjects=Subject.query.order_by(Subject.name).all(),
                            contents=contents, activities=activities, experiments=experiments)
+@student_bp.get('/pptx/<int:id>')
+def pptx_view(id):
+    c = Content.query.get_or_404(id)
+    slides = _preview_files(c)
+    if c.kind != 'file' or not c.file_name or not slides:
+        abort(404)
+    return render_template('student/pptx_viewer.html', content=c, slides=list(range(len(slides))))
+
+@student_bp.get('/pptx/<int:id>/slide/<int:slide>')
+def pptx_slide(id, slide):
+    c = Content.query.get_or_404(id)
+    slides = _preview_files(c)
+    if c.kind != 'file' or slide < 0 or slide >= len(slides):
+        abort(404)
+    key = slides[slide]
+    if not isinstance(key, str):
+        abort(404)
+    if b2_enabled():
+        try:
+            obj = get_file(key)
+        except StorageError as exc:
+            current_app.logger.warning('Falha ao abrir slide %s do material %s: %s | %s', slide, c.id, exc.message, exc.technical)
+            abort(404)
+        return safe_file_response(obj, key, 'image/png')
+    return send_from_directory(current_app.config['UPLOAD_FOLDER'], key, mimetype='image/png')
+
 @student_bp.get('/arquivo/<int:id>')
 def arquivo(id):
     c=Content.query.get_or_404(id)

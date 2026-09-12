@@ -2413,3 +2413,17 @@ html.is-loading body{
   .page-loader-logo img{width:68px;height:68px}
   .page-loader-card strong{font-size:1.16rem}
 }
+
+/* Visualizador de apresentações PPTX */
+.pptx-viewer-shell{max-width:1120px}
+.pptx-viewer-head{display:flex;flex-direction:column;gap:14px;margin-bottom:18px}
+.pptx-viewer-head h1{margin:5px 0 6px}
+.pptx-viewer-head p{margin:0;color:#8fa4bb}
+.pptx-viewer-card{background:linear-gradient(180deg,#0e2239,#0b1b2f);border:1px solid var(--pjm-border);border-radius:20px;box-shadow:var(--pjm-shadow-soft);padding:14px}
+.pptx-viewer-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:2px 2px 14px;position:sticky;top:0;z-index:3;background:linear-gradient(180deg,#0e2239 78%,rgba(14,34,57,0))}
+.pptx-slides{display:grid;gap:18px}
+.pptx-slide{margin:0;padding:0;border:1px solid rgba(120,163,204,.16);border-radius:14px;overflow:hidden;background:#071525;box-shadow:0 12px 30px rgba(0,0,0,.18)}
+.pptx-slide img{display:block;width:100%;height:auto;background:#fff}
+.pptx-slide figcaption{padding:8px 12px;color:#8fa4bb;font-size:.78rem;text-align:center}
+@media(max-width:560px){.pptx-viewer-card{padding:9px;border-radius:16px}.pptx-viewer-actions .btn{min-height:42px;padding:9px 12px}.pptx-slide{border-radius:11px}.pptx-viewer-head h1{font-size:1.65rem}}
+.field-help{margin:8px 0 0;color:#8fa4bb;font-size:.82rem;line-height:1.45}.field-help strong{color:#cfe1f5}
