@@ -6,7 +6,7 @@
   <section class="student-panel calendar-card">
     <div class="calendar-head"><a class="btn secondary btn-small" href="{{url_for('student.calendar_view',year=prev_year,month=prev_month)}}">←</a><h2>{{month_name}} {{year}}</h2><a class="btn secondary btn-small" href="{{url_for('student.calendar_view',year=next_year,month=next_month)}}">→</a></div>
     <div class="calendar-weekdays">{% for name in ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'] %}<span>{{name}}</span>{% endfor %}</div>
-    <div class="calendar-grid">{% for day in cells %}<div class="calendar-day {% if day == today %}is-today{% endif %} {% if not day %}is-empty{% endif %}">{% if day %}<strong>{{day.day}}</strong>{% for a in events.get(day, [])[:2] %}<a href="{{url_for('student.activity',id=a.id)}}" title="{{a.title}}"><span>{{a.title}}</span><small>{{a.due_at.strftime('%H:%M')}}</small></a>{% endfor %}{% if events.get(day)|length > 2 %}<small class="calendar-more">+{{events.get(day)|length - 2}} prazo(s)</small>{% endif %}{% endif %}</div>{% endfor %}</div>
+    <div class="calendar-grid">{% for day in cells %}<div class="calendar-day {% if day == today %}is-today{% endif %} {% if not day %}is-empty{% endif %}">{% if day %}<strong>{{day.day}}</strong>{% for a in events.get(day, [])[:2] %}<a href="{{url_for('student.activity',id=a.id)}}" title="{{a.title}}"><span>{{a.title}}</span><small>{{a.due_at.strftime('%H:%M')}}</small></a>{% endfor %}{% if events.get(day, [])|length > 2 %}<small class="calendar-more">+{{events.get(day)|length - 2}} prazo(s)</small>{% endif %}{% endif %}</div>{% endfor %}</div>
   </section>
 </section>
 {% endblock %}
