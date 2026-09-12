@@ -7,6 +7,7 @@
 <input type="hidden" name="csrf_token" value="{{csrf_token()}}">
 <div class="publisher-card activity-settings-card"><div class="form-grid tidy-grid">
 <label class="field-block full">Título<input name="title" maxlength="200" value="{{activity.title}}" required></label>
+<label class="field-block">Nível<select name="difficulty"><option value="facil" {% if activity.difficulty=='facil' %}selected{% endif %}>Fácil</option><option value="medio" {% if not activity.difficulty or activity.difficulty=='medio' %}selected{% endif %}>Médio</option><option value="dificil" {% if activity.difficulty=='dificil' %}selected{% endif %}>Difícil</option></select></label>
 <label class="field-block">Prazo de entrega<input type="datetime-local" name="due_at" value="{{due_raw or ''}}"><small>Deixe vazio para remover o prazo.</small></label>
 <label class="field-block full">Descrição<textarea name="description" maxlength="5000">{{activity.description or ''}}</textarea></label>
 </div></div>

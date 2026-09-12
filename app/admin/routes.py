@@ -10,6 +10,7 @@ from ..storage import upload as storage_upload, delete as storage_delete, get_fi
 from ..extensions import db
 from ..models import Series, Subject, Content, User, Activity, ActivityAttempt, Experiment, Notification, Alert, QuestionBank
 from ..pptx_preview import convert_pptx_to_images
+from ..activity_library import PREBUILT_ACTIVITIES, BY_SLUG
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 ALLOWED_KINDS = {'explanation','file','pdf','slide','video','link'}
@@ -591,7 +592,6 @@ def question_bank():
         question = request.form.get('question', '').strip()
         options = [request.form.get(f'option_{letter}', '').strip() for letter in ('a','b','c','d')]
         correct_index = request.form.get('correct', '').strip()
-        difficulty = request.form.get('difficulty', 'medio').strip().lower()
         sid = request.form.get('series_id', '').strip(); subid = request.form.get('subject_id', '').strip()
         ser = Series.query.get(int(sid)) if sid.isdigit() else None
         sub = Subject.query.get(int(subid)) if subid.isdigit() else None
@@ -642,9 +642,11 @@ def activities():
     series_id = request.args.get('series_id', '').strip()
     subject_id = request.args.get('subject_id', '').strip()
     status = request.args.get('status', '').strip().lower()
+    difficulty = request.args.get('difficulty', '').strip().lower()
     if request.method == 'POST':
         title = request.form.get('title', '').strip()
         description = request.form.get('description', '').strip()
+        difficulty_value = request.form.get('difficulty', 'medio').strip().lower()
         sid = request.form.get('series_id', '').strip()
         subid = request.form.get('subject_id', '').strip()
         due_raw = request.form.get('due_at', '').strip()
@@ -656,7 +658,7 @@ def activities():
         elif due_error:
             flash(due_error, 'error')
         else:
-            a = Activity(title=title, description=description[:5000], series_id=s.id, subject_id=sub.id, due_at=due_at)
+            a = Activity(title=title, description=description[:5000], series_id=s.id, subject_id=sub.id, due_at=due_at, difficulty=difficulty_value if difficulty_value in {'facil','medio','dificil'} else 'medio')
             a.set_questions([])
             db.session.add(a)
             db.session.commit()
@@ -668,11 +670,49 @@ def activities():
         query = query.filter(or_(Activity.title.ilike(like), Activity.description.ilike(like)))
     if series_id.isdigit(): query = query.filter_by(series_id=int(series_id))
     if subject_id.isdigit(): query = query.filter_by(subject_id=int(subject_id))
+    if difficulty in {'facil','medio','dificil'}: query = query.filter_by(difficulty=difficulty)
     now = datetime.utcnow()
     items = query.order_by(Activity.id.desc()).all()
     if status == 'pending': items = [a for a in items if not a.due_at or a.due_at >= now]
     elif status == 'expired': items = [a for a in items if a.due_at and a.due_at < now]
-    return render_template('admin/activities.html', activities=items, series=Series.query.order_by(Series.id).all(), subjects=Subject.query.order_by(Subject.name).all(), q=q, series_id=series_id, subject_id=subject_id, status=status, now=now)
+    return render_template('admin/activities.html', activities=items, series=Series.query.order_by(Series.id).all(), subjects=Subject.query.order_by(Subject.name).all(), q=q, series_id=series_id, subject_id=subject_id, status=status, difficulty=difficulty, now=now)
+
+
+@admin_bp.route('/activities/prontas', methods=['GET', 'POST'])
+def ready_activities():
+    """Catálogo de atividades prontas que o professor pode clonar para uma turma."""
+    difficulty = request.args.get('difficulty', '').strip().lower()
+    selected = [item for item in PREBUILT_ACTIVITIES if not difficulty or item['difficulty'] == difficulty]
+    series = Series.query.order_by(Series.id).all()
+    subjects = Subject.query.order_by(Subject.name).all()
+    if request.method == 'POST':
+        slug = request.form.get('template_slug', '').strip()
+        item = BY_SLUG.get(slug)
+        sid = request.form.get('series_id', '').strip()
+        subid = request.form.get('subject_id', '').strip()
+        due_raw = request.form.get('due_at', '').strip()
+        ser = Series.query.get(int(sid)) if sid.isdigit() else None
+        sub = Subject.query.get(int(subid)) if subid.isdigit() else None
+        due_at, due_error = parse_due_at(due_raw)
+        if not item:
+            flash('Selecione uma atividade pronta válida.', 'error')
+        elif not ser or not sub or sub.series_id != ser.id:
+            flash('Selecione uma série e matéria válidas.', 'error')
+        elif due_error:
+            flash(due_error, 'error')
+        else:
+            activity = Activity(
+                title=item['title'], description=item['description'],
+                series_id=ser.id, subject_id=sub.id, due_at=due_at,
+                difficulty=item['difficulty'],
+            )
+            activity.set_questions([dict(q) for q in item['questions']])
+            db.session.add(activity); db.session.commit()
+            notify_students(f'Nova atividade: {activity.title}', url_for('student.activity', id=activity.id))
+            db.session.commit()
+            flash(f'Atividade pronta "{activity.title}" adicionada com {len(item["questions"])} questões.', 'success')
+            return redirect(url_for('admin.activity_edit', id=activity.id))
+    return render_template('admin/ready_activities.html', templates=selected, all_templates=PREBUILT_ACTIVITIES, series=series, subjects=subjects, difficulty=difficulty)
 
 
 def parse_due_at(value):
@@ -717,6 +757,7 @@ def activity_edit(id):
         title = request.form.get('title', '').strip()
         desc = request.form.get('description', '').strip()
         due_raw = request.form.get('due_at', '').strip()
+        difficulty_value = request.form.get('difficulty', a.difficulty or 'medio').strip().lower()
         due_at, due_error = parse_due_at(due_raw)
         questions, error = read_activity_questions_from_form()
         if not title or len(title) > 200:
@@ -730,6 +771,7 @@ def activity_edit(id):
             a.title = title
             a.description = desc[:5000]
             a.due_at = due_at
+            a.difficulty = difficulty_value if difficulty_value in {'facil','medio','dificil'} else 'medio'
             a.set_questions(questions)
             db.session.commit()
             if was_empty:
