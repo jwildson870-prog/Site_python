@@ -3614,3 +3614,24 @@ a.card:active,a.tile:active,a.student-material-card:active,a.student-summary-car
 .question-kind-error { border-color: rgba(255,145,145,.25); background: rgba(180,45,65,.12); }
 .question-kind-output { border-color: rgba(83,211,255,.28); }
 .question-code-input { min-height: 150px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+/* Biblioteca das 259 atividades: organização por módulo e leitura de código. */
+.ready-library-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:18px 0; }
+.ready-stat { padding:16px 18px; border:1px solid rgba(83,211,255,.14); border-radius:16px; background:rgba(9,28,48,.48); box-shadow:inset 0 1px 0 rgba(255,255,255,.04); }
+.ready-stat strong { display:block; font-size:1.55rem; line-height:1; }
+.ready-stat span { display:block; margin-top:7px; color:var(--muted,#8da8bd); font-size:.82rem; }
+.ready-topic-section { margin-top:28px; }
+.ready-topic-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:14px; padding:0 2px; }
+.ready-topic-heading h2 { margin:2px 0 4px; }
+.ready-topic-heading p { margin:0; color:var(--muted,#8da8bd); }
+.ready-topic-count { min-width:44px; height:44px; display:grid; place-items:center; border-radius:14px; border:1px solid rgba(83,211,255,.22); background:rgba(18,67,101,.48); font-weight:800; }
+.ready-question-list { margin:16px 0 0; padding-left:22px; }
+.ready-question-list > li { margin:0 0 18px; padding:0 0 18px 4px; border-bottom:1px solid rgba(255,255,255,.07); }
+.ready-question-list > li:last-child { border-bottom:0; margin-bottom:0; padding-bottom:0; }
+.ready-question-list strong { display:block; line-height:1.5; }
+.ready-question-code { margin:10px 0 8px; font-size:.84rem; }
+.question-kind-code { margin-top:9px; }
+.ready-options { display:grid; gap:5px; margin:9px 0; }
+.ready-options span { padding:7px 9px; border-radius:9px; background:rgba(255,255,255,.035); color:#c8d9e5; font-size:.82rem; }
+.ready-answer { display:block; color:#83e6c1; font-weight:700; }
+@media (max-width:760px) { .ready-library-stats { grid-template-columns:1fr; } .ready-topic-heading { align-items:flex-start; } .ready-topic-count { flex:0 0 auto; } }

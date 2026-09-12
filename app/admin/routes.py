@@ -681,9 +681,38 @@ def activities():
 
 @admin_bp.route('/activities/prontas', methods=['GET', 'POST'])
 def ready_activities():
-    """Catálogo de atividades prontas que o professor pode clonar para uma turma."""
+    """Catálogo de atividades prontas, organizado por conteúdo."""
     difficulty = request.args.get('difficulty', '').strip().lower()
+    topic = request.args.get('topic', '').strip().lower()
     selected = [item for item in PREBUILT_ACTIVITIES if not difficulty or item['difficulty'] == difficulty]
+
+    def activity_topic(item):
+        text = f"{item.get('title', '')} {item.get('description', '')}".lower()
+        if 'análise de código' in text or 'analise de codigo' in text or 'análise de código' in text:
+            return 'Análise de Código'
+        if 'funç' in text or 'funcoes' in text:
+            return 'Funções'
+        if 'laço' in text or 'laços' in text or 'repetição' in text or 'repeticao' in text:
+            return 'Estruturas de Repetição'
+        if 'condicional' in text or 'condicionais' in text:
+            return 'Estruturas Condicionais'
+        return 'Outros'
+
+    topic_map = {
+        'condicionais': 'Estruturas Condicionais',
+        'repeticao': 'Estruturas de Repetição',
+        'funcoes': 'Funções',
+        'codigo': 'Análise de Código',
+        'outros': 'Outros',
+    }
+    selected = [item for item in selected if not topic or activity_topic(item) == topic_map.get(topic, topic)]
+    grouped = {}
+    for item in selected:
+        grouped.setdefault(activity_topic(item), []).append(item)
+    order = ['Estruturas Condicionais', 'Estruturas de Repetição', 'Funções', 'Análise de Código', 'Outros']
+    grouped = {name: grouped[name] for name in order if name in grouped}
+    code_questions = sum(1 for item in selected for q in item.get('questions', []) if q.get('code'))
+    total_questions = sum(len(item.get('questions', [])) for item in selected)
     series = Series.query.order_by(Series.id).all()
     subjects = Subject.query.order_by(Subject.name).all()
     if request.method == 'POST':
@@ -713,7 +742,7 @@ def ready_activities():
             db.session.commit()
             flash(f'Atividade pronta "{activity.title}" adicionada com {len(item["questions"])} questões.', 'success')
             return redirect(url_for('admin.activity_edit', id=activity.id))
-    return render_template('admin/ready_activities.html', templates=selected, all_templates=PREBUILT_ACTIVITIES, series=series, subjects=subjects, difficulty=difficulty)
+    return render_template('admin/ready_activities.html', templates=selected, grouped_templates=grouped, all_templates=PREBUILT_ACTIVITIES, series=series, subjects=subjects, difficulty=difficulty, topic=topic, code_questions=code_questions, total_questions=total_questions)
 
 
 def parse_due_at(value):
