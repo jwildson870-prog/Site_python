@@ -3203,3 +3203,80 @@ body.app-authenticated{
 @media(prefers-reduced-motion:reduce){
   .admin-shell,.student-shell{animation:none!important}
 }
+
+
+/* ==========================================================
+   PORTAL PYTHON — VISUAL POLISH / RESPONSIVE FIXES
+   Consolidated final overrides for the Spatial System.
+   ========================================================== */
+
+/* Sidebar: compacta, consistente e confortável. */
+.side-menu{
+  width:250px!important;
+  max-width:250px!important;
+}
+.side-brand{min-height:68px!important}
+.side-nav{padding-inline:11px!important}
+.side-link{min-width:0!important}
+.side-link b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Topbar: evita disputa de espaço entre elementos. */
+.topbar{min-width:0!important}
+.topbar-brand{flex:0 1 auto!important}
+.topbar-search{flex:0 1 360px!important;min-width:0!important}
+.topbar-user{min-width:0!important}
+.topbar-user-copy{min-width:0!important}
+.topbar-user-copy strong,.topbar-user-copy small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Ícones dos cards de recursos: sem dependência de emoji/fontes do aparelho. */
+.resource-icon{
+  width:46px!important;height:46px!important;border-radius:13px!important;
+  display:grid!important;place-items:center!important;
+  background:linear-gradient(145deg,rgba(34,211,238,.13),rgba(37,99,235,.10))!important;
+  border:1px solid rgba(103,208,255,.14)!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.08),0 8px 18px rgba(0,50,100,.12)!important;
+}
+.resource-icon img{width:22px!important;height:22px!important;opacity:.9;filter:drop-shadow(0 0 7px rgba(34,211,238,.22))}
+
+/* Hero: conteúdo sempre acima da arte decorativa. */
+.admin-hero,.student-hero{isolation:isolate;overflow:hidden}
+.admin-hero>*:not(.hero-python-art):not(.student-hero-art),
+.student-hero>*:not(.hero-python-art):not(.student-hero-art){position:relative;z-index:2}
+.hero-python-art,.student-hero-art{z-index:1;pointer-events:none}
+
+/* Glass mais legível: transparência sem sacrificar contraste. */
+.professor-panel,.student-panel,.professor-metric,.student-stat,.card,.reference-section{
+  backdrop-filter:blur(18px) saturate(125%);
+  -webkit-backdrop-filter:blur(18px) saturate(125%);
+}
+
+/* Mobile: busca vira ação compacta e não espreme a topbar. */
+@media(max-width:760px){
+  .topbar-search{flex:0 0 40px!important;width:40px!important;height:40px!important;padding:0!important;justify-content:center!important;border-radius:12px!important}
+  .topbar-search span{display:none!important}
+  .topbar-search img{width:18px!important;height:18px!important}
+  .topbar-user-copy{display:none!important}
+  .topbar-avatar{flex:0 0 38px!important}
+}
+
+@media(max-width:680px){
+  .side-menu{width:min(286px,88vw)!important;max-width:none!important}
+  .student-hero-art{right:-18px!important;bottom:-18px!important;opacity:.20!important;z-index:0!important}
+  .hero-python-art{right:-28px!important;opacity:.20!important;z-index:0!important}
+  .admin-hero p,.student-hero p{max-width:78%!important}
+  .resource-icon{width:40px!important;height:40px!important;border-radius:11px!important}
+  .resource-icon img{width:19px!important;height:19px!important}
+}
+
+@media(max-width:390px){
+  .topbar-brand strong{font-size:.9rem!important}
+  .topbar-brand img{width:32px!important;height:32px!important}
+  .topbar-search{display:grid!important}
+  .topbar{gap:6px!important;padding-inline:8px!important}
+  .admin-hero,.student-hero{padding:20px 16px!important}
+  .admin-hero p,.student-hero p{max-width:100%!important}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .side-link:hover,.btn:hover,.professor-metric:hover,.student-stat:hover{transform:none!important}
+}
