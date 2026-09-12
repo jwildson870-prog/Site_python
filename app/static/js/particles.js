@@ -3,22 +3,46 @@
 
   const canvas = document.getElementById('spaceParticles');
   if (!canvas) return;
-
   const ctx = canvas.getContext('2d', { alpha: true });
   if (!ctx) return;
 
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const mobile = window.matchMedia('(max-width: 680px)');
-  let particles = [];
-  let width = 0;
-  let height = 0;
-  let animationFrame = 0;
-  let lastTime = 0;
+  let width = 0, height = 0, animationFrame = 0, lastTime = 0;
+  let snippets = [];
 
-  function count() {
-    if (reduceMotion.matches) return 28;
-    if (mobile.matches) return 42;
-    return Math.min(90, Math.max(55, Math.round((width * height) / 18000)));
+  const code = [
+    'def calcular_media(notas):',
+    '    return sum(notas) / len(notas)',
+    'class Aluno:',
+    '    def __init__(self, nome):',
+    '        self.nome = nome',
+    'for aluno in alunos:',
+    '    print(aluno.nome)',
+    'if nota >= 7:',
+    '    aprovado = True',
+    'import random',
+    'import datetime',
+    'while True:',
+    '    escolha = input("> ")',
+    'lista.append(valor)',
+    'def estudar(topico):',
+    '    return aprender(topico)',
+    'try:',
+    '    resultado = calcular()',
+    'except ValueError:',
+    '    resultado = 0',
+    'print("Portal Python")',
+    'for i in range(10):',
+    '    print(i)',
+    'dados = {"nome": "Aluno"}',
+    'with open("dados.json") as arquivo:',
+    '    dados = json.load(arquivo)'
+  ];
+
+  function amount() {
+    if (reduceMotion.matches) return mobile.matches ? 5 : 8;
+    return mobile.matches ? 7 : 13;
   }
 
   function resize() {
@@ -30,21 +54,22 @@
     canvas.style.width = width + 'px';
     canvas.style.height = height + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    createParticles();
+    createSnippets();
   }
 
-  function createParticles() {
-    particles = Array.from({ length: count() }, function () {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = 0.06 + Math.random() * 0.16;
+  function createSnippets() {
+    snippets = Array.from({ length: amount() }, function (_, index) {
+      const text = code[(index * 3 + Math.floor(Math.random() * 4)) % code.length];
       return {
+        text: text,
         x: Math.random() * width,
         y: Math.random() * height,
-        r: 0.55 + Math.random() * 1.35,
-        alpha: 0.16 + Math.random() * 0.48,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        twinkle: Math.random() * Math.PI * 2
+        vx: (Math.random() - 0.5) * 0.018,
+        vy: -0.012 - Math.random() * 0.022,
+        size: mobile.matches ? 10 + Math.random() * 2 : 12 + Math.random() * 3,
+        alpha: mobile.matches ? 0.045 + Math.random() * 0.025 : 0.055 + Math.random() * 0.045,
+        phase: Math.random() * Math.PI * 2,
+        drift: 0.0005 + Math.random() * 0.0008
       };
     });
   }
@@ -54,45 +79,26 @@
     lastTime = time;
     ctx.clearRect(0, 0, width, height);
 
-    particles.forEach(function (p) {
+    snippets.forEach(function (s) {
       if (!reduceMotion.matches) {
-        p.x += p.vx * delta;
-        p.y += p.vy * delta;
-        p.twinkle += delta * 0.0012;
-        if (p.x < -10) p.x = width + 10;
-        if (p.x > width + 10) p.x = -10;
-        if (p.y < -10) p.y = height + 10;
-        if (p.y > height + 10) p.y = -10;
+        s.x += s.vx * delta;
+        s.y += s.vy * delta;
+        s.phase += delta * s.drift;
+        s.x += Math.sin(s.phase) * 0.06;
       }
 
-      const pulse = 0.78 + Math.sin(p.twinkle) * 0.22;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(125, 211, 252, ' + (p.alpha * pulse) + ')';
-      ctx.fill();
+      const w = ctx.measureText(s.text).width;
+      if (s.y < -40) s.y = height + 35;
+      if (s.x < -w - 30) s.x = width + 30;
+      if (s.x > width + 30) s.x = -w - 30;
+
+      ctx.font = '600 ' + s.size + 'px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+      ctx.fillStyle = 'rgba(103, 211, 255, ' + s.alpha + ')';
+      ctx.shadowColor = 'rgba(34, 211, 238, 0.18)';
+      ctx.shadowBlur = 7;
+      ctx.fillText(s.text, s.x, s.y);
+      ctx.shadowBlur = 0;
     });
-
-    // Conecta apenas partículas próximas para criar uma rede espacial discreta.
-    if (!reduceMotion.matches && !mobile.matches) {
-      for (let i = 0; i < particles.length; i += 1) {
-        for (let j = i + 1; j < particles.length; j += 1) {
-          const a = particles[i];
-          const b = particles[j];
-          const dx = a.x - b.x;
-          const dy = a.y - b.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          if (distance < 115) {
-            const opacity = (1 - distance / 115) * 0.075;
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.strokeStyle = 'rgba(34, 211, 238, ' + opacity + ')';
-            ctx.lineWidth = 0.7;
-            ctx.stroke();
-          }
-        }
-      }
-    }
 
     animationFrame = window.requestAnimationFrame(draw);
   }
@@ -102,8 +108,5 @@
   mobile.addEventListener?.('change', resize);
   resize();
   animationFrame = window.requestAnimationFrame(draw);
-
-  window.addEventListener('pagehide', function () {
-    window.cancelAnimationFrame(animationFrame);
-  });
+  window.addEventListener('pagehide', function () { window.cancelAnimationFrame(animationFrame); });
 })();

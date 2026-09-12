@@ -2927,3 +2927,104 @@ input:focus,select:focus,textarea:focus{
 @media(prefers-reduced-motion:reduce){
   .space-particles{opacity:.42}
 }
+
+/* =========================================================
+   PORTAL PYTHON — GLASS MAIS TRANSPARENTE + RELEVO
+   O código animado deve aparecer suavemente por trás do vidro.
+========================================================= */
+.space-particles{
+  z-index:0;
+  opacity:.72;
+  mix-blend-mode:screen;
+}
+.app-authenticated > *:not(.space-particles):not(.page-loader){
+  position:relative;
+  z-index:1;
+}
+
+/* Vidro: deixa o fundo respirar sem sacrificar legibilidade. */
+.card,.panel,.box,.content-card,.dashboard-card,
+.publisher-card,.material-row,.admin-stat,.admin-action-card,
+.reference-section,.reference-stat,.student-panel,.student-stat,
+.student-material-card,.student-summary-card,.student-profile-card,
+.tile,.calendar-card,.achievement-card,.smart-alert-mini,.smart-alert-card,
+.ready-activity-card{
+  background:linear-gradient(145deg,rgba(13,43,70,.56),rgba(4,20,36,.46))!important;
+  border-color:rgba(106,211,255,.20)!important;
+  box-shadow:
+    0 22px 55px rgba(0,0,0,.28),
+    inset 0 1px 0 rgba(255,255,255,.08),
+    inset 0 -1px 0 rgba(0,0,0,.12),
+    0 0 0 1px rgba(34,211,238,.025);
+  backdrop-filter:blur(20px) saturate(155%);
+  -webkit-backdrop-filter:blur(20px) saturate(155%);
+}
+
+.card::after,.panel::after,.student-panel::after,.student-stat::after,
+.student-material-card::after,.student-summary-card::after,.tile::after,
+.calendar-card::after,.achievement-card::after,.ready-activity-card::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  pointer-events:none;
+  background:linear-gradient(120deg,rgba(255,255,255,.055),transparent 28%,transparent 72%,rgba(56,189,248,.025));
+}
+
+/* Relevo físico nos botões. */
+.btn,.student-hero-actions .btn,button.primary,button[type="submit"],input[type="submit"]{
+  position:relative;
+  transform:translateY(-1px);
+  border-width:1px!important;
+  border-style:solid!important;
+  box-shadow:
+    0 7px 0 rgba(3,33,58,.78),
+    0 13px 25px rgba(0,83,155,.24),
+    inset 0 1px 0 rgba(255,255,255,.25),
+    inset 0 -2px 0 rgba(0,45,90,.20)!important;
+  transition:transform .16s ease,box-shadow .16s ease,filter .16s ease!important;
+}
+.btn:hover,.student-hero-actions .btn:hover,button.primary:hover,button[type="submit"]:hover,input[type="submit"]:hover{
+  transform:translateY(-3px);
+  filter:saturate(1.08) brightness(1.04);
+  box-shadow:
+    0 9px 0 rgba(3,33,58,.72),
+    0 18px 32px rgba(0,83,155,.30),
+    0 0 22px rgba(34,211,238,.10),
+    inset 0 1px 0 rgba(255,255,255,.28)!important;
+}
+.btn:active,.student-hero-actions .btn:active,button.primary:active,button[type="submit"]:active,input[type="submit"]:active{
+  transform:translateY(4px);
+  box-shadow:
+    0 2px 0 rgba(3,33,58,.78),
+    0 5px 12px rgba(0,83,155,.20),
+    inset 0 2px 5px rgba(0,0,0,.18)!important;
+}
+.btn.secondary{
+  box-shadow:
+    0 6px 0 rgba(1,17,30,.82),
+    0 12px 24px rgba(0,0,0,.20),
+    inset 0 1px 0 rgba(255,255,255,.10)!important;
+}
+
+/* Pequena flutuação dos cards, como painéis suspensos. */
+.card,.panel,.student-panel,.student-stat,.student-material-card,.student-summary-card,.tile,.calendar-card,.achievement-card{
+  transition:transform .28s cubic-bezier(.16,1,.3,1),box-shadow .28s ease,border-color .28s ease!important;
+}
+.card:hover,.panel:hover,.student-panel:hover,.student-stat:hover,.student-material-card:hover,.student-summary-card:hover,.tile:hover,.calendar-card:hover,.achievement-card:hover{
+  transform:translateY(-3px);
+  box-shadow:0 28px 65px rgba(0,0,0,.34),0 0 30px rgba(34,211,238,.07),inset 0 1px 0 rgba(255,255,255,.09)!important;
+}
+
+@media(max-width:680px){
+  .space-particles{opacity:.58}
+  .card,.panel,.student-panel,.student-stat,.student-material-card,.student-summary-card,.tile,.calendar-card,.achievement-card{
+    backdrop-filter:blur(14px) saturate(140%);
+    -webkit-backdrop-filter:blur(14px) saturate(140%);
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .btn,.student-hero-actions .btn{transition:none!important;transform:none!important}
+  .card,.panel,.student-panel,.student-stat,.student-material-card,.student-summary-card,.tile,.calendar-card,.achievement-card{transition:none!important}
+  .card:hover,.panel:hover,.student-panel:hover,.student-stat:hover,.student-material-card:hover,.student-summary-card:hover,.tile:hover,.calendar-card:hover,.achievement-card:hover{transform:none}
+}
