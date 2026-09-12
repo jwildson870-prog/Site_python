@@ -2704,3 +2704,195 @@ img,svg{max-width:100%}
   .student-stat:hover,.student-material-card:hover,.student-quick-grid a:hover,.student-activity-card:hover,.achievement-card:hover{transform:none}
 }
 
+
+/* =========================================================
+   PORTAL PYTHON — VISUAL REFERENCE / SPATIAL 2.0
+   Direção: dashboard espacial + glassmorphism mais evidente.
+   Somente apresentação; rotas e lógica permanecem intactas.
+========================================================= */
+:root{
+  --space-deep:#030b17;
+  --space-panel:rgba(7,25,45,.70);
+  --space-panel-strong:rgba(5,20,37,.84);
+  --space-cyan:#22d3ee;
+  --space-blue:#2196f3;
+  --space-teal:#14b8a6;
+  --space-yellow:#facc15;
+  --space-edge:rgba(70,185,255,.28);
+  --space-edge-soft:rgba(105,205,255,.14);
+  --space-glow:0 0 34px rgba(33,150,243,.16);
+}
+
+body.app-authenticated{
+  background:
+    radial-gradient(900px 520px at 58% 4%,rgba(0,132,255,.14),transparent 60%),
+    radial-gradient(620px 520px at 8% 82%,rgba(20,184,166,.11),transparent 62%),
+    radial-gradient(520px 420px at 94% 42%,rgba(34,211,238,.08),transparent 64%),
+    linear-gradient(145deg,#020914 0%,#061426 48%,#03101e 100%);
+}
+
+.app-authenticated .site-main::after{
+  width:100%;height:100%;left:0;bottom:auto;top:0;opacity:.7;filter:none;z-index:-2;
+  background-image:
+    radial-gradient(circle at 18% 22%,rgba(255,255,255,.38) 0 1px,transparent 1.5px),
+    radial-gradient(circle at 74% 14%,rgba(125,211,252,.32) 0 1px,transparent 1.5px),
+    radial-gradient(circle at 87% 64%,rgba(255,255,255,.20) 0 1px,transparent 1.5px),
+    radial-gradient(circle at 34% 78%,rgba(56,189,248,.24) 0 1px,transparent 1.5px);
+  background-size:180px 180px,240px 240px,310px 310px,220px 220px;
+  pointer-events:none;
+}
+
+.topbar{
+  background:linear-gradient(180deg,rgba(3,13,26,.88),rgba(4,17,31,.70));
+  border-bottom:1px solid rgba(74,190,255,.22);
+  box-shadow:0 12px 38px rgba(0,0,0,.32),0 1px 0 rgba(125,211,252,.05) inset;
+  backdrop-filter:blur(22px) saturate(150%);
+  -webkit-backdrop-filter:blur(22px) saturate(150%);
+}
+.topbar-brand img{
+  width:40px;height:40px;object-fit:contain;
+  filter:drop-shadow(0 5px 12px rgba(33,150,243,.25));
+}
+.topbar-brand strong{letter-spacing:-.035em}
+.topbar-brand span{color:#facc15}
+.topbar-search{
+  background:rgba(5,24,43,.64)!important;
+  border-color:rgba(65,184,255,.28)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 0 22px rgba(33,150,243,.07);
+}
+.topbar-bell,.topbar-avatar,.menu-toggle{
+  background:rgba(7,29,49,.68)!important;
+  border-color:rgba(105,205,255,.18)!important;
+}
+.topbar-avatar{box-shadow:0 0 0 1px rgba(56,189,248,.12),0 8px 22px rgba(0,0,0,.24)}
+
+.side-menu{
+  background:
+    radial-gradient(420px 360px at 10% 86%,rgba(20,184,166,.09),transparent 62%),
+    linear-gradient(180deg,rgba(4,18,33,.96),rgba(2,12,24,.97));
+  border-right:1px solid rgba(70,185,255,.25);
+  box-shadow:24px 0 70px rgba(0,0,0,.44),1px 0 0 rgba(125,211,252,.04) inset;
+  backdrop-filter:blur(22px) saturate(135%);
+  -webkit-backdrop-filter:blur(22px) saturate(135%);
+}
+.side-brand{border-bottom-color:rgba(105,205,255,.15)}
+.side-logo{
+  background:rgba(7,31,53,.76);
+  border:1px solid rgba(78,190,255,.28);
+  box-shadow:0 10px 28px rgba(0,0,0,.25),0 0 24px rgba(33,150,243,.10);
+}
+.side-logo img{width:38px;height:38px;object-fit:contain}
+.side-link{
+  border:1px solid transparent;
+  transition:transform .22s cubic-bezier(.16,1,.3,1),background .22s ease,border-color .22s ease,box-shadow .22s ease;
+}
+.side-link:hover{
+  transform:translateX(3px);
+  background:rgba(33,150,243,.075);
+  border-color:rgba(70,185,255,.16);
+}
+.side-link.active{
+  background:linear-gradient(105deg,rgba(16,122,220,.30),rgba(34,211,238,.09));
+  border-color:rgba(63,188,255,.35);
+  box-shadow:inset 3px 0 0 #38bdf8,0 8px 24px rgba(0,105,190,.13);
+}
+.side-area{
+  background:linear-gradient(135deg,rgba(20,184,166,.12),rgba(34,211,238,.045));
+  border-color:rgba(45,212,191,.22);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035);
+}
+.side-python-quote{
+  background:linear-gradient(145deg,rgba(7,34,57,.76),rgba(4,20,35,.62))!important;
+  border-color:rgba(70,185,255,.22)!important;
+  box-shadow:0 12px 28px rgba(0,0,0,.20),var(--space-glow);
+}
+
+/* Glass surfaces: the reference look is intentionally obvious. */
+.card,.panel,.box,.content-card,.dashboard-card,
+.publisher-card,.material-row,.admin-stat,.admin-action-card,
+.reference-section,.reference-stat,.student-panel,.student-stat,
+.student-material-card,.student-summary-card,.student-profile-card,
+.tile,.calendar-card,.achievement-card,.smart-alert-mini,.smart-alert-card{
+  background:linear-gradient(145deg,rgba(10,36,60,.76),rgba(3,18,33,.66))!important;
+  border-color:var(--space-edge-soft)!important;
+  box-shadow:0 18px 48px rgba(0,0,0,.26),inset 0 1px 0 rgba(255,255,255,.045),0 0 0 1px rgba(34,211,238,.025);
+  backdrop-filter:blur(18px) saturate(145%);
+  -webkit-backdrop-filter:blur(18px) saturate(145%);
+}
+.card:hover,.publisher-card:hover,.admin-action-card:hover,.tile:hover,
+.student-panel:hover,.student-stat:hover,.student-material-card:hover,
+.student-quick-grid a:hover,.achievement-card:hover{
+  border-color:rgba(73,190,255,.34)!important;
+  box-shadow:0 24px 60px rgba(0,0,0,.34),0 0 32px rgba(33,150,243,.10),inset 0 1px 0 rgba(255,255,255,.055);
+}
+
+.admin-hero,.student-hero{
+  position:relative;
+  overflow:hidden;
+  background:
+    radial-gradient(500px 250px at 82% 0%,rgba(33,150,243,.22),transparent 66%),
+    radial-gradient(380px 240px at 30% 100%,rgba(20,184,166,.10),transparent 70%),
+    linear-gradient(145deg,rgba(8,35,59,.84),rgba(3,18,33,.70))!important;
+  border-color:rgba(78,190,255,.30)!important;
+  box-shadow:0 24px 65px rgba(0,0,0,.32),0 0 42px rgba(33,150,243,.09),inset 0 1px 0 rgba(255,255,255,.06);
+  backdrop-filter:blur(20px) saturate(150%);
+  -webkit-backdrop-filter:blur(20px) saturate(150%);
+}
+.admin-hero::before,.student-hero::before{
+  content:"";position:absolute;inset:-40%;pointer-events:none;
+  background:radial-gradient(circle,rgba(56,189,248,.12),transparent 36%);
+  transform:translate(34%,-24%);
+}
+
+.student-hero-art{
+  position:absolute;right:9%;top:50%;transform:translateY(-50%);
+  width:180px;height:180px;display:grid;place-items:center;z-index:1;pointer-events:none;
+}
+.student-hero-art::before{
+  content:"";position:absolute;width:145px;height:145px;border-radius:50%;
+  border:1px solid rgba(34,211,238,.42);box-shadow:0 0 24px rgba(34,211,238,.25),0 0 0 18px rgba(34,211,238,.045);
+}
+.student-hero-art img{width:128px;height:128px;object-fit:contain;filter:drop-shadow(0 18px 24px rgba(0,0,0,.34)) drop-shadow(0 0 18px rgba(34,211,238,.20))}
+
+.btn{
+  background:linear-gradient(135deg,rgba(29,130,219,.92),rgba(34,183,224,.86))!important;
+  border-color:rgba(106,218,255,.42)!important;
+  box-shadow:0 10px 28px rgba(0,104,190,.20),inset 0 1px 0 rgba(255,255,255,.14);
+}
+.btn:hover{box-shadow:0 15px 34px rgba(0,104,190,.28),0 0 24px rgba(34,211,238,.12)!important}
+.btn.secondary{background:rgba(7,29,49,.70)!important}
+
+input,select,textarea{
+  background:rgba(3,17,31,.68)!important;
+  border-color:rgba(82,166,216,.24)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025);
+}
+input:focus,select:focus,textarea:focus{
+  border-color:rgba(56,189,248,.60)!important;
+  box-shadow:0 0 0 3px rgba(56,189,248,.10),0 0 24px rgba(56,189,248,.07)!important;
+}
+
+.student-quick-grid a{
+  min-height:106px!important;
+  background:linear-gradient(145deg,rgba(8,39,65,.78),rgba(3,20,37,.65))!important;
+  border-color:rgba(72,188,255,.24)!important;
+  box-shadow:0 16px 34px rgba(0,0,0,.23),inset 0 1px 0 rgba(255,255,255,.045);
+}
+.student-quick-grid a:nth-child(2n){border-color:rgba(45,212,191,.22)!important}
+.student-quick-grid a:nth-child(3n){border-color:rgba(139,92,246,.24)!important}
+.student-quick-grid a>img{filter:drop-shadow(0 0 8px rgba(56,189,248,.22))}
+
+.student-ring{box-shadow:0 0 28px rgba(34,211,238,.16),inset 0 0 20px rgba(34,211,238,.05)!important}
+.badge{box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+
+@media(max-width:680px){
+  .student-hero-art{right:-28px;top:auto;bottom:-34px;transform:none;width:140px;height:140px;opacity:.30}
+  .student-hero-art img{width:100px;height:100px}
+  .student-hero-art::before{width:110px;height:110px}
+  .topbar-brand img{width:36px;height:36px}
+  .card,.publisher-card,.student-panel,.tile{backdrop-filter:blur(13px) saturate(135%);-webkit-backdrop-filter:blur(13px) saturate(135%)}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .side-link:hover{transform:none}
+}

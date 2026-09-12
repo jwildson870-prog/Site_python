@@ -3,8 +3,8 @@
 {% block content %}
 <section class="admin-shell professor-dashboard" id="relatorios">
   <div class="admin-hero reference-hero">
-    <div class="hero-copy"><span class="eyebrow">ÁREA DO PROFESSOR</span><h1>Olá, {{ current_user.name }} <span class="wave">👋</span></h1><p>Uma visão executiva das turmas, atividades, prazos e desempenho dos alunos.</p><a class="btn admin-primary hero-cta" href="{{url_for('admin.content_new')}}">＋ Adicionar material</a></div>
-    <div class="hero-python-art" aria-hidden="true"><img class="python-art-logo" src="{{url_for('static',filename='icons/python.svg')}}" alt=""><div class="hero-code"><span>def ensinar():</span><br><span>    return "Conhecimento"</span><br><b>&gt;&gt;&gt;</b></div></div>
+    <div class="hero-copy"><span class="eyebrow">ÁREA DO PROFESSOR</span><h1>Olá, {{ current_user.name }} <span class="wave"></span></h1><p>Uma visão executiva das turmas, atividades, prazos e desempenho dos alunos.</p><a class="btn admin-primary hero-cta" href="{{url_for('admin.content_new')}}">＋ Adicionar material</a></div>
+    <div class="hero-python-art" aria-hidden="true"><img class="python-art-logo" src="{{url_for('static',filename='icons/python-brand.png')}}" alt=""><div class="hero-code"><span>def ensinar():</span><br><span>    return "Conhecimento"</span><br><b>&gt;&gt;&gt;</b></div></div>
   </div>
 
   <div class="professor-metrics">

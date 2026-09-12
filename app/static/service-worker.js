@@ -1,4 +1,4 @@
-const CACHE_NAME = 'portal-python-static-v7';
+const CACHE_NAME = 'portal-python-static-v8';
 const STATIC_ASSETS = [
   '/static/css/style.css',
   '/static/js/ui.js',
@@ -6,6 +6,8 @@ const STATIC_ASSETS = [
   '/static/manifest.json',
   '/static/icons/icon-192.png',
   '/static/icons/icon-512.png',
+  '/static/icons/python-brand.png',
+  '/static/icons/python-brand-192.png',
   '/static/js/pwa.js',
   '/static/offline.html'
 ];
