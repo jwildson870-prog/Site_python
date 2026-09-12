@@ -591,6 +591,7 @@ def question_bank():
     if request.method == 'POST':
         question = request.form.get('question', '').strip()
         options = [request.form.get(f'option_{letter}', '').strip() for letter in ('a','b','c','d')]
+        code = request.form.get('code', '').strip()
         correct_index = request.form.get('correct', '').strip()
         sid = request.form.get('series_id', '').strip(); subid = request.form.get('subject_id', '').strip()
         ser = Series.query.get(int(sid)) if sid.isdigit() else None
@@ -604,7 +605,7 @@ def question_bank():
         elif any(options[i] and not options[i-1] for i in range(1,4)):
             flash('Preencha as alternativas em sequência.', 'error')
         else:
-            item = QuestionBank(question=question, correct=options[int(correct_index)], difficulty=difficulty if difficulty in {'facil','medio','dificil'} else 'medio', series_id=ser.id, subject_id=sub.id)
+            item = QuestionBank(question=question, correct=options[int(correct_index)], code=code[:8000] or None, difficulty=difficulty if difficulty in {'facil','medio','dificil'} else 'medio', series_id=ser.id, subject_id=sub.id)
             item.set_options([x for x in options if x])
             db.session.add(item); db.session.commit()
             flash('Questão adicionada ao banco.', 'success')
@@ -630,7 +631,7 @@ def activity_import_questions(id):
         item = QuestionBank.query.get(qid)
         if not item or item.series_id != activity.series_id or item.subject_id != activity.subject_id: continue
         opts = item.get_options()
-        current.append({'question': item.question, 'options': opts, 'correct': item.correct})
+        current.append({'question': item.question, 'options': opts, 'correct': item.correct, **({'code': item.code} if item.code else {})})
         added += 1
     activity.set_questions(current); db.session.commit()
     flash(f'{added} questão(ões) importada(s) para a atividade.', 'success' if added else 'error')

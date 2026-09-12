@@ -85,6 +85,7 @@ class QuestionBank(db.Model):
     question = db.Column(db.String(1000), nullable=False)
     options_json = db.Column(db.Text, nullable=False, default='[]')
     correct = db.Column(db.String(500), nullable=False)
+    code = db.Column(db.Text, nullable=True)
     difficulty = db.Column(db.String(20), nullable=False, default='medio')
     series_id = db.Column(db.Integer, db.ForeignKey('series.id'), nullable=False)
     subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False)

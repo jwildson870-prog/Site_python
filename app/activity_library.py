@@ -5,7 +5,7 @@ conceito de laço, for, indentação, while, loop infinito, break/continue,
 comparação for x while e exercícios com range/acumulador.
 """
 
-PREBUILT_ACTIVITIES = [
+LEGACY_PREBUILT_ACTIVITIES = [
     {
         "slug": "fundamentos-lacos-facil",
         "title": "Laços de Repetição — Fundamentos",
@@ -172,6 +172,9 @@ _ADDITIONAL = [
     {'slug': 'laços-repeticao-extra-50', 'title': 'Laços de Repetição — Atividade Extra 50', 'description': 'Atividade pronta de nível dificil, revisando controle de fluxo conforme o módulo de Laços de Repetição.', 'difficulty': 'dificil', 'questions': [{'question': 'Na revisão de controle de fluxo, qual alternativa está correta?', 'options': ['Sai do laço', 'break', 'continue', 'Pula uma iteração'], 'correct': 'Sai do laço'}, {'question': 'Qual item corresponde ao conceito principal de controle de fluxo?', 'options': ['break', 'continue', 'Sai do laço', 'Pula uma iteração'], 'correct': 'break'}, {'question': 'Qual alternativa NÃO corresponde ao conteúdo trabalhado sobre controle de fluxo?', 'options': ['Pula uma iteração', 'break', 'Sai do laço', 'continue'], 'correct': 'Pula uma iteração'}, {'question': 'Qual afirmação resume corretamente controle de fluxo?', 'options': ['continue', 'Sai do laço', 'Pula uma iteração', 'break'], 'correct': 'continue'}]},
 ]
 
-PREBUILT_ACTIVITIES.extend(_ADDITIONAL)
+LEGACY_PREBUILT_ACTIVITIES.extend(_ADDITIONAL)
 
+from .question_bank_seed import PREBUILT_ACTIVITIES as GENERATED_PREBUILT_ACTIVITIES
+# O catálogo expandido passa a ser a biblioteca principal.
+PREBUILT_ACTIVITIES = GENERATED_PREBUILT_ACTIVITIES + LEGACY_PREBUILT_ACTIVITIES
 BY_SLUG = {item["slug"]: item for item in PREBUILT_ACTIVITIES}

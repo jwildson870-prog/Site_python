@@ -99,6 +99,12 @@ def create_app(test_config=None):
     @app.cli.command('seed')
     def seed():
         from .services import seed_initial_content; seed_initial_content(); print('Conteúdo inicial confirmado.')
+
+    @app.cli.command('seed-question-bank')
+    def seed_question_bank():
+        from .question_seed_service import seed_generated_question_bank
+        added = seed_generated_question_bank()
+        print(f'Banco expandido: {added} questão(ões) nova(s).')
     with app.app_context():
         db.create_all()
         # Migração leve e retrocompatível para instalações existentes: adiciona
@@ -125,6 +131,15 @@ def create_app(test_config=None):
                     conn.execute(text("ALTER TABLE activities ADD COLUMN difficulty VARCHAR(20) DEFAULT 'medio'"))
         # O banco de questões é aditivo e não altera tabelas existentes.
         db.create_all()
+        inspector = inspect(db.engine)
+        if 'question_bank' in inspector.get_table_names() and 'code' not in {c['name'] for c in inspector.get_columns('question_bank')}:
+            with db.engine.begin() as conn:
+                if db.engine.dialect.name == 'postgresql':
+                    conn.execute(text('ALTER TABLE question_bank ADD COLUMN IF NOT EXISTS code TEXT'))
+                elif db.engine.dialect.name == 'sqlite':
+                    conn.execute(text('ALTER TABLE question_bank ADD COLUMN code TEXT'))
         from .services import ensure_admin,seed_initial_content,migrate_legacy_python_subjects
         ensure_admin(); seed_initial_content(); migrate_legacy_python_subjects()
+        from .question_seed_service import seed_generated_question_bank
+        seed_generated_question_bank()
     return app
