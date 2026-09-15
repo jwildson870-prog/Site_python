@@ -1,8 +1,96 @@
 /* ==========================================================================
-   Portal Python — camada de refinamento de interações
-   Este arquivo é ADITIVO: não redefine paleta, não remove nada de style.css.
-   Cobre apenas estados que faltavam (loading, disabled, confirmação, toasts).
+   Portal Python — camada de refinamento visual e de interações
+   Este arquivo é ADITIVO: não redefine paleta, não remove nada de style.css,
+   não altera grids/colunas específicas de cada card. Só harmoniza o que é
+   seguro harmonizar sem ver o resultado renderizado: arredondamento, sombra,
+   resposta ao toque/hover e proteção contra texto quebrando o layout.
    ========================================================================== */
+
+/* --------------------------------------------------------------------
+   Padronização dos cartões do sistema
+   Os mais de 30 componentes "cartão" do portal (materiais, atividades,
+   experimentos, dashboard, relatórios etc.) já usam a paleta correta,
+   mas com arredondamento/sombra/hover levemente diferentes entre si.
+   Esta regra só uniformiza esses três aspectos — nunca o grid interno,
+   o padding específico de conteúdo, nem as cores de cada um.
+   -------------------------------------------------------------------- */
+.achievement-card,
+.activity-admin-card,
+.activity-settings-card,
+.bank-import-card,
+.calendar-card,
+.continue-study-card,
+.manage-card,
+.notification-card,
+.performance-summary-card,
+.progress-hero-card,
+.publisher-card,
+.question-student-card,
+.ready-activity-card,
+.search-result-card,
+.settings-card,
+.smart-alert-card,
+.student-activity-card,
+.student-material-card,
+.student-profile-card,
+.student-summary-card,
+.upcoming-card{
+  border-radius:var(--pjm-radius,18px);
+  box-shadow:var(--pjm-shadow-soft,0 8px 24px rgba(0,0,0,.18));
+  transition:transform .16s ease-out,border-color .16s ease-out,box-shadow .16s ease-out;
+}
+
+a.ready-activity-card:hover,
+a.student-material-card:hover,
+a.upcoming-card:hover{
+  transform:translateY(-2px);
+  box-shadow:var(--pjm-shadow,0 14px 34px rgba(0,0,0,.24));
+}
+
+@media (prefers-reduced-motion:reduce){
+  .achievement-card,.activity-admin-card,.activity-settings-card,.bank-import-card,
+  .calendar-card,.continue-study-card,.manage-card,.notification-card,
+  .performance-summary-card,.progress-hero-card,.publisher-card,.question-student-card,
+  .ready-activity-card,.search-result-card,.settings-card,.smart-alert-card,
+  .student-activity-card,.student-material-card,.student-profile-card,
+  .student-summary-card,.upcoming-card{
+    transition:none;
+  }
+}
+
+/* --------------------------------------------------------------------
+   Ritmo padrão de título/subtítulo/texto (só entra onde nada mais
+   específico já define espaçamento — não sobrepõe os componentes que
+   já têm seu próprio espaçamento, graças à especificidade do CSS).
+   -------------------------------------------------------------------- */
+h1{margin:0 0 10px}
+h2{margin:0 0 8px}
+h3{margin:0 0 6px}
+h1 + p,h2 + p,h3 + p{margin-top:0}
+p{line-height:1.5}
+.achievement-card h2,.activity-admin-card h2,
+.manage-card h2,.notification-card strong,
+.ready-activity-card h2,.student-activity-card h2,
+.student-material-card h2,.student-material-card h3,.student-summary-card h2{
+  overflow-wrap:anywhere;
+  word-break:break-word;
+  hyphens:auto;
+}
+
+/* Evita que descrições longas empurrem botões/ações para fora do cartão. */
+.achievement-card p,.activity-admin-card p,
+.manage-card p,.ready-activity-card p,.student-activity-card p,
+.student-material-card p{
+  overflow-wrap:anywhere;
+}
+
+/* --------------------------------------------------------------------
+   Materiais, atividades e experimentos: miniaturas/ícones não deformam
+   -------------------------------------------------------------------- */
+.manage-icon img,.large-icon img,
+.student-material-card img,.ready-activity-card img,.activity-admin-card img{
+  object-fit:contain;
+}
 
 /* --------------------------------------------------------------------
    Botões: estado de carregamento e desabilitado
