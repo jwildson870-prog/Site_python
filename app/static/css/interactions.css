@@ -93,6 +93,22 @@ p{line-height:1.5}
 }
 
 /* --------------------------------------------------------------------
+   Telas/painéis sem conteúdo: unifica ".professor-empty", que hoje é só
+   texto solto, com o mesmo padrão visual (caixa tracejada e centralizada)
+   já usado em ".empty-state" e ".professor-empty-state" em outras telas.
+   -------------------------------------------------------------------- */
+.professor-empty{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:22px 16px;
+  border:1px dashed rgba(86,146,198,.22);
+  border-radius:13px;
+  background:rgba(7,22,37,.30);
+}
+
+/* --------------------------------------------------------------------
    Botões: estado de carregamento e desabilitado
    -------------------------------------------------------------------- */
 .btn[disabled],
