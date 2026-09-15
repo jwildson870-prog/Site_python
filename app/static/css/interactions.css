@@ -1,0 +1,179 @@
+/* ==========================================================================
+   Portal Python — camada de refinamento de interações
+   Este arquivo é ADITIVO: não redefine paleta, não remove nada de style.css.
+   Cobre apenas estados que faltavam (loading, disabled, confirmação, toasts).
+   ========================================================================== */
+
+/* --------------------------------------------------------------------
+   Botões: estado de carregamento e desabilitado
+   -------------------------------------------------------------------- */
+.btn[disabled],
+.btn.is-loading{
+  cursor:not-allowed;
+  opacity:.62;
+  pointer-events:none;
+  transform:none!important;
+  box-shadow:none!important;
+}
+
+.btn.is-loading{
+  position:relative;
+  color:transparent!important;
+}
+
+.btn.is-loading::after{
+  content:"";
+  position:absolute;
+  top:50%;left:50%;
+  width:16px;height:16px;
+  margin:-8px 0 0 -8px;
+  border-radius:50%;
+  border:2px solid rgba(255,255,255,.35);
+  border-top-color:#fff;
+  animation:pjm-btn-spin .7s linear infinite;
+}
+
+.btn.secondary.is-loading::after{
+  border:2px solid rgba(56,189,248,.30);
+  border-top-color:var(--pjm-primary,#38bdf8);
+}
+
+@keyframes pjm-btn-spin{
+  to{transform:rotate(360deg)}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .btn.is-loading::after{animation-duration:1.4s}
+}
+
+/* --------------------------------------------------------------------
+   Campos de formulário: foco e validação mais visíveis
+   -------------------------------------------------------------------- */
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea{
+  transition:border-color .15s ease,box-shadow .15s ease,background .15s ease;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):focus-visible,
+select:focus-visible,
+textarea:focus-visible{
+  outline:none;
+  border-color:var(--pjm-primary,#38bdf8);
+  box-shadow:0 0 0 3px rgba(56,189,248,.20);
+}
+
+input.field-invalid,
+select.field-invalid,
+textarea.field-invalid{
+  border-color:var(--pjm-danger,#f87171)!important;
+  box-shadow:0 0 0 3px rgba(248,113,113,.14);
+}
+
+.field-error-msg{
+  display:block;
+  margin-top:6px;
+  color:var(--pjm-danger,#f87171);
+  font-size:.78rem;
+  line-height:1.4;
+}
+
+/* --------------------------------------------------------------------
+   Mensagens flash: entrada suave e leitura mais fácil
+   -------------------------------------------------------------------- */
+.flash{
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  animation:pjm-flash-in .28s ease-out;
+  transition:opacity .35s ease,transform .35s ease,max-height .35s ease,margin .35s ease,padding .35s ease;
+}
+
+.flash.is-dismissing{
+  opacity:0;
+  transform:translateY(-6px);
+}
+
+@keyframes pjm-flash-in{
+  from{opacity:0;transform:translateY(-6px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .flash{animation:none}
+}
+
+/* --------------------------------------------------------------------
+   Alvos de toque confortáveis em telas pequenas
+   -------------------------------------------------------------------- */
+@media (max-width:600px){
+  .btn,
+  .side-link,
+  button:not(.text-button){
+    min-height:44px;
+  }
+}
+
+/* --------------------------------------------------------------------
+   Overlay de confirmação (usado por interactions.js antes de excluir)
+   -------------------------------------------------------------------- */
+.pjm-confirm-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:2000;
+  display:grid;
+  place-items:center;
+  padding:20px;
+  background:rgba(4,10,20,.62);
+  backdrop-filter:blur(3px);
+  animation:pjm-confirm-fade .16s ease-out;
+}
+
+@keyframes pjm-confirm-fade{
+  from{opacity:0}
+  to{opacity:1}
+}
+
+.pjm-confirm-card{
+  width:100%;
+  max-width:360px;
+  padding:22px;
+  border-radius:var(--pjm-radius-sm,12px);
+  border:1px solid var(--pjm-border,#1d3552);
+  background:var(--pjm-surface-2,#10233b);
+  box-shadow:var(--pjm-shadow,0 14px 34px rgba(0,0,0,.24));
+  color:var(--pjm-text,#f3f7ff);
+}
+
+.pjm-confirm-card h2{
+  margin:0 0 8px;
+  font-size:1.05rem;
+}
+
+.pjm-confirm-card p{
+  margin:0 0 18px;
+  color:var(--pjm-muted,#94a8bf);
+  font-size:.88rem;
+  line-height:1.5;
+}
+
+.pjm-confirm-actions{
+  display:flex;
+  gap:10px;
+  justify-content:flex-end;
+}
+
+.pjm-confirm-actions .btn{
+  min-height:42px;
+}
+
+@media (max-width:480px){
+  .pjm-confirm-actions{
+    flex-direction:column-reverse;
+  }
+  .pjm-confirm-actions .btn{
+    width:100%;
+    justify-content:center;
+  }
+}

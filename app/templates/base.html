@@ -18,6 +18,7 @@
   <link rel="apple-touch-icon" href="{{ url_for('static',filename='icons/icon-192.png') }}">
   <title>{% block title %}Portal Python{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static',filename='css/style.css', v='20260915-sidebar-desktop-1') }}">
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/interactions.css', v='20260915-interactions-1') }}">
 </head>
 <body class="{% if current_user.is_authenticated %}app-authenticated{% else %}public-page{% endif %}">
 <canvas id="spaceParticles" class="space-particles" aria-hidden="true"></canvas>
@@ -124,5 +125,6 @@
 <script src="{{ url_for('static',filename='js/pwa.js') }}" defer></script>
 <script src="{{ url_for('static',filename='js/loading.js', v='20260912-question-bank-1') }}" defer></script>
 <script src="{{ url_for('static',filename='js/sidebar-nav.js', v='20260915-sidebar-1') }}" defer></script>
+<script src="{{ url_for('static',filename='js/interactions.js', v='20260915-interactions-1') }}" defer></script>
 </body>
 </html>
