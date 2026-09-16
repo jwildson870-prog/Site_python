@@ -7,6 +7,19 @@
    ========================================================================== */
 
 /* --------------------------------------------------------------------
+   Telas grandes (monitores 4K, projetores, TVs de até 100"): sem limite
+   de largura, o conteúdo esticaria a tela inteira e ficaria deformado.
+   Um teto de largura + centralização resolve isso em qualquer tamanho
+   de tela, sem mudar nada no layout para notebook/desktop comum.
+   -------------------------------------------------------------------- */
+.admin-shell,
+.student-shell{
+  max-width:1680px;
+  margin-left:auto;
+  margin-right:auto;
+}
+
+/* --------------------------------------------------------------------
    Padronização dos cartões do sistema
    Os mais de 30 componentes "cartão" do portal (materiais, atividades,
    experimentos, dashboard, relatórios etc.) já usam a paleta correta,
