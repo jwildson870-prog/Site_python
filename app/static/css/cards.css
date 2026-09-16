@@ -1,0 +1,239 @@
+/* ==========================================================================
+   Portal Python — sistema de cards (.pjm-card)
+   ==========================================================================
+   O que é isto:
+   Uma base única para qualquer "cartão" novo do portal, com a MESMA
+   aparência (raio, sombra, cor, hover) que os +30 componentes de cartão
+   já existentes no style.css/interactions.css — só que agora com um nome,
+   uma estrutura e um conjunto de variantes, em vez de uma classe nova
+   toda vez que uma tela precisa de um cartão.
+
+   O que isto NÃO faz:
+   - Não substitui nenhum componente já existente (.student-material-card,
+     .manage-card, .professor-metric etc.) — eles continuam funcionando
+     exatamente como estão. A migração é gradual: quando fizer sentido,
+     um template troca sua classe antiga por `.pjm-card` + variante, um de
+     cada vez, comparando visualmente antes/depois.
+   - Não define cor nova nem raio novo: reaproveita as variáveis --pjm-*
+     já usadas em todo o site.
+   - Não decide sozinho a animação de entrada/hover: esses efeitos vêm de
+     interactions.css, que já inclui `.pjm-card` na lista de seletores
+     animados (ver seção "MICROINTERAÇÕES" daquele arquivo).
+
+   Estrutura HTML esperada:
+
+     <div class="pjm-card pjm-card--material">
+       <div class="pjm-card__icon"><img src="..." alt=""></div>
+       <div class="pjm-card__body">
+         <div class="pjm-card__header">
+           <h3 class="pjm-card__title">Título</h3>
+           <span class="pjm-card__badge">Novo</span>          [opcional]
+         </div>
+         <p class="pjm-card__desc">Descrição curta...</p>
+         <div class="pjm-card__meta">Série • Matéria</div>    [opcional]
+       </div>
+       <div class="pjm-card__actions">                        [opcional]
+         <a class="btn secondary" href="...">Ver</a>
+       </div>
+     </div>
+
+   Nem todo bloco precisa de todas as partes. Um card de estatística, por
+   exemplo, normalmente só usa __icon + __body (com um número grande em
+   vez de título/descrição) — ver variante `.pjm-card--stat` abaixo.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------
+   Base — comum a todas as variantes
+   -------------------------------------------------------------------- */
+.pjm-card{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  padding:18px;
+  border-radius:var(--pjm-radius,18px);
+  border:1px solid rgba(86,146,198,.18);
+  background:var(--pjm-surface-2,#10233b);
+  box-shadow:var(--pjm-shadow-soft,0 8px 24px rgba(0,0,0,.18));
+  color:inherit;
+  text-decoration:none;
+  transition:transform .16s ease-out,border-color .16s ease-out,box-shadow .16s ease-out;
+}
+
+/* Cards que são links herdam o cursor certo; cards que são só container
+   (article/div informativo, sem link) continuam com cursor normal. */
+a.pjm-card{cursor:pointer}
+
+.pjm-card__icon{
+  width:44px;
+  height:44px;
+  flex:0 0 44px;
+  display:grid;
+  place-items:center;
+  border-radius:12px;
+  background:rgba(56,189,248,.10);
+  border:1px solid rgba(56,189,248,.14);
+}
+.pjm-card__icon img{width:20px;height:20px;object-fit:contain}
+
+.pjm-card__body{min-width:0;flex:1;display:flex;flex-direction:column;gap:4px}
+
+.pjm-card__header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.pjm-card__title{
+  margin:0;
+  font-size:1rem;
+  color:var(--pjm-text,#f3f7ff);
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+
+.pjm-card__desc{
+  margin:0;
+  color:var(--pjm-muted,#94a8bf);
+  font-size:.85rem;
+  line-height:1.5;
+  overflow-wrap:anywhere;
+}
+
+.pjm-card__meta{
+  margin-top:2px;
+  color:#7e98b0;
+  font-size:.72rem;
+  letter-spacing:.02em;
+}
+
+.pjm-card__badge{
+  flex:0 0 auto;
+  padding:3px 9px;
+  border-radius:999px;
+  border:1px solid rgba(56,189,248,.24);
+  background:rgba(56,189,248,.10);
+  color:#7dd3fc;
+  font-size:.68rem;
+  font-weight:750;
+  white-space:nowrap;
+}
+
+.pjm-card__actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:4px;
+}
+.pjm-card__actions form{margin:0}
+
+/* --------------------------------------------------------------------
+   Variante: card-feature
+   Destaque simples (ícone/emoji + título + texto curto). Usado em telas
+   públicas ou de introdução — ex.: os 4 destaques da home.
+   -------------------------------------------------------------------- */
+.pjm-card--feature{
+  align-items:flex-start;
+  padding:16px;
+  gap:8px;
+  background:rgba(5,20,34,.38);
+}
+.pjm-card--feature .pjm-card__icon{
+  width:38px;height:38px;flex-basis:38px;
+  border-radius:11px;
+  font-size:1.1rem;
+}
+
+/* --------------------------------------------------------------------
+   Variante: card-stat
+   Número grande + rótulo, com ícone ao lado. Ex.: métricas do professor
+   (alunos, atividades) e estatísticas do aluno (materiais, progresso).
+   -------------------------------------------------------------------- */
+.pjm-card--stat{
+  flex-direction:row;
+  align-items:center;
+  gap:12px;
+  padding:15px;
+}
+.pjm-card--stat .pjm-card__body{gap:2px}
+.pjm-card--stat .pjm-card__value{
+  margin:0;
+  font-size:1.3rem;
+  font-weight:850;
+  color:var(--pjm-text,#f3f7ff);
+  font-variant-numeric:tabular-nums;
+}
+.pjm-card--stat .pjm-card__meta{margin-top:0;font-size:.72rem}
+
+/* --------------------------------------------------------------------
+   Variante: card-material
+   Ícone/thumbnail + título + descrição + meta. Ex.: materiais,
+   atividades e projetos listados para o aluno.
+   -------------------------------------------------------------------- */
+.pjm-card--material{
+  flex-direction:row;
+  align-items:flex-start;
+  gap:14px;
+}
+.pjm-card--material .pjm-card__icon img{object-fit:contain}
+
+/* --------------------------------------------------------------------
+   Variante: card-action
+   Ícone + título + descrição + botões de ação. Ex.: cartões de gestão
+   no painel do professor (editar série, gerenciar usuários etc.).
+   -------------------------------------------------------------------- */
+.pjm-card--action{
+  gap:10px;
+}
+.pjm-card--action .pjm-card__header{align-items:center}
+
+/* --------------------------------------------------------------------
+   Variante: card-empty
+   Estado vazio: nada para mostrar ainda. Centralizado, borda tracejada,
+   sem sombra (não é um cartão "ativo").
+   -------------------------------------------------------------------- */
+.pjm-card--empty{
+  align-items:center;
+  text-align:center;
+  padding:36px 20px;
+  border-style:dashed;
+  border-color:rgba(86,146,198,.22);
+  background:rgba(7,22,37,.30);
+  box-shadow:none;
+}
+.pjm-card--empty .pjm-card__icon{
+  width:52px;height:52px;flex-basis:52px;
+  border-radius:16px;
+  font-size:1.6rem;
+}
+.pjm-card--empty .pjm-card__title{font-size:1.05rem}
+.pjm-card--empty .pjm-card__desc{max-width:34ch}
+
+/* --------------------------------------------------------------------
+   Grade padrão para organizar cards do mesmo tipo lado a lado.
+   Uso: <div class="pjm-card-grid"> ... vários .pjm-card ... </div>
+   -------------------------------------------------------------------- */
+.pjm-card-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  gap:12px;
+}
+.pjm-card-grid--stats{
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+}
+
+@media (max-width:600px){
+  .pjm-card-grid{grid-template-columns:1fr}
+  .pjm-card-grid--stats{grid-template-columns:1fr 1fr}
+}
+
+/* --------------------------------------------------------------------
+   Acessibilidade / preferências de movimento: o hover e a entrada em si
+   já são tratados por interactions.css (que inclui .pjm-card na lista
+   de seletores animados). Aqui só garantimos que a base não force
+   nenhuma transformação quando o usuário pediu menos movimento.
+   -------------------------------------------------------------------- */
+@media (prefers-reduced-motion:reduce){
+  .pjm-card{transition:none}
+}
