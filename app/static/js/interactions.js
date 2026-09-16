@@ -150,4 +150,110 @@
       }, 6000 + index * 400);
     });
   });
+
+  var prefersReducedMotion = window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ------------------------------------------------------------------
+  // Efeito cascata na entrada dos cartões: cada item do mesmo grupo
+  // (mesmo pai) ganha um pequeno atraso extra, para não entrarem todos
+  // de uma vez. A animação em si é definida em CSS (interactions.css);
+  // aqui só calculamos o atraso de cada item.
+  // ------------------------------------------------------------------
+  var CARD_SELECTOR = [
+    '.achievement-card', '.activity-admin-card', '.activity-settings-card',
+    '.bank-import-card', '.calendar-card', '.continue-study-card', '.manage-card',
+    '.notification-card', '.performance-summary-card', '.progress-hero-card',
+    '.publisher-card', '.question-student-card', '.ready-activity-card',
+    '.search-result-card', '.settings-card', '.smart-alert-card',
+    '.student-activity-card', '.student-material-card', '.student-profile-card',
+    '.student-summary-card', '.upcoming-card', '.professor-metric', '.student-stat'
+  ].join(',');
+
+  function staggerCardEntrance() {
+    if (prefersReducedMotion) return;
+    var STEP_MS = 45;
+    var MAX_DELAY_MS = 320;
+    var seenParents = [];
+
+    document.querySelectorAll(CARD_SELECTOR).forEach(function (card) {
+      var parent = card.parentElement;
+      if (!parent) return;
+
+      var parentIndex = seenParents.indexOf(parent);
+      if (parentIndex === -1) {
+        parent._pjmChildCount = 0;
+        seenParents.push(parent);
+        parentIndex = seenParents.length - 1;
+      }
+
+      var order = parent._pjmChildCount || 0;
+      parent._pjmChildCount = order + 1;
+
+      var delay = Math.min(order * STEP_MS, MAX_DELAY_MS);
+      card.style.setProperty('--pjm-in-delay', delay + 'ms');
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', staggerCardEntrance);
+
+  // ------------------------------------------------------------------
+  // Contagem animada dos números de estatística (materiais, atividades,
+  // projetos etc.). Só anima uma vez por elemento, quando ele entra na
+  // tela, e preserva o formato original (casas decimais, "%", "—").
+  // ------------------------------------------------------------------
+  var STAT_SELECTOR = [
+    '.professor-metric strong', '.student-stat strong',
+    '.student-summary-card strong', '.performance-summary-card strong',
+    '.progress-hero-card strong'
+  ].join(',');
+
+  function animateCountUp(el) {
+    var raw = (el.textContent || '').trim();
+    var match = raw.match(/^(\d+(?:[.,]\d+)?)(.*)$/);
+    if (!match) return; // ex.: "—" (sem dado ainda) — não anima
+
+    var target = parseFloat(match[1].replace(',', '.'));
+    var suffix = match[2] || '';
+    var decimals = (match[1].split(/[.,]/)[1] || '').length;
+
+    if (prefersReducedMotion || !isFinite(target)) return;
+
+    var duration = 700;
+    var start = null;
+
+    function step(timestamp) {
+      if (start === null) start = timestamp;
+      var progress = Math.min((timestamp - start) / duration, 1);
+      var eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      var value = target * eased;
+      el.textContent = value.toFixed(decimals) + suffix;
+      if (progress < 1) {
+        window.requestAnimationFrame(step);
+      } else {
+        el.textContent = raw; // garante o valor/formatação original no final
+      }
+    }
+
+    window.requestAnimationFrame(step);
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var stats = document.querySelectorAll(STAT_SELECTOR);
+    if (!stats.length) return;
+
+    if (prefersReducedMotion || typeof IntersectionObserver === 'undefined') {
+      return; // mantém os números como já vêm renderizados pelo servidor
+    }
+
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        animateCountUp(entry.target);
+        observer.unobserve(entry.target);
+      });
+    }, { threshold: 0.4 });
+
+    stats.forEach(function (stat) { observer.observe(stat); });
+  });
 })();

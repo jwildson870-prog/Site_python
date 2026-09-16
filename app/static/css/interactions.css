@@ -388,3 +388,271 @@ textarea.field-invalid{
     justify-content:center;
   }
 }
+
+/* ==========================================================================
+   MICROINTERAÇÕES — entrada, hover e brilho discreto
+   Camada final, só de movimento/luz: reaproveita os seletores já usados
+   acima (mesma lista de cartões, mesmos ícones, mesma paleta azul/ciano).
+   Nada aqui muda cor, grid ou espaçamento — só opacidade, sombra, blur,
+   transform e transições. Tudo desliga sozinho com prefers-reduced-motion.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------
+   1) Entrada suave dos cartões e estatísticas
+   Cada item nasce um pouco abaixo e transparente, e sobe até o lugar.
+   O atraso em cascata (--pjm-in-delay) é opcional: sem JS, todos entram
+   juntos; com JS (interactions.js), cada item do mesmo grupo ganha um
+   pequeno atraso extra para o efeito de cascata.
+   -------------------------------------------------------------------- */
+@keyframes pjm-fade-up{
+  from{opacity:0;transform:translateY(14px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+.achievement-card,.activity-admin-card,.activity-settings-card,.bank-import-card,
+.calendar-card,.continue-study-card,.manage-card,.notification-card,
+.performance-summary-card,.progress-hero-card,.publisher-card,.question-student-card,
+.ready-activity-card,.search-result-card,.settings-card,.smart-alert-card,
+.student-activity-card,.student-material-card,.student-profile-card,
+.student-summary-card,.upcoming-card,
+.professor-metric,.student-stat{
+  animation:pjm-fade-up .55s cubic-bezier(.16,1,.3,1) both;
+  animation-delay:var(--pjm-in-delay,0ms);
+}
+
+@media (prefers-reduced-motion:reduce){
+  .achievement-card,.activity-admin-card,.activity-settings-card,.bank-import-card,
+  .calendar-card,.continue-study-card,.manage-card,.notification-card,
+  .performance-summary-card,.progress-hero-card,.publisher-card,.question-student-card,
+  .ready-activity-card,.search-result-card,.settings-card,.smart-alert-card,
+  .student-activity-card,.student-material-card,.student-profile-card,
+  .student-summary-card,.upcoming-card,
+  .professor-metric,.student-stat{
+    animation:none;
+  }
+}
+
+/* --------------------------------------------------------------------
+   2) Hover dos cartões: eleva, ganha brilho na borda e sombra mais funda.
+   Usa :is() para reaproveitar a mesma lista de cartões e a mesma lista
+   de ícones já padronizadas mais acima, sem repetir seletor por seletor.
+   -------------------------------------------------------------------- */
+:is(.achievement-card,.activity-admin-card,.activity-settings-card,.bank-import-card,
+.calendar-card,.continue-study-card,.manage-card,.notification-card,
+.performance-summary-card,.progress-hero-card,.publisher-card,.question-student-card,
+.ready-activity-card,.search-result-card,.settings-card,.smart-alert-card,
+.student-activity-card,.student-material-card,.student-profile-card,
+.student-summary-card,.upcoming-card,
+.professor-metric,.student-stat):hover{
+  transform:translateY(-4px);
+  border-color:rgba(56,189,248,.38);
+  box-shadow:0 18px 40px rgba(0,0,0,.30),0 0 0 1px rgba(56,189,248,.10),0 0 26px rgba(56,189,248,.10);
+}
+
+/* Ícone do cartão reage junto, com uma animação curta (escala + leve giro
+   + brilho). Reaproveita a lista de ícones já padronizada acima. */
+:is(.achievement-card,.activity-admin-card,.activity-settings-card,.bank-import-card,
+.calendar-card,.continue-study-card,.manage-card,.notification-card,
+.performance-summary-card,.progress-hero-card,.publisher-card,.question-student-card,
+.ready-activity-card,.search-result-card,.settings-card,.smart-alert-card,
+.student-activity-card,.student-material-card,.student-profile-card,
+.student-summary-card,.upcoming-card,
+.professor-metric,.student-stat):hover
+:is(.continue-icon,.large-icon,.manage-icon,.material-icon,
+.notification-icon,.performance-icon,.professor-metric-icon,.ready-intro-icon,
+.resource-icon,.search-empty-icon,.search-result-icon,.smart-alert-icon,
+.stat-icon,.student-item-icon,.student-stat-icon,.summary-icon){
+  transform:scale(1.08) rotate(-3deg);
+  background:rgba(56,189,248,.16);
+  border-color:rgba(56,189,248,.28);
+}
+
+:is(.continue-icon,.large-icon,.manage-icon,.material-icon,
+.notification-icon,.performance-icon,.professor-metric-icon,.ready-intro-icon,
+.resource-icon,.search-empty-icon,.search-result-icon,.smart-alert-icon,
+.stat-icon,.student-item-icon,.student-stat-icon,.summary-icon){
+  transition:transform .18s cubic-bezier(.16,1,.3,1),background .18s ease,border-color .18s ease;
+}
+
+@media (prefers-reduced-motion:reduce){
+  :is(.achievement-card,.activity-admin-card,.activity-settings-card,.bank-import-card,
+  .calendar-card,.continue-study-card,.manage-card,.notification-card,
+  .performance-summary-card,.progress-hero-card,.publisher-card,.question-student-card,
+  .ready-activity-card,.search-result-card,.settings-card,.smart-alert-card,
+  .student-activity-card,.student-material-card,.student-profile-card,
+  .student-summary-card,.upcoming-card,
+  .professor-metric,.student-stat):hover{
+    transform:none;
+  }
+  :is(.continue-icon,.large-icon,.manage-icon,.material-icon,
+  .notification-icon,.performance-icon,.professor-metric-icon,.ready-intro-icon,
+  .resource-icon,.search-empty-icon,.search-result-icon,.smart-alert-icon,
+  .stat-icon,.student-item-icon,.student-stat-icon,.summary-icon){
+    transition:none;
+  }
+}
+
+/* --------------------------------------------------------------------
+   3) Botões: elevação, brilho discreto (sweep) e efeito de pressionar.
+   -------------------------------------------------------------------- */
+.btn{
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+}
+
+.btn::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  left:-60%;
+  width:40%;
+  background:linear-gradient(115deg,transparent,rgba(255,255,255,.32),transparent);
+  transform:skewX(-18deg);
+  transition:left .55s ease;
+  pointer-events:none;
+}
+
+.btn:hover::before{left:130%}
+.btn:hover{filter:brightness(1.05)}
+.btn:active{transform:translateY(1px) scale(.97);filter:brightness(.98)}
+
+@media (prefers-reduced-motion:reduce){
+  .btn::before{display:none}
+  .btn:active{transform:none}
+}
+
+/* --------------------------------------------------------------------
+   4) Campos de busca: crescem sutilmente e destacam a borda ao focar.
+   -------------------------------------------------------------------- */
+.search-query-field,
+.admin-search,
+.side-nav-search{
+  transition:transform .18s ease-out;
+}
+
+.search-query-field:focus-within,
+.admin-search:focus-within{
+  transform:scale(1.012);
+}
+
+.side-nav-filter{
+  transition:border-color .18s ease-out,background .18s ease-out,box-shadow .18s ease-out,transform .18s ease-out;
+}
+
+.side-nav-filter:focus{
+  box-shadow:0 0 0 3px rgba(56,189,248,.16);
+  transform:scale(1.01);
+}
+
+.topbar-search{transition:transform .18s ease-out,box-shadow .2s ease-out}
+.topbar-search:hover{transform:translateY(-1px)}
+.topbar-search img{transition:transform .18s ease-out,filter .18s ease-out}
+.topbar-search:hover img{transform:scale(1.08);filter:brightness(1.3) drop-shadow(0 0 5px rgba(56,189,248,.4))}
+
+@media (prefers-reduced-motion:reduce){
+  .search-query-field:focus-within,.admin-search:focus-within,
+  .side-nav-filter:focus,.topbar-search:hover,.topbar-search:hover img{
+    transform:none;
+  }
+}
+
+/* --------------------------------------------------------------------
+   5) Sidebar: indicador lateral também aparece (suave) só no hover,
+   sem depender de a página estar ativa naquele item.
+   -------------------------------------------------------------------- */
+.side-link{position:relative}
+
+.side-link::after{
+  content:"";
+  position:absolute;
+  left:-10px;
+  top:50%;
+  bottom:50%;
+  width:3px;
+  border-radius:0 4px 4px 0;
+  background:var(--pjm-primary,#38bdf8);
+  opacity:0;
+  transition:opacity .18s ease-out,top .18s ease-out,bottom .18s ease-out;
+  pointer-events:none;
+}
+
+.side-link:hover::after{opacity:.55;top:24%;bottom:24%}
+.side-link.active::after{display:none} /* o item ativo já tem seu próprio indicador */
+
+@media (prefers-reduced-motion:reduce){
+  .side-link::after{transition:opacity .18s ease-out}
+}
+
+/* --------------------------------------------------------------------
+   6) Logo: brilho e flutuação muito discretos, quase imperceptíveis.
+   -------------------------------------------------------------------- */
+@keyframes pjm-logo-breathe{
+  0%,100%{filter:drop-shadow(0 5px 12px rgba(33,150,243,.22)) brightness(1)}
+  50%{filter:drop-shadow(0 5px 16px rgba(33,150,243,.38)) brightness(1.06)}
+}
+
+.topbar-brand img,
+.side-logo img{
+  animation:pjm-logo-breathe 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion:reduce){
+  .topbar-brand img,.side-logo img{animation:none}
+}
+
+/* --------------------------------------------------------------------
+   7) Tela de carregamento: pequeno respiro no texto, sem exagerar no
+   que já existe (pulso do logo e barra de progresso já eram animados).
+   -------------------------------------------------------------------- */
+@keyframes pjm-loader-text-fade{
+  0%,100%{opacity:.72}
+  50%{opacity:1}
+}
+
+.page-loader-card small{
+  animation:pjm-loader-text-fade 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion:reduce){
+  .page-loader-card small{animation:none;opacity:1}
+}
+
+/* --------------------------------------------------------------------
+   8) Fundo: os dois glows fixos ganham uma respiração muito lenta e
+   sutil, quase imperceptível — mantendo a opacidade baixa já definida
+   mais acima neste arquivo.
+   -------------------------------------------------------------------- */
+@keyframes pjm-bg-breathe{
+  0%,100%{opacity:.85;transform:scale(1)}
+  50%{opacity:1;transform:scale(1.04)}
+}
+
+.app-authenticated .site-main::before{
+  animation:pjm-bg-breathe 14s ease-in-out infinite;
+}
+
+.app-authenticated .site-main::after{
+  animation:pjm-bg-breathe 18s ease-in-out infinite reverse;
+}
+
+@media (prefers-reduced-motion:reduce){
+  .app-authenticated .site-main::before,
+  .app-authenticated .site-main::after{
+    animation:none;
+  }
+}
+
+/* --------------------------------------------------------------------
+   9) Números de estatística: espaço para a animação de contagem feita
+   em interactions.js (tabular-nums evita o texto "tremer" de largura
+   enquanto os dígitos mudam).
+   -------------------------------------------------------------------- */
+.professor-metric strong,
+.student-stat strong,
+.student-summary-card strong,
+.performance-summary-card strong,
+.progress-hero-card strong{
+  font-variant-numeric:tabular-nums;
+}
