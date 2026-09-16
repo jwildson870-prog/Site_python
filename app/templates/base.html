@@ -37,7 +37,11 @@
   <div class="topbar-brand"><img src="{{ url_for('static',filename='icons/python-brand.png') }}" alt="Python"><strong>Portal <span>Python</span></strong></div>
   <div class="topbar-context"><span class="status-dot"></span><span>Portal online</span></div>
   <div class="topbar-spacer"></div>
+  {% if current_user.is_authenticated and not current_user.is_admin %}
+  <a class="topbar-search" href="{{ url_for('student.search') }}" aria-label="Buscar no portal"><img src="{{ url_for('static',filename='icons/ui/search.svg') }}" alt=""><span>Buscar no portal...</span><kbd>Ctrl K</kbd></a>
+  {% else %}
   <div class="topbar-search" aria-label="Buscar no portal"><img src="{{ url_for('static',filename='icons/ui/search.svg') }}" alt=""><span>Buscar no portal...</span></div>
+  {% endif %}
   <div class="topbar-bell" aria-label="Notificações"><img src="{{ url_for('static',filename='icons/ui/bell.svg') }}" alt=""><i></i></div>
   {% if current_user.is_authenticated %}
   <div class="topbar-user"><div class="topbar-avatar">{{ current_user.name[:1]|upper }}</div><div class="topbar-user-copy"><strong>{{ current_user.name }}</strong><small>{% if current_user.is_admin %}Professor{% else %}Aluno{% endif %}</small></div></div>

@@ -237,3 +237,20 @@ a.pjm-card{cursor:pointer}
 @media (prefers-reduced-motion:reduce){
   .pjm-card{transition:none}
 }
+
+/* --------------------------------------------------------------------
+   Telas pequenas (≤430px): os componentes antigos que o .pjm-card vem
+   substituindo (.student-stat, .professor-metric) sempre ficaram mais
+   compactos aqui. Repito o mesmo ajuste para quem já foi migrado, pra
+   não regredir em relação ao que existia antes.
+   -------------------------------------------------------------------- */
+@media (max-width:430px){
+  .pjm-card-grid--stats,
+  .student-stats-grid,
+  .professor-metrics{gap:8px}
+  .pjm-card--stat{padding:11px;gap:8px}
+  .pjm-card--stat .pjm-card__icon{width:36px;height:36px;flex-basis:36px;border-radius:11px}
+  .pjm-card--stat .pjm-card__icon img{width:18px;height:18px}
+  .pjm-card--stat .pjm-card__value{font-size:1.15rem}
+  .pjm-card--stat .pjm-card__meta{font-size:.67rem}
+}

@@ -67,3 +67,28 @@
 
   syncMenu();
 })();
+
+// Atalho Ctrl/Cmd+K: leva para a busca (ou foca o campo, se já estiver nela).
+// Roda numa IIFE separada da anterior porque essa precisa funcionar em toda
+// página autenticada, mesmo nas que não têm o menu mobile.
+(function () {
+  const searchLink = document.querySelector('.topbar-search[href]');
+  if (!searchLink) return; // sem link de busca nesta conta/página, não faz nada
+
+  document.addEventListener('keydown', function (event) {
+    const isShortcut = (event.ctrlKey || event.metaKey) && !event.altKey &&
+      (event.key === 'k' || event.key === 'K');
+    if (!isShortcut) return;
+
+    const existingInput = document.getElementById('searchQueryInput');
+    if (existingInput) {
+      event.preventDefault();
+      existingInput.focus();
+      existingInput.select();
+      return;
+    }
+
+    event.preventDefault();
+    window.location.href = searchLink.href;
+  });
+})();

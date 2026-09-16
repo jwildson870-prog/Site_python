@@ -585,6 +585,31 @@ textarea.field-invalid{
   .side-link::after{transition:opacity .18s ease-out}
 }
 
+/* Ícone do item também reage um pouco ao hover/foco, igual aos ícones
+   de cartão já animados acima — só que com um deslocamento sutil em vez
+   de escala, para combinar com o menu ser uma lista vertical. */
+.side-link .nav-icon{
+  transition:transform .16s cubic-bezier(.16,1,.3,1);
+}
+.side-link:hover .nav-icon,
+.side-link:focus-visible .nav-icon{
+  transform:translateX(2px);
+}
+
+@media (prefers-reduced-motion:reduce){
+  .side-link .nav-icon{transition:none}
+  .side-link:hover .nav-icon,.side-link:focus-visible .nav-icon{transform:none}
+}
+
+/* Separação visual entre grupos da sidebar: uma linha bem discreta
+   acima de cada grupo (menos o primeiro), só pra o olho encontrar onde
+   um grupo termina e o outro começa. */
+.side-section + .side-section{
+  margin-top:6px;
+  padding-top:6px;
+  border-top:1px solid rgba(120,163,204,.09);
+}
+
 /* --------------------------------------------------------------------
    6) Logo: brilho e flutuação muito discretos, quase imperceptíveis.
    -------------------------------------------------------------------- */
@@ -717,4 +742,42 @@ textarea.field-invalid{
   .student-shell .progress-fill{
     animation:none;
   }
+}
+
+/* --------------------------------------------------------------------
+   12) Busca: destaque do termo pesquisado, categoria como selo (chip) em
+   vez de texto solto, e o topo do site vira um atalho real (Ctrl/Cmd+K)
+   -------------------------------------------------------------------- */
+mark.search-hit{
+  background:rgba(56,189,248,.22);
+  color:#e0f7ff;
+  border-radius:3px;
+  padding:0 2px;
+}
+
+.search-result-card small.search-result-category{
+  display:inline-flex;
+  align-items:center;
+  width:fit-content;
+  max-width:100%;
+  padding:2px 8px;
+  border-radius:999px;
+  background:rgba(56,189,248,.10);
+  border:1px solid rgba(56,189,248,.18);
+}
+
+.topbar-search{cursor:pointer}
+.topbar-search kbd{
+  margin-left:auto;
+  padding:1px 6px;
+  border-radius:6px;
+  border:1px solid rgba(148,168,191,.28);
+  background:rgba(255,255,255,.04);
+  color:var(--pjm-muted,#94a8bf);
+  font:inherit;
+  font-size:.65rem;
+}
+
+@media (max-width:760px){
+  .topbar-search kbd{display:none}
 }

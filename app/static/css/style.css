@@ -1567,6 +1567,8 @@ body.app-authenticated{
   display:flex;align-items:center;gap:10px;
   padding:0 17px;
   margin-right:34px;
+  text-decoration:none;
+  color:inherit;
   border:1px solid #1b4d7e;
   border-radius:999px;
   background:rgba(5,28,53,.72);

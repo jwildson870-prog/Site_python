@@ -35,10 +35,10 @@
   </div>
 
   <div class="student-stats-grid">
-    <a class="student-stat" href="{{ url_for('student.progress') }}"><span class="student-stat-icon"><img src="{{ url_for('static',filename='icons/ui/chart.svg') }}" alt=""></span><span><strong>{{ completed }}</strong><small>Conteúdos concluídos</small></span></a>
-    <a class="student-stat" href="{{ url_for('student.activities') }}"><span class="student-stat-icon"><img src="{{ url_for('static',filename='icons/ui/check.svg') }}" alt=""></span><span><strong>{{ pending_activities }}</strong><small>Atividades pendentes</small></span></a>
-    <a class="student-stat" href="{{ url_for('student.grades') }}"><span class="student-stat-icon"><img src="{{ url_for('static',filename='icons/ui/chart.svg') }}" alt=""></span><span><strong>{{ '%.1f'|format(average) if average is not none else '—' }}</strong><small>Média das atividades</small></span></a>
-    <a class="student-stat" href="{{ url_for('student.favorites') }}"><span class="student-stat-icon"><img src="{{ url_for('static',filename='icons/ui/folder-yellow.svg') }}" alt=""></span><span><strong>{{ favorites }}</strong><small>Materiais favoritos</small></span></a>
+    <a class="pjm-card pjm-card--stat" href="{{ url_for('student.progress') }}"><div class="pjm-card__icon"><img src="{{ url_for('static',filename='icons/ui/chart.svg') }}" alt=""></div><div class="pjm-card__body"><p class="pjm-card__value">{{ completed }}</p><p class="pjm-card__meta">Conteúdos concluídos</p></div></a>
+    <a class="pjm-card pjm-card--stat" href="{{ url_for('student.activities') }}"><div class="pjm-card__icon"><img src="{{ url_for('static',filename='icons/ui/check.svg') }}" alt=""></div><div class="pjm-card__body"><p class="pjm-card__value">{{ pending_activities }}</p><p class="pjm-card__meta">Atividades pendentes</p></div></a>
+    <a class="pjm-card pjm-card--stat" href="{{ url_for('student.grades') }}"><div class="pjm-card__icon"><img src="{{ url_for('static',filename='icons/ui/chart.svg') }}" alt=""></div><div class="pjm-card__body"><p class="pjm-card__value">{{ '%.1f'|format(average) if average is not none else '—' }}</p><p class="pjm-card__meta">Média das atividades</p></div></a>
+    <a class="pjm-card pjm-card--stat" href="{{ url_for('student.favorites') }}"><div class="pjm-card__icon"><img src="{{ url_for('static',filename='icons/ui/folder-yellow.svg') }}" alt=""></div><div class="pjm-card__body"><p class="pjm-card__value">{{ favorites }}</p><p class="pjm-card__meta">Materiais favoritos</p></div></a>
   </div>
 
   <div class="student-dashboard-grid">

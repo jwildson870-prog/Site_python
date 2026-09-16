@@ -35,6 +35,66 @@
     });
   }
 
+  function initSectionAnimation() {
+    var reduceMotion = window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) return; // mantém o comportamento nativo, instantâneo
+
+    var sections = document.querySelectorAll('.side-section');
+
+    sections.forEach(function (section) {
+      var summary = section.querySelector(':scope > summary.side-section-title');
+      var panel = section.querySelector(':scope > .side-section-links');
+      if (!summary || !panel) return;
+      var busy = false;
+
+      summary.addEventListener('click', function (evt) {
+        evt.preventDefault();
+        if (busy) return;
+        section.open ? closeSection() : openSection();
+      });
+
+      function openSection() {
+        busy = true;
+        section.open = true;
+        var target = panel.scrollHeight;
+        panel.style.overflow = 'hidden';
+        panel.style.height = '0px';
+        requestAnimationFrame(function () {
+          panel.style.transition = 'height .22s cubic-bezier(.16,1,.3,1)';
+          panel.style.height = target + 'px';
+        });
+        panel.addEventListener('transitionend', settle);
+      }
+
+      function closeSection() {
+        busy = true;
+        panel.style.overflow = 'hidden';
+        panel.style.height = panel.scrollHeight + 'px';
+        requestAnimationFrame(function () {
+          panel.style.transition = 'height .18s ease-in';
+          panel.style.height = '0px';
+        });
+        panel.addEventListener('transitionend', function onEnd() {
+          section.open = false;
+          settle(onEnd);
+        });
+      }
+
+      function settle(evtOrHandler) {
+        if (typeof evtOrHandler === 'function') {
+          panel.removeEventListener('transitionend', evtOrHandler);
+        } else {
+          panel.removeEventListener('transitionend', settle);
+        }
+        panel.style.transition = '';
+        panel.style.height = '';
+        panel.style.overflow = '';
+        busy = false;
+      }
+    });
+  }
+
   function normalize(text) {
     return (text || '')
       .toLowerCase()
@@ -82,6 +142,7 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     initSectionMemory();
+    try { initSectionAnimation(); } catch (e) { /* fallback: toggle nativo instantâneo */ }
     initFilter();
   });
 })();

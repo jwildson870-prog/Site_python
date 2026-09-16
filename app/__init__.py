@@ -50,6 +50,30 @@ def create_app(test_config=None):
         allowed_attrs = {'a': ['href','title','target','rel']}
         return bleach.clean(value or '', tags=allowed_tags, attributes=allowed_attrs, protocols={'http','https','mailto'}, strip=True)
 
+    @app.template_filter('highlight')
+    def highlight(value, query):
+        """Marca visualmente (com <mark>) as ocorrências de `query` dentro de
+        `value`, sem HTML injection: o texto original é sempre escapado antes
+        de qualquer marcação ser inserida."""
+        from markupsafe import Markup, escape
+        import re
+        text = value or ''
+        query = (query or '').strip()
+        if not query:
+            return Markup(escape(text))
+        try:
+            pattern = re.compile(re.escape(query), re.IGNORECASE)
+        except re.error:
+            return Markup(escape(text))
+        pieces = []
+        last_end = 0
+        for match in pattern.finditer(text):
+            pieces.append(escape(text[last_end:match.start()]))
+            pieces.append(Markup('<mark class="search-hit">') + escape(match.group(0)) + Markup('</mark>'))
+            last_end = match.end()
+        pieces.append(escape(text[last_end:]))
+        return Markup('').join(pieces)
+
     @app.after_request
     def add_security_headers(response):
         response.headers.setdefault('X-Content-Type-Options', 'nosniff')
