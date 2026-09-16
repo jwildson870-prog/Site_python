@@ -131,7 +131,20 @@
 .upcoming-card{
   border-radius:var(--pjm-radius,18px);
   box-shadow:var(--pjm-shadow-soft,0 8px 24px rgba(0,0,0,.18));
+  border-color:rgba(86,146,198,.18);
   transition:transform .16s ease-out,border-color .16s ease-out,box-shadow .16s ease-out;
+}
+
+/* Ícones dentro dos cartões: mesmo raio e mesmo tom de fundo/borda em
+   todo o portal (mantive cada tamanho como já estava — mudar isso exigiria
+   conferir visualmente cada grid pra não desalinhar ícone x coluna). */
+.continue-icon,.large-icon,.manage-icon,.material-icon,
+.notification-icon,.performance-icon,.professor-metric-icon,.ready-intro-icon,
+.resource-icon,.search-empty-icon,.search-result-icon,.smart-alert-icon,
+.stat-icon,.student-item-icon,.student-stat-icon,.summary-icon{
+  border-radius:12px;
+  background:rgba(56,189,248,.10);
+  border:1px solid rgba(56,189,248,.14);
 }
 
 a.ready-activity-card:hover,
