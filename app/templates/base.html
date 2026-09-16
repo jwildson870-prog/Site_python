@@ -19,10 +19,7 @@
   <title>{% block title %}Portal Python{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static',filename='css/style.css', v='20260915-sidebar-desktop-1') }}">
   <link rel="stylesheet" href="{{ url_for('static',filename='css/interactions.css', v='20260916-microinteractions-1') }}">
-<<<<<<< HEAD
-=======
   <link rel="stylesheet" href="{{ url_for('static',filename='css/cards.css', v='20260916-cards-1') }}">
->>>>>>> fbe3ebd (style: substitui emojis da home por icones SVG)
 </head>
 <body class="{% if current_user.is_authenticated %}app-authenticated{% else %}public-page{% endif %}">
 <canvas id="spaceParticles" class="space-particles" aria-hidden="true"></canvas>

@@ -8,10 +8,10 @@
   </div>
 
   <div class="professor-metrics">
-    <a class="professor-metric" href="{{url_for('admin.users')}}"><span class="professor-metric-icon"><img src="{{url_for('static',filename='icons/ui/users.svg')}}" alt=""></span><span><strong>{{students_count}}</strong><small>Alunos cadastrados</small></span></a>
-    <a class="professor-metric" href="{{url_for('admin.activities')}}"><span class="professor-metric-icon"><img src="{{url_for('static',filename='icons/ui/check.svg')}}" alt=""></span><span><strong>{{activities}}</strong><small>Atividades criadas</small></span></a>
-    <a class="professor-metric" href="{{url_for('admin.performance')}}"><span class="professor-metric-icon"><img src="{{url_for('static',filename='icons/ui/chart.svg')}}" alt=""></span><span><strong>{{average_score}}</strong><small>Média das tentativas</small></span></a>
-    <a class="professor-metric" href="{{url_for('admin.performance')}}"><span class="professor-metric-icon"><img src="{{url_for('static',filename='icons/ui/chart.svg')}}" alt=""></span><span><strong>{{overall_completion}}%</strong><small>Conclusão média</small></span></a>
+    <a class="pjm-card pjm-card--stat" href="{{url_for('admin.users')}}"><div class="pjm-card__icon"><img src="{{url_for('static',filename='icons/ui/users.svg')}}" alt=""></div><div class="pjm-card__body"><p class="pjm-card__value">{{students_count}}</p><p class="pjm-card__meta">Alunos cadastrados</p></div></a>
+    <a class="pjm-card pjm-card--stat" href="{{url_for('admin.activities')}}"><div class="pjm-card__icon"><img src="{{url_for('static',filename='icons/ui/check.svg')}}" alt=""></div><div class="pjm-card__body"><p class="pjm-card__value">{{activities}}</p><p class="pjm-card__meta">Atividades criadas</p></div></a>
+    <a class="pjm-card pjm-card--stat" href="{{url_for('admin.performance')}}"><div class="pjm-card__icon"><img src="{{url_for('static',filename='icons/ui/chart.svg')}}" alt=""></div><div class="pjm-card__body"><p class="pjm-card__value">{{average_score}}</p><p class="pjm-card__meta">Média das tentativas</p></div></a>
+    <a class="pjm-card pjm-card--stat" href="{{url_for('admin.performance')}}"><div class="pjm-card__icon"><img src="{{url_for('static',filename='icons/ui/chart.svg')}}" alt=""></div><div class="pjm-card__body"><p class="pjm-card__value">{{overall_completion}}%</p><p class="pjm-card__meta">Conclusão média</p></div></a>
   </div>
 
   <div class="professor-panel smart-alert-dashboard-panel">
