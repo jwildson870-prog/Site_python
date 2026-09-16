@@ -7,6 +7,29 @@
    ========================================================================== */
 
 /* --------------------------------------------------------------------
+   Menos camadas decorativas competindo com o conteúdo. O fundo já tem
+   gradiente do body + glows fixos no site-main + partículas animadas,
+   todos ao mesmo tempo — deixo os três mais discretos (sem remover
+   nenhum) para o conteúdo real (dados, texto, cards) ganhar contraste.
+   -------------------------------------------------------------------- */
+.app-authenticated .site-main::before,
+.app-authenticated .site-main::after{
+  opacity:.16;
+}
+
+.space-particles{
+  opacity:.34;
+}
+
+@media(max-width:680px){
+  .space-particles{opacity:.22}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .space-particles{opacity:.16}
+}
+
+/* --------------------------------------------------------------------
    Telas grandes (monitores 4K, projetores, TVs de até 100"): sem limite
    de largura, o conteúdo esticaria a tela inteira e ficaria deformado.
    Um teto de largura + centralização resolve isso em qualquer tamanho
