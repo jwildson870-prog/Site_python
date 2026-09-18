@@ -1,8 +1,10 @@
 import os
 from pathlib import Path
-from flask import Flask,render_template,redirect,url_for,request
+from datetime import timedelta
+import hashlib
+from flask import Flask,render_template,redirect,url_for,request,session
 from sqlalchemy import inspect, text
-from flask_login import LoginManager,current_user
+from flask_login import LoginManager,current_user,logout_user
 from flask_wtf import CSRFProtect
 import bleach
 from .extensions import db
@@ -92,6 +94,30 @@ def create_app(test_config=None):
     from .models import User
     @login.user_loader
     def load_user(uid): return db.session.get(User,int(uid))
+
+    @app.before_request
+    def _enforce_session_version():
+        # Uma troca/redefinição de senha incrementa User.session_version.
+        # Se a sessão do navegador guarda uma versão antiga, ela é encerrada
+        # aqui — é assim que uma redefinição de senha derruba sessões
+        # antigas (item 7/9 do pedido) sem exigir uma tabela de dispositivos.
+        if not current_user.is_authenticated:
+            return
+        if session.get('sv') != current_user.session_version:
+            logout_user(); session.clear(); return
+        # Também valida contra a tabela de sessões (item 9/10): se esta
+        # sessão específica foi encerrada pelo usuário na tela "Sessões
+        # ativas" (ou por qualquer outro motivo), derruba aqui também.
+        raw = session.get('st')
+        if raw:
+            from .models import UserSession
+            from .timeutils import utcnow
+            token_hash = hashlib.sha256(raw.encode()).hexdigest()
+            row = UserSession.query.filter_by(token_hash=token_hash, user_id=current_user.id).first()
+            if not row or row.revoked_at is not None:
+                logout_user(); session.clear()
+            elif utcnow() - row.last_seen_at > timedelta(minutes=5):
+                row.last_seen_at = utcnow(); db.session.commit()
     from .auth.routes import auth_bp
     from .student.routes import student_bp
     from .admin.routes import admin_bp
@@ -153,7 +179,26 @@ def create_app(test_config=None):
                     conn.execute(text("ALTER TABLE activities ADD COLUMN IF NOT EXISTS difficulty VARCHAR(20) DEFAULT 'medio'"))
                 elif db.engine.dialect.name == 'sqlite':
                     conn.execute(text("ALTER TABLE activities ADD COLUMN difficulty VARCHAR(20) DEFAULT 'medio'"))
+        # Migração leve para instalações existentes: adiciona as colunas de
+        # autenticação (item 3 do ITEM 3) sem apagar ou recriar tabelas.
+        inspector = inspect(db.engine)
+        if 'users' in inspector.get_table_names():
+            existing_cols = {c['name'] for c in inspector.get_columns('users')}
+            with db.engine.begin() as conn:
+                if 'session_version' not in existing_cols:
+                    if db.engine.dialect.name == 'postgresql':
+                        conn.execute(text('ALTER TABLE users ADD COLUMN IF NOT EXISTS session_version INTEGER NOT NULL DEFAULT 0'))
+                    elif db.engine.dialect.name == 'sqlite':
+                        conn.execute(text('ALTER TABLE users ADD COLUMN session_version INTEGER NOT NULL DEFAULT 0'))
+                if 'email_verified' not in existing_cols:
+                    if db.engine.dialect.name == 'postgresql':
+                        conn.execute(text('ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT false'))
+                    elif db.engine.dialect.name == 'sqlite':
+                        conn.execute(text('ALTER TABLE users ADD COLUMN email_verified BOOLEAN NOT NULL DEFAULT 0'))
         # O banco de questões é aditivo e não altera tabelas existentes.
+        # As tabelas novas (password_reset_tokens, email_verification_tokens,
+        # login_attempts) são criadas automaticamente pelo db.create_all()
+        # abaixo, sem afetar as tabelas já existentes.
         db.create_all()
         inspector = inspect(db.engine)
         if 'question_bank' in inspector.get_table_names() and 'code' not in {c['name'] for c in inspector.get_columns('question_bank')}:

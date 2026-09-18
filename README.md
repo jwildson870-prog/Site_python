@@ -72,6 +72,16 @@ Para ativar o preview de PPTX em produção, configure o serviço no Render com 
 
 Senhas são armazenadas somente como hash; CSRF é aplicado aos POST; rotas administrativas verificam o papel no servidor; cadastro não permite promoção a administrador; segredos ficam no `.env`; arquivos não executáveis são aceitos como PDF apenas.
 
+### Autenticação (login, cadastro, recuperação de senha)
+
+- **Senha**: mínimo de 10 caracteres, com ao menos uma letra e um número (regra única em `app/auth/routes.py::password_errors`, usada no cadastro e na redefinição; a tela mostra os mesmos requisitos em tempo real, mas quem decide é sempre o servidor).
+- **Recuperação de senha**: `/auth/forgot-password` sempre responde com a mesma mensagem genérica, exista ou não a conta. O link enviado por e-mail expira em 30 minutos e só pode ser usado uma vez; ao redefinir a senha, todas as sessões abertas da conta são encerradas.
+- **E-mail transacional**: configurável via `MAIL_SERVER`/`MAIL_PORT`/`MAIL_USERNAME`/`MAIL_PASSWORD`/`MAIL_USE_TLS`/`MAIL_DEFAULT_SENDER` no `.env`. Sem isso configurado, o fluxo de recuperação de senha continua funcionando (gera o token), só não envia o e-mail de verdade — útil em desenvolvimento.
+- **Verificação de e-mail**: infraestrutura pronta (`EmailVerificationToken`), mas não bloqueia o login — é só um selo de confiança, enviado automaticamente no cadastro quando o e-mail está configurado.
+- **Limite de tentativas**: login, cadastro e recuperação de senha têm um limite de tentativas malsucedidas por IP e por conta em uma janela de 15 minutos (`app/rate_limit.py`), guardado no banco (funciona com vários workers do gunicorn). Não há CAPTCHA — o ponto de extensão está marcado em `rate_limit.should_show_captcha` para quando um provedor (hCaptcha/Turnstile) for integrado.
+- **Google OAuth**: o botão "Continuar com Google" só aparece quando `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` estão configurados; caso contrário, fica oculto (nunca aparece quebrado).
+- **Sessões**: cookies `HttpOnly`, `SameSite=Lax` e `Secure` em produção (já existia). Uma redefinição de senha incrementa `User.session_version` e derruba sessões antigas no próximo request (`app/__init__.py::_enforce_session_version`). Uma lista de sessões/dispositivos ativos (o item "sessões ativas" do pedido original) não foi implementada — exigiria uma tabela de dispositivos e um pouco mais de estrutura; o campo `session_version` já é a base para isso, se for necessário no futuro.
+
 ## Publicação de materiais — painel do professor
 
 O painel do professor mantém a interface do Portal Python e oferece uma área de publicação rápida com quatro fontes:

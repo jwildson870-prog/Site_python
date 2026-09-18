@@ -119,7 +119,7 @@
 <label class="menu-overlay" for="menuCheck" aria-label="Fechar menu"></label>
 {% endif %}
 <main class="site-main">
-{% with messages=get_flashed_messages(with_categories=true) %}{% for category,msg in messages %}<div class="flash {{category}}">{{msg}}</div>{% endfor %}{% endwith %}
+{% with messages=get_flashed_messages(with_categories=true) %}{% if messages %}<div role="status" aria-live="polite">{% for category,msg in messages %}<div class="flash {{category}}">{{msg}}</div>{% endfor %}</div>{% endif %}{% endwith %}
 {% block content %}{% endblock %}
 </main>
 <footer class="site-footer">Portal Python <span>•</span> Aprender <span>•</span> Praticar <span>•</span> Evoluir</footer>

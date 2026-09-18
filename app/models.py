@@ -13,6 +13,15 @@ class User(UserMixin, db.Model):
     role = db.Column(db.String(20), nullable=False, default='student')
     google_sub = db.Column(db.String(255), unique=True)
     created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
+    # Incrementado a cada troca de senha. Guardado também na sessão de login
+    # (session['sv']); se não baterem, a sessão é considerada antiga e é
+    # encerrada. É assim que uma troca de senha derruba sessões antigas
+    # sem precisar de uma tabela de dispositivos.
+    session_version = db.Column(db.Integer, nullable=False, default=0)
+    # Infraestrutura para verificação de e-mail (item 8). Fica desligada por
+    # padrão (ninguém é bloqueado por não confirmar); contas Google já
+    # chegam confirmadas, pois o Google já validou o e-mail.
+    email_verified = db.Column(db.Boolean, nullable=False, default=False)
     def set_password(self, p): self.password_hash = generate_password_hash(p)
     def check_password(self, p): return bool(self.password_hash) and check_password_hash(self.password_hash, p)
     @property
@@ -167,3 +176,81 @@ class Alert(db.Model):
 
     user = db.relationship('User', foreign_keys=[user_id])
     activity = db.relationship('Activity', foreign_keys=[activity_id])
+
+
+class PasswordResetToken(db.Model):
+    """Token de uso único para o fluxo "Esqueci minha senha".
+
+    Guardamos apenas o hash SHA-256 do token, nunca o valor bruto: o valor
+    bruto só existe no link enviado por e-mail. Assim, mesmo um vazamento
+    do banco não permite redefinir senhas de usuários.
+    """
+    __tablename__ = 'password_reset_tokens'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    token_hash = db.Column(db.String(64), unique=True, nullable=False, index=True)
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    used_at = db.Column(db.DateTime, nullable=True)
+    user = db.relationship('User')
+    @property
+    def is_valid(self):
+        return self.used_at is None and self.expires_at > utcnow()
+
+
+class EmailVerificationToken(db.Model):
+    """Token de uso único para confirmar o e-mail cadastrado.
+
+    Infraestrutura preparada (item 8): a conta funciona normalmente mesmo
+    sem confirmar o e-mail, então isso nunca bloqueia o acesso — apenas
+    permite exibir um aviso e, futuramente, exigir a confirmação se o
+    Portal Python decidir habilitar isso.
+    """
+    __tablename__ = 'email_verification_tokens'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    token_hash = db.Column(db.String(64), unique=True, nullable=False, index=True)
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    used_at = db.Column(db.DateTime, nullable=True)
+    user = db.relationship('User')
+    @property
+    def is_valid(self):
+        return self.used_at is None and self.expires_at > utcnow()
+
+
+class LoginAttempt(db.Model):
+    """Registro leve de tentativas malsucedidas, usado só para limitar taxa
+    (login, cadastro, recuperação de senha). Guardado no banco (não em
+    memória do processo) para funcionar corretamente com vários workers
+    do gunicorn. Linhas antigas podem ser removidas periodicamente; a
+    tabela é pequena porque só tentativas malsucedidas são gravadas.
+    """
+    __tablename__ = 'login_attempts'
+    id = db.Column(db.Integer, primary_key=True)
+    action = db.Column(db.String(20), nullable=False, index=True)  # 'login' | 'register' | 'forgot_password'
+    ip = db.Column(db.String(64), nullable=True, index=True)
+    email = db.Column(db.String(255), nullable=True, index=True)
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False, index=True)
+
+
+class UserSession(db.Model):
+    """Uma sessão de login (um dispositivo/navegador). Guardamos só o hash
+    do token de sessão — o valor bruto vive apenas no cookie do navegador
+    (chave 'st' na sessão do Flask), nunca em texto puro no banco. Isso dá
+    suporte à tela "sessões ativas" (item 10): listar, encerrar uma sessão
+    específica ou encerrar todas as outras.
+    """
+    __tablename__ = 'user_sessions'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    token_hash = db.Column(db.String(64), unique=True, nullable=False, index=True)
+    user_agent = db.Column(db.String(255), nullable=True)
+    ip = db.Column(db.String(64), nullable=True)
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
+    last_seen_at = db.Column(db.DateTime, default=utcnow, nullable=False)
+    revoked_at = db.Column(db.DateTime, nullable=True)
+    user = db.relationship('User')
+    @property
+    def is_active(self):
+        return self.revoked_at is None

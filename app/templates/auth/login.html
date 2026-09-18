@@ -23,10 +23,13 @@
                     </button>
                 </div>
             </label>
+            <p class="login-forgot"><a href="{{url_for('auth.forgot_password')}}">Esqueceu a senha?</a></p>
             <button class="btn login-btn" type="submit">Entrar</button>
         </form>
+        {% if google_enabled %}
         <a class="google login-google" href="{{url_for('auth.google_login')}}">Continuar com Google</a>
         <div class="login-divider"><span>ou</span></div>
+        {% endif %}
         <p class="login-register">Ainda não tem conta? <a href="{{url_for('auth.register')}}">Criar uma conta</a></p>
     </div>
 </section>

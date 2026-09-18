@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Sessões ativas · Portal Python{% endblock %}
+{% block content %}
+<section class="admin-shell workspace-shell narrow-workspace">
+  <div class="workspace-head">
+    <div>
+      <span class="eyebrow">CONTA</span>
+      <h1>Sessões ativas</h1>
+      <p>Dispositivos onde sua conta está conectada agora. Se não reconhecer algum, encerre-o.</p>
+    </div>
+  </div>
+
+  {% if sessions|length > 1 %}
+  <form method="post" action="{{ url_for('auth.revoke_other_sessions') }}" style="margin-bottom:16px">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn" type="submit">Encerrar todas as outras sessões</button>
+  </form>
+  {% endif %}
+
+  <div class="settings-grid">
+    {% for s in sessions %}
+    <div class="publisher-card settings-card">
+      <span class="uiverse-feature-card"><img src="{{ url_for('static',filename='icons/ui/users.svg') }}" alt=""></span>
+      <h2>{{ s.device }}{% if s.is_current %} <span class="badge">Este dispositivo</span>{% endif %}</h2>
+      <p>IP: {{ s.ip }}<br>Início: {{ s.created_at.strftime('%d/%m/%Y %H:%M') }}<br>Última atividade: {{ s.last_seen_at.strftime('%d/%m/%Y %H:%M') }}</p>
+      <form method="post" action="{{ url_for('auth.revoke_session', session_id=s.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn" type="submit">{{ 'Sair desta sessão' if s.is_current else 'Encerrar esta sessão' }}</button>
+      </form>
+    </div>
+    {% else %}
+    <p>Nenhuma sessão ativa encontrada.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
