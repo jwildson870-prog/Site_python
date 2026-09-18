@@ -15,6 +15,14 @@ from ..activity_library import PREBUILT_ACTIVITIES, BY_SLUG
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 ALLOWED_KINDS = {'explanation','file','pdf','slide','video','link'}
+DIFFICULTIES = {'facil', 'medio', 'dificil'}
+DEFAULT_DIFFICULTY = 'medio'
+
+def normalize_difficulty(value):
+    """Normaliza a dificuldade aceita pelo Portal, sem confiar no formulário."""
+    value = (value or DEFAULT_DIFFICULTY).strip().lower()
+    return value if value in DIFFICULTIES else DEFAULT_DIFFICULTY
+
 ALLOWED_EXTENSIONS = {'pdf','png','jpg','jpeg','webp','gif','ppt','pptx','doc','docx','txt'}
 MAX_UPLOAD = 25 * 1024 * 1024
 SAFE_INLINE_TYPES = {'pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp'}
@@ -678,7 +686,7 @@ def question_bank():
         options = [request.form.get(f'option_{letter}', '').strip() for letter in ('a','b','c','d')]
         code = request.form.get('code', '').strip()
         correct_index = request.form.get('correct', '').strip()
-        difficulty = request.form.get('difficulty', 'medio').strip().lower()
+        difficulty = normalize_difficulty(request.form.get('difficulty'))
         sid = request.form.get('series_id', '').strip(); subid = request.form.get('subject_id', '').strip()
         ser = db.session.get(Series, int(sid)) if sid.isdigit() else None
         sub = db.session.get(Subject, int(subid)) if subid.isdigit() else None
@@ -691,7 +699,7 @@ def question_bank():
         elif any(options[i] and not options[i-1] for i in range(1,4)):
             flash('Preencha as alternativas em sequência.', 'error')
         else:
-            item = QuestionBank(question=question, correct=options[int(correct_index)], code=code[:8000] or None, difficulty=difficulty if difficulty in {'facil','medio','dificil'} else 'medio', series_id=ser.id, subject_id=sub.id)
+            item = QuestionBank(question=question, correct=options[int(correct_index)], code=code[:8000] or None, difficulty=difficulty, series_id=ser.id, subject_id=sub.id)
             item.set_options([x for x in options if x])
             db.session.add(item); db.session.commit()
             flash('Questão adicionada ao banco.', 'success')
@@ -733,7 +741,7 @@ def activities():
     if request.method == 'POST':
         title = request.form.get('title', '').strip()
         description = request.form.get('description', '').strip()
-        difficulty_value = request.form.get('difficulty', 'medio').strip().lower()
+        difficulty_value = normalize_difficulty(request.form.get('difficulty'))
         sid = request.form.get('series_id', '').strip()
         subid = request.form.get('subject_id', '').strip()
         due_raw = request.form.get('due_at', '').strip()
@@ -745,7 +753,7 @@ def activities():
         elif due_error:
             flash(due_error, 'error')
         else:
-            a = Activity(title=title, description=description[:5000], series_id=s.id, subject_id=sub.id, due_at=due_at, difficulty=difficulty_value if difficulty_value in {'facil','medio','dificil'} else 'medio')
+            a = Activity(title=title, description=description[:5000], series_id=s.id, subject_id=sub.id, due_at=due_at, difficulty=difficulty_value)
             a.set_questions([])
             db.session.add(a)
             db.session.commit()
@@ -757,7 +765,7 @@ def activities():
         query = query.filter(or_(Activity.title.ilike(like), Activity.description.ilike(like)))
     if series_id.isdigit(): query = query.filter_by(series_id=int(series_id))
     if subject_id.isdigit(): query = query.filter_by(subject_id=int(subject_id))
-    if difficulty in {'facil','medio','dificil'}: query = query.filter_by(difficulty=difficulty)
+    if difficulty in DIFFICULTIES: query = query.filter_by(difficulty=difficulty)
     now = utcnow()
     items = query.order_by(Activity.id.desc()).all()
     if status == 'pending': items = [a for a in items if not a.due_at or a.due_at >= now]

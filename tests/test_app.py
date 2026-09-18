@@ -173,3 +173,14 @@ def test_public_pages_render_without_authenticated_user(client):
     assert 'Área do Professor' not in home.text
     assert client.get('/auth/login').status_code == 200
     assert client.get('/auth/register').status_code == 200
+
+
+def test_normalize_difficulty_accepts_only_supported_values():
+    from app.admin.routes import normalize_difficulty
+
+    assert normalize_difficulty('facil') == 'facil'
+    assert normalize_difficulty(' MEDIO ') == 'medio'
+    assert normalize_difficulty('dificil') == 'dificil'
+    assert normalize_difficulty('qualquer-coisa') == 'medio'
+    assert normalize_difficulty('') == 'medio'
+    assert normalize_difficulty(None) == 'medio'

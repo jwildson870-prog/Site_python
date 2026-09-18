@@ -37,7 +37,9 @@ def _endpoint():
 
 
 def b2_enabled():
-    return bool(_key_id() and _env('B2_APPLICATION_KEY') and _env('B2_BUCKET_NAME'))
+    # O bucket possui um padrão oficial do projeto; não obrigamos o Render a
+    # repetir B2_BUCKET_NAME para considerar o B2 habilitado.
+    return bool(_key_id() and _env('B2_APPLICATION_KEY'))
 
 
 def b2_configuration_message():
@@ -47,7 +49,6 @@ def b2_configuration_message():
             name for name in (
                 'B2_APPLICATION_KEY_ID/B2_KEY_ID',
                 'B2_APPLICATION_KEY',
-                'B2_BUCKET_NAME',
             ) if not _env(name)
         ]
         return f'Backblaze B2 não está configurado corretamente. Variáveis ausentes: {", ".join(missing)}.'
