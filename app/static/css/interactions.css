@@ -546,14 +546,9 @@ textarea.field-invalid{
   transform:scale(1.01);
 }
 
-.topbar-search{transition:transform .18s ease-out,box-shadow .2s ease-out}
-.topbar-search:hover{transform:translateY(-1px)}
-.topbar-search img{transition:transform .18s ease-out,filter .18s ease-out}
-.topbar-search:hover img{transform:scale(1.08);filter:brightness(1.3) drop-shadow(0 0 5px rgba(56,189,248,.4))}
-
 @media (prefers-reduced-motion:reduce){
   .search-query-field:focus-within,.admin-search:focus-within,
-  .side-nav-filter:focus,.topbar-search:hover,.topbar-search:hover img{
+  .side-nav-filter:focus{
     transform:none;
   }
 }
@@ -764,20 +759,4 @@ mark.search-hit{
   border-radius:999px;
   background:rgba(56,189,248,.10);
   border:1px solid rgba(56,189,248,.18);
-}
-
-.topbar-search{cursor:pointer}
-.topbar-search kbd{
-  margin-left:auto;
-  padding:1px 6px;
-  border-radius:6px;
-  border:1px solid rgba(148,168,191,.28);
-  background:rgba(255,255,255,.04);
-  color:var(--pjm-muted,#94a8bf);
-  font:inherit;
-  font-size:.65rem;
-}
-
-@media (max-width:760px){
-  .topbar-search kbd{display:none}
 }

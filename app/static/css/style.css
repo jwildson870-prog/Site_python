@@ -1562,21 +1562,6 @@ body.app-authenticated{
 .topbar-brand strong{font-size:1.45rem;color:#f8fbff}
 .topbar-brand strong span{color:var(--python-yellow)}
 .topbar-spacer{display:block;flex:1}
-.topbar-search{
-  width:min(460px,42vw);height:43px;
-  display:flex;align-items:center;gap:10px;
-  padding:0 17px;
-  margin-right:34px;
-  text-decoration:none;
-  color:inherit;
-  border:1px solid #1b4d7e;
-  border-radius:999px;
-  background:rgba(5,28,53,.72);
-  color:#91adca;
-  box-shadow:inset 0 0 20px rgba(0,0,0,.08);
-}
-.topbar-search img{width:19px;height:19px;color:#d7e7f7;filter:brightness(1.4)}
-.topbar-search span{font-size:.86rem}
 .topbar-bell{width:30px;margin-right:22px;position:relative;font-size:0}
 .topbar-bell img{width:24px;height:24px;color:#e7f1fb;filter:brightness(1.5)}
 .topbar-bell i{width:8px;height:8px;top:-2px;right:0;background:#ef3340;border:2px solid #07162b}
@@ -1701,7 +1686,6 @@ body.app-authenticated{
   .menu-toggle:hover{background:rgba(31,131,225,.10);border-color:rgba(31,131,225,.14)}
 }
 @media(max-width:900px){
-  .topbar-search{display:none}
   .side-menu{top:0;width:min(300px,88vw);transform:translateX(-105%)}
   .menu-check:checked ~ .side-menu{transform:translateX(0)}
   .side-brand{display:flex}
@@ -2201,7 +2185,6 @@ a:hover{color:#a4e8ff}
     padding:0 12px;
     gap:10px;
   }
-  html.mobile-device .topbar-search{display:none}
   html.mobile-device .topbar-brand{min-width:0;gap:8px}
   html.mobile-device .topbar-brand img{width:36px;height:36px;flex:0 0 36px}
   html.mobile-device .topbar-brand strong{font-size:1.02rem;white-space:nowrap}
@@ -2757,11 +2740,6 @@ body.app-authenticated{
 }
 .topbar-brand strong{letter-spacing:-.035em}
 .topbar-brand span{color:#facc15}
-.topbar-search{
-  background:rgba(5,24,43,.64)!important;
-  border-color:rgba(65,184,255,.28)!important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 0 22px rgba(33,150,243,.07);
-}
 .topbar-bell,.topbar-avatar,.menu-toggle{
   background:rgba(7,29,49,.68)!important;
   border-color:rgba(105,205,255,.18)!important;
@@ -3086,14 +3064,6 @@ body.app-authenticated{
   width:7px;height:7px;border-radius:50%;display:inline-block;
   background:#2dd4bf;box-shadow:0 0 12px rgba(45,212,191,.8);
 }
-.topbar-search{
-  min-width:220px;max-width:430px;height:40px!important;
-  border-radius:13px!important;
-  background:rgba(5,25,43,.52)!important;
-  border-color:rgba(96,204,255,.17)!important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 7px 20px rgba(0,0,0,.10)!important;
-}
-.topbar-search:hover{border-color:rgba(96,204,255,.35)!important;box-shadow:0 0 22px rgba(34,211,238,.07)!important}
 .topbar-user{display:flex;align-items:center;gap:9px;margin-left:2px}
 .topbar-user-copy{display:flex;flex-direction:column;line-height:1.1;min-width:80px}
 .topbar-user-copy strong{font-size:.76rem;color:#eef8ff;white-space:nowrap}
@@ -3185,7 +3155,6 @@ body.app-authenticated{
 @media(max-width:900px){
   .topbar-context,.topbar-user-copy{display:none}
   .topbar-brand{min-width:0!important}
-  .topbar-search{margin-left:auto;min-width:150px}
 }
 @media(max-width:680px){
   .topbar{height:64px!important;padding:0 10px!important}
@@ -3225,7 +3194,6 @@ body.app-authenticated{
 /* Topbar: evita disputa de espaço entre elementos. */
 .topbar{min-width:0!important}
 .topbar-brand{flex:0 1 auto!important}
-.topbar-search{flex:0 1 360px!important;min-width:0!important}
 .topbar-user{min-width:0!important}
 .topbar-user-copy{min-width:0!important}
 .topbar-user-copy strong,.topbar-user-copy small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -3252,11 +3220,7 @@ body.app-authenticated{
   -webkit-backdrop-filter:blur(18px) saturate(125%);
 }
 
-/* Mobile: busca vira ação compacta e não espreme a topbar. */
 @media(max-width:760px){
-  .topbar-search{flex:0 0 40px!important;width:40px!important;height:40px!important;padding:0!important;justify-content:center!important;border-radius:12px!important}
-  .topbar-search span{display:none!important}
-  .topbar-search img{width:18px!important;height:18px!important}
   .topbar-user-copy{display:none!important}
   .topbar-avatar{flex:0 0 38px!important}
 }
@@ -3273,7 +3237,6 @@ body.app-authenticated{
 @media(max-width:390px){
   .topbar-brand strong{font-size:.9rem!important}
   .topbar-brand img{width:32px!important;height:32px!important}
-  .topbar-search{display:grid!important}
   .topbar{gap:6px!important;padding-inline:8px!important}
   .admin-hero,.student-hero{padding:20px 16px!important}
   .admin-hero p,.student-hero p{max-width:100%!important}
