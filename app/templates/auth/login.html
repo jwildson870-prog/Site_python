@@ -15,7 +15,14 @@
         <form method="post" class="login-form">
             <input type="hidden" name="csrf_token" value="{{csrf_token()}}">
             <label>E-mail<input name="email" type="email" placeholder="seu@email.com" required autocomplete="email"></label>
-            <label>Senha<input name="password" type="password" placeholder="Digite sua senha" required autocomplete="current-password"></label>
+            <label>Senha
+                <div class="password-field">
+                    <input name="password" id="loginPassword" type="password" placeholder="Digite sua senha" required autocomplete="current-password">
+                    <button type="button" class="password-toggle" data-target="loginPassword" data-icon-off="{{ url_for('static',filename='icons/ui/eye-off.svg') }}" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha">
+                        <img src="{{ url_for('static',filename='icons/ui/eye.svg') }}" alt="">
+                    </button>
+                </div>
+            </label>
             <button class="btn login-btn" type="submit">Entrar</button>
         </form>
         <a class="google login-google" href="{{url_for('auth.google_login')}}">Continuar com Google</a>
@@ -23,4 +30,5 @@
         <p class="login-register">Ainda não tem conta? <a href="{{url_for('auth.register')}}">Criar uma conta</a></p>
     </div>
 </section>
+<script src="{{ url_for('static',filename='js/password-toggle.js') }}" defer></script>
 {% endblock %}
