@@ -104,7 +104,11 @@
 
     if (isDeleteForm(form)) {
       evt.preventDefault();
-      askConfirmation('Esta ação não pode ser desfeita. Deseja continuar?').then(function (ok) {
+      // Mensagem específica do item (ex.: "Excluir esta atividade?"), quando
+      // o formulário define data-confirm-message; senão, mensagem genérica.
+      var message = form.dataset.confirmMessage ||
+        'Esta ação não pode ser desfeita. Deseja continuar?';
+      askConfirmation(message).then(function (ok) {
         if (!ok) return;
         form.dataset.pjmConfirmed = 'true';
         setButtonLoading(submitBtn);
@@ -148,6 +152,37 @@
           flash.remove();
         }, 400);
       }, 6000 + index * 400);
+    });
+  });
+
+  // ------------------------------------------------------------------
+  // "Desfazer" ao remover um favorito: é uma ação não destrutiva e
+  // reversível — o próprio endpoint já alterna favorito/não-favorito —
+  // então desfazer é só reenviar o mesmo formulário de novo. Não cria
+  // rota nem lógica nova nenhuma, só reaproveita o toggle existente.
+  // Notificações não recebem "desfazer" aqui porque marcar como lida
+  // não tem uma ação de "voltar a não lida" no backend.
+  // ------------------------------------------------------------------
+  document.addEventListener('DOMContentLoaded', function () {
+    var UNDO_FAVORITE_TEXT = 'Removido dos favoritos.';
+    document.querySelectorAll('.flash.success').forEach(function (flash) {
+      if ((flash.textContent || '').trim() !== UNDO_FAVORITE_TEXT) return;
+      var toggleForm = document.querySelector('form[action*="/favoritar"]');
+      if (!toggleForm) return;
+
+      var undoBtn = document.createElement('button');
+      undoBtn.type = 'button';
+      undoBtn.className = 'text-button flash-undo';
+      undoBtn.textContent = 'Desfazer';
+      undoBtn.addEventListener('click', function () {
+        flash.remove();
+        if (typeof toggleForm.requestSubmit === 'function') {
+          toggleForm.requestSubmit();
+        } else {
+          toggleForm.submit();
+        }
+      });
+      flash.appendChild(undoBtn);
     });
   });
 

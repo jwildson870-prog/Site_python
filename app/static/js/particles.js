@@ -8,8 +8,19 @@
 
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const mobile = window.matchMedia('(max-width: 680px)');
-  let width = 0, height = 0, animationFrame = 0, lastTime = 0;
+  // Telas densas de gerenciamento (listas/tabelas/formulários administrativos)
+  // não precisam de partículas competindo com o conteúdo — ver item 2 do
+  // pedido de animações: prioriza-se home/login/apresentação.
+  const dense = document.body.classList.contains('pjm-dense-screen');
+  let width = 0, height = 0, animationFrame = 0, lastTime = 0, running = false;
   let snippets = [];
+
+  if (dense) {
+    // Ainda desenha o canvas (mantém a identidade visual), só com bem menos
+    // elementos e bem mais discreto, para não disputar atenção com tabelas
+    // e formulários administrativos.
+    canvas.classList.add('space-particles--dense');
+  }
 
   const code = [
     'def calcular_media(notas):',
@@ -41,7 +52,8 @@
   ];
 
   function amount() {
-    if (reduceMotion.matches) return mobile.matches ? 5 : 8;
+    if (reduceMotion.matches) return dense ? 3 : (mobile.matches ? 5 : 8);
+    if (dense) return mobile.matches ? 4 : 6;
     return mobile.matches ? 7 : 13;
   }
 
@@ -67,7 +79,7 @@
         vx: (Math.random() - 0.5) * 0.018,
         vy: -0.012 - Math.random() * 0.022,
         size: mobile.matches ? 10 + Math.random() * 2 : 12 + Math.random() * 3,
-        alpha: mobile.matches ? 0.045 + Math.random() * 0.025 : 0.055 + Math.random() * 0.045,
+        alpha: (dense ? 0.5 : 1) * (mobile.matches ? 0.045 + Math.random() * 0.025 : 0.055 + Math.random() * 0.045),
         phase: Math.random() * Math.PI * 2,
         drift: 0.0005 + Math.random() * 0.0008
       };
@@ -100,13 +112,40 @@
       ctx.shadowBlur = 0;
     });
 
+    if (running) animationFrame = window.requestAnimationFrame(draw);
+  }
+
+  // ------------------------------------------------------------------
+  // Aba em segundo plano: pausa o loop de desenho (requestAnimationFrame)
+  // enquanto a página estiver oculta, e retoma ao voltar. Evita gastar
+  // CPU/bateria de graça com uma animação puramente decorativa que
+  // ninguém está vendo.
+  // ------------------------------------------------------------------
+  function start() {
+    if (running) return;
+    running = true;
+    lastTime = 0;
     animationFrame = window.requestAnimationFrame(draw);
   }
+
+  function stop() {
+    running = false;
+    if (animationFrame) window.cancelAnimationFrame(animationFrame);
+    animationFrame = 0;
+  }
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) {
+      stop();
+    } else {
+      start();
+    }
+  });
 
   window.addEventListener('resize', resize, { passive: true });
   reduceMotion.addEventListener?.('change', resize);
   mobile.addEventListener?.('change', resize);
   resize();
-  animationFrame = window.requestAnimationFrame(draw);
-  window.addEventListener('pagehide', function () { window.cancelAnimationFrame(animationFrame); });
+  if (!document.hidden) start();
+  window.addEventListener('pagehide', stop);
 })();

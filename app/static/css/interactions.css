@@ -103,6 +103,23 @@
   .space-particles{opacity:.16}
 }
 
+/* Telas densas de gerenciamento (área do professor: listas, tabelas e
+   formulários administrativos) — partículas continuam existindo (mesma
+   identidade visual), só bem mais discretas para não competir com o
+   conteúdo de trabalho. particles.js também gera menos elementos nessas
+   telas (ver classe .space-particles--dense aplicada por lá). */
+.pjm-dense-screen .space-particles{
+  opacity:.14;
+}
+
+@media(max-width:680px){
+  .pjm-dense-screen .space-particles{opacity:.10}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .pjm-dense-screen .space-particles{opacity:.08}
+}
+
 /* --------------------------------------------------------------------
    Telas grandes (monitores 4K, projetores, TVs de até 100"): sem limite
    de largura, o conteúdo esticaria a tela inteira e ficaria deformado.
@@ -330,6 +347,26 @@ textarea.field-invalid{
 @media (prefers-reduced-motion:reduce){
   .flash{animation:none}
 }
+
+/* Botão "Desfazer" dentro da mensagem flash (ver interactions.js) —
+   encostado à direita, discreto, mesmo padrão visual de .text-button. */
+.flash-undo{
+  margin-left:auto;
+  flex:0 0 auto;
+  white-space:nowrap;
+  border:0;
+  background:none;
+  color:inherit;
+  font:inherit;
+  font-size:.78rem;
+  font-weight:750;
+  text-decoration:underline;
+  text-underline-offset:2px;
+  cursor:pointer;
+  padding:4px 2px;
+}
+.flash-undo:hover{opacity:.8}
+.flash-undo:focus-visible{outline:2px solid currentColor;outline-offset:2px;border-radius:4px}
 
 /* --------------------------------------------------------------------
    Alvos de toque confortáveis em telas pequenas
