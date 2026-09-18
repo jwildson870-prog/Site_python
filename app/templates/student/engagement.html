@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Metas de estudo · Portal Python{% endblock %}
+{% block content %}
+<section class="student-shell engagement-page">
+  <div class="student-page-head"><div><span class="eyebrow">ENGAJAMENTO</span><h1>Metas de estudo</h1><p>Acompanhe sua constância sem rankings ou comparações.</p></div><div class="achievement-total"><strong>{{ percent }}%</strong><span>da meta</span></div></div>
+  <div class="student-dashboard-grid">
+    <section class="student-panel student-panel-wide">
+      <div class="student-panel-head"><div><span class="eyebrow">META DA SEMANA</span><h2>{{ completed }} de {{ target }} ações</h2></div></div>
+      <div class="engagement-big-progress"><div class="engagement-bar"><span style="width: {{ percent }}%"></span></div><strong>{{ percent }}%</strong></div>
+      <form method="post" class="engagement-goal-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label for="target">Minha meta semanal</label><input id="target" name="target" type="number" min="1" max="20" value="{{ target }}"><button class="btn primary" type="submit">Salvar meta</button></form>
+      <p class="muted">Cada material concluído ou atividade respondida conta como uma ação de estudo.</p>
+    </section>
+    <section class="student-panel">
+      <div class="student-panel-head"><div><span class="eyebrow">PENDENTES</span><h2>Atividades pendentes</h2></div></div>
+      <div class="student-list-compact">{% for a in pending[:6] %}<a class="student-list-item" href="{{ url_for('student.activity', id=a.id) }}"><span class="student-item-icon"><img src="{{ url_for('static',filename='icons/ui/check.svg') }}" alt=""></span><span class="student-item-copy"><strong>{{ a.title }}</strong><small>{% if a.due_at %}Prazo: {{ a.due_at.strftime('%d/%m/%Y %H:%M') }}{% else %}Sem prazo{% endif %}</small></span><span class="badge">Pendente</span></a>{% else %}<div class="student-empty">Nenhuma atividade pendente.</div>{% endfor %}</div>
+    </section>
+  </div>
+  <section class="student-panel"><div class="student-panel-head"><div><span class="eyebrow">LEMBRETES</span><h2>Prazos próximos</h2></div><a class="text-link" href="{{ url_for('student.calendar_view') }}">Calendário →</a></div><div class="student-list-compact">{% for a in upcoming %}<a class="student-list-item" href="{{ url_for('student.activity', id=a.id) }}"><span class="student-item-icon"><img src="{{ url_for('static',filename='icons/ui/calendar.svg') }}" alt=""></span><span class="student-item-copy"><strong>{{ a.title }}</strong><small>Entrega até {{ a.due_at.strftime('%d/%m às %H:%M') }}</small></span></a>{% else %}<div class="student-empty">Nenhum prazo próximo.</div>{% endfor %}</div></section>
+</section>
+{% endblock %}

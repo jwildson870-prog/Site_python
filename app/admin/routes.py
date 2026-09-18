@@ -4,24 +4,19 @@ from pathlib import Path
 from urllib.parse import urlparse
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, current_app, send_from_directory, Response, make_response
 from flask_login import login_required, current_user
-from sqlalchemy import or_, func, case
+from sqlalchemy import or_
 from werkzeug.utils import secure_filename
 from ..storage import upload as storage_upload, delete as storage_delete, get_file, b2_enabled, StorageError
 from ..extensions import db
 from ..timeutils import utcnow
-from ..models import Series, Subject, Content, ContentHistory, User, Activity, ActivityAttempt, Experiment, Notification, Alert, QuestionBank, ProjectSubmission, ProjectAttachment, ProjectComment, ProjectRubric, ProjectRubricCriterion, ProjectRubricScore
+from ..models import Series, Subject, Content, User, Activity, ActivityAttempt, Experiment, Notification, Alert, QuestionBank, Progress
 from ..pptx_preview import convert_pptx_to_images
 from ..activity_library import PREBUILT_ACTIVITIES, BY_SLUG
-from ..services import get_system_bool, get_system_int, get_system_setting, set_system_setting
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 ALLOWED_KINDS = {'explanation','file','pdf','slide','video','link'}
 ALLOWED_EXTENSIONS = {'pdf','png','jpg','jpeg','webp','gif','ppt','pptx','doc','docx','txt'}
-MIN_UPLOAD_MB = 1
-MAX_UPLOAD_MB = 1024
-
-def max_upload_bytes():
-    return max(MIN_UPLOAD_MB, min(MAX_UPLOAD_MB, get_system_int('max_upload_mb', 25))) * 1024 * 1024
+MAX_UPLOAD = 25 * 1024 * 1024
 SAFE_INLINE_TYPES = {'pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp'}
 SAFE_TYPES = {
     'pdf': 'application/pdf', 'png': 'image/png', 'jpg': 'image/jpeg',
@@ -69,27 +64,6 @@ def file_signature_ok(file_storage, extension):
         return False
     return any(head.startswith(signature) for signature in signatures)
 
-CONTENT_STATUSES = {'draft', 'published', 'scheduled'}
-
-def _history_snapshot(item):
-    if isinstance(item, Content):
-        return {'title': item.title, 'description': item.description, 'kind': item.kind, 'body': item.body, 'external_url': item.external_url, 'file_name': item.file_name, 'preview_manifest': item.preview_manifest, 'series_id': item.series_id, 'subject_id': item.subject_id, 'status': item.status, 'scheduled_at': item.scheduled_at.isoformat() if item.scheduled_at else None, 'archived_at': item.archived_at.isoformat() if item.archived_at else None}
-    return {'title': item.title, 'description': item.description, 'series_id': item.series_id, 'subject_id': item.subject_id, 'difficulty': item.difficulty, 'max_attempts': item.max_attempts, 'review_enabled': item.review_enabled, 'shuffle_questions': item.shuffle_questions, 'shuffle_options': item.shuffle_options, 'due_at': item.due_at.isoformat() if item.due_at else None, 'archived_at': item.archived_at.isoformat() if item.archived_at else None, 'questions': item.get_questions()}
-
-def _record_history(item, action):
-    db.session.add(ContentHistory(entity_type='content' if isinstance(item, Content) else 'activity', entity_id=item.id, action=action, user_id=current_user.id, snapshot_json=json.dumps(_history_snapshot(item), ensure_ascii=False)))
-
-def _parse_schedule(raw):
-    if not raw:
-        return None, None
-    try:
-        value = datetime.fromisoformat(raw)
-    except ValueError:
-        return None, 'A data e hora da publicação são inválidas.'
-    if value <= utcnow():
-        return None, 'A publicação programada precisa estar no futuro.'
-    return value, None
-
 def valid_url(value):
     parsed = urlparse(value or '')
     return parsed.scheme in ('http','https') and bool(parsed.netloc) and not parsed.username and not parsed.password and len(value) <= 1000
@@ -113,7 +87,7 @@ def save_uploaded_file(file, required_extension=None):
     original = secure_filename(file.filename); extension = Path(original).suffix.lower().lstrip('.')
     if not extension or extension not in ALLOWED_EXTENSIONS or (required_extension and extension != required_extension): return False, None
     if len(original) > 180 or any(ord(ch) < 32 for ch in original): return False, None
-    if request.content_length and request.content_length > max_upload_bytes(): return 'too_large', None
+    if request.content_length and request.content_length > MAX_UPLOAD: return 'too_large', None
     if not file_signature_ok(file, extension): return 'invalid_signature', None
     if not mime_ok(extension, file.mimetype): return 'invalid_mime', None
     try:
@@ -134,8 +108,6 @@ def save_uploaded_file(file, required_extension=None):
     return filename, original
 
 def notify_students(message, link=None):
-    if not get_system_bool('notifications_enabled', True):
-        return
     for student in User.query.filter_by(role='student').all():
         db.session.add(Notification(user_id=student.id, message=message, link=link))
 
@@ -146,8 +118,6 @@ def admin_guard():
 
 def _sync_smart_alerts(students, activities, attempts, now):
     """Cria alertas acionáveis sem duplicar alertas ativos."""
-    if not get_system_bool('alerts_enabled', True):
-        return
     latest_by_pair = {}
     attempts_by_student = {}
     for attempt in attempts:
@@ -266,6 +236,27 @@ def dashboard():
         risk_students=risk_students, activity_stats=activity_stats, deadline_activities=deadline_activities,
         overall_completion=overall_completion, recent_activity_count=recent_activity_count, now=now, smart_alerts=smart_alerts, alert_counts=alert_counts)
 
+@admin_bp.get('/ranking')
+def ranking():
+    """Visualização administrativa do ranking semanal de alunos."""
+    start = datetime.combine((utcnow() - timedelta(days=utcnow().weekday())).date(), datetime.min.time())
+    students = User.query.filter(User.role == 'student').order_by(User.name.asc()).all()
+    rows = []
+    for student in students:
+        materials = Progress.query.filter(
+            Progress.user_id == student.id,
+            Progress.completed_at >= start
+        ).count()
+        activities = ActivityAttempt.query.filter(
+            ActivityAttempt.user_id == student.id,
+            ActivityAttempt.created_at >= start
+        ).count()
+        rows.append({'student': student, 'materials': materials, 'activities': activities, 'points': materials + activities})
+    rows.sort(key=lambda row: (-row['points'], -row['activities'], -row['materials'], row['student'].name.casefold()))
+    for position, row in enumerate(rows, 1):
+        row['position'] = position
+    return render_template('admin/ranking.html', rows=rows, week_start=start.date())
+
 @admin_bp.route('/alertas', methods=['GET', 'POST'])
 def alerts():
     if request.method == 'POST':
@@ -338,8 +329,6 @@ def contents():
     kind = request.args.get('kind', '').strip().lower()
     series_id = request.args.get('series_id', '').strip()
     subject_id = request.args.get('subject_id', '').strip()
-    status = request.args.get('status', '').strip().lower()
-    archived = request.args.get('archived', '').strip()
     query = Content.query
     if q:
         like = f'%{q}%'
@@ -348,11 +337,8 @@ def contents():
         query = query.filter_by(kind=kind)
     if series_id.isdigit(): query = query.filter_by(series_id=int(series_id))
     if subject_id.isdigit(): query = query.filter_by(subject_id=int(subject_id))
-    if status in CONTENT_STATUSES: query = query.filter_by(status=status)
-    if archived == '1': query = query.filter(Content.archived_at.is_not(None))
-    elif archived != 'all': query = query.filter(Content.archived_at.is_(None))
     contents = query.order_by(Content.id.desc()).all()
-    return render_template('admin/contents.html', contents=contents, q=q, kind=kind, series_id=series_id, subject_id=subject_id, status=status, archived=archived,
+    return render_template('admin/contents.html', contents=contents, q=q, kind=kind, series_id=series_id, subject_id=subject_id,
                            series=Series.query.order_by(Series.id).all(), subjects=Subject.query.order_by(Subject.name).all())
 @admin_bp.get('/series/<int:id>')
 def series_detail(id): return render_template('admin/series_detail.html',series=Series.query.get_or_404(id))
@@ -402,19 +388,9 @@ def content_form(content=None):
     desc = request.form.get('description', '').strip()
     body = request.form.get('body', '').strip()
     external_url = request.form.get('external_url', '').strip()
-    status = request.form.get('status', 'published').strip().lower()
-    scheduled_raw = request.form.get('scheduled_at', '').strip()
 
     s = db.session.get(Series, int(sid)) if sid.isdigit() else None
     sub = db.session.get(Subject, int(subid)) if subid.isdigit() else None
-    if status not in CONTENT_STATUSES:
-        flash('Status de publicação inválido.', 'error')
-        return None, series, subjects
-    scheduled_at, schedule_error = _parse_schedule(scheduled_raw)
-    if schedule_error or (status == 'scheduled' and not scheduled_at):
-        flash(schedule_error or 'Informe uma data futura para a publicação programada.', 'error')
-        return None, series, subjects
-    if status != 'scheduled': scheduled_at = None
     if not title or len(title) > 200 or len(desc) > 5000 or not s or not sub or sub.series_id != s.id or kind not in ALLOWED_KINDS:
         flash('Preencha os dados obrigatórios corretamente.', 'error')
         return None, series, subjects
@@ -445,7 +421,7 @@ def content_form(content=None):
             flash('O conteúdo do arquivo não corresponde ao tipo informado. Escolha um arquivo válido.', 'error')
             return None, series, subjects
         if uploaded == 'too_large':
-            flash(f"Arquivo muito grande. Limite: {get_system_int('max_upload_mb', 25)} MB.", 'error')
+            flash('Arquivo muito grande. Limite: 25 MB.', 'error')
             return None, series, subjects
         if isinstance(uploaded, StorageError):
             flash(uploaded.message, 'error')
@@ -485,20 +461,14 @@ def content_form(content=None):
     content.preview_manifest = json.dumps(new_preview, ensure_ascii=False) if new_preview else None
     content.series_id = s.id
     content.subject_id = sub.id
-    content.status = status
-    content.scheduled_at = scheduled_at
-    if status != 'published' and content.archived_at:
-        content.archived_at = None
     db.session.add(content)
-    db.session.flush()
-    _record_history(content, 'created' if content.created_at == content.updated_at else 'updated')
     db.session.commit()
 
-    if old_file and old_file != new_file and not Content.query.filter_by(file_name=old_file).first():
+    if old_file and old_file != new_file:
         storage_delete(old_file)
     if old_preview and old_preview != new_preview:
         for key in old_preview:
-            if key not in new_preview and not Content.query.filter(Content.preview_manifest.ilike(f'%{key}%')).first():
+            if key not in new_preview:
                 storage_delete(key)
     return content, None, None
 
@@ -506,10 +476,9 @@ def content_form(content=None):
 def content_new():
     content, series, subjects = content_form()
     if request.method == 'POST' and content:
-        if content.status == 'published':
-            notify_students(f'Novo material: {content.title}', url_for('student.content', id=content.id))
+        notify_students(f'Novo material: {content.title}', url_for('student.content', id=content.id))
         db.session.commit()
-        flash('Material publicado com sucesso.' if content.status == 'published' else ('Material programado com sucesso.' if content.status == 'scheduled' else 'Rascunho salvo com sucesso.'), 'success')
+        flash('Material publicado com sucesso.', 'success')
         return redirect(url_for('admin.contents'))
     return render_template('admin/content_form.html', content=None, series=series, subjects=subjects)
 
@@ -522,72 +491,17 @@ def content_edit(id):
         return redirect(url_for('admin.contents'))
     return render_template('admin/content_form.html', content=content, series=series, subjects=subjects)
 
-@admin_bp.post('/contents/<int:id>/duplicate')
-def content_duplicate(id):
-    source = Content.query.get_or_404(id)
-    duplicate = Content(title=f'{source.title} (cópia)', description=source.description, kind=source.kind, body=source.body, external_url=source.external_url, file_name=source.file_name, preview_manifest=source.preview_manifest, series_id=source.series_id, subject_id=source.subject_id, status='draft', scheduled_at=None)
-    db.session.add(duplicate); db.session.flush(); _record_history(duplicate, 'duplicated'); db.session.commit()
-    flash('Material duplicado como rascunho.', 'success')
-    return redirect(url_for('admin.content_edit', id=duplicate.id))
-
-@admin_bp.post('/contents/<int:id>/archive')
-def content_archive(id):
-    content = Content.query.get_or_404(id)
-    if content.archived_at is None:
-        content.archived_at = utcnow(); _record_history(content, 'archived'); db.session.commit()
-        flash('Material arquivado.', 'success')
-    return redirect(url_for('admin.contents'))
-
-@admin_bp.post('/contents/<int:id>/restore')
-def content_restore(id):
-    content = Content.query.get_or_404(id)
-    content.archived_at = None; _record_history(content, 'restored'); db.session.commit()
-    flash('Material restaurado.', 'success')
-    return redirect(url_for('admin.contents'))
-
-@admin_bp.get('/contents/<int:id>/history')
-def content_history(id):
-    content = Content.query.get_or_404(id)
-    history = ContentHistory.query.filter_by(entity_type='content', entity_id=id).order_by(ContentHistory.created_at.desc()).all()
-    return render_template('admin/content_history.html', content=content, history=history)
-
-@admin_bp.get('/contents/<int:id>/preview')
-def content_preview(id):
-    """Pré-visualização exclusiva do professor para revisar um material antes de usá-lo."""
-    content = Content.query.get_or_404(id)
-    slides = _preview_files(content)
-    return render_template('admin/content_preview.html', content=content, slides=slides)
-
-@admin_bp.get('/contents/<int:id>/preview/slide/<int:slide>')
-def content_preview_slide(id, slide):
-    content = Content.query.get_or_404(id)
-    slides = _preview_files(content)
-    if content.kind != 'file' or slide < 0 or slide >= len(slides):
-        abort(404)
-    key = slides[slide]
-    if not isinstance(key, str) or not key:
-        abort(404)
-    if b2_enabled():
-        try:
-            obj = get_file(key)
-        except StorageError as exc:
-            current_app.logger.warning('Falha ao abrir prévia do slide %s do material %s: %s | %s', slide, content.id, exc.message, exc.technical)
-            abort(404)
-        return safe_file_response(obj, key, 'image/png')
-    return send_from_directory(current_app.config['UPLOAD_FOLDER'], key, mimetype='image/png')
-
 @admin_bp.post('/contents/<int:id>/delete')
 def content_delete(id):
     content = Content.query.get_or_404(id)
     filename = content.file_name
     preview_files = _preview_files(content)
-    _record_history(content, 'deleted')
     db.session.delete(content)
     db.session.commit()
-    if filename and not Content.query.filter_by(file_name=filename).first():
+    if filename:
         storage_delete(filename)
     for key in preview_files:
-        if isinstance(key, str) and not Content.query.filter(Content.preview_manifest.ilike(f'%{key}%')).first():
+        if isinstance(key, str):
             storage_delete(key)
     flash('Conteúdo excluído.', 'success')
     return redirect(url_for('admin.contents'))
@@ -694,29 +608,14 @@ def user_delete(id):
 
 @admin_bp.route('/question-bank', methods=['GET', 'POST'])
 def question_bank():
-    """Banco de questões: cadastro, pesquisa, filtros e ordenação.
-
-    A dificuldade é normalizada em um conjunto único de valores internos
-    (facil/medio/dificil), aceitando aliases legados para corrigir de vez
-    registros antigos sem quebrar dados já existentes.
-    """
     series = Series.query.order_by(Series.id).all()
     subjects = Subject.query.order_by(Subject.name).all()
-    difficulty_aliases = {
-        'facil': 'facil', 'fácil': 'facil', 'easy': 'facil', 'easy_level': 'facil',
-        'medio': 'medio', 'médio': 'medio', 'medium': 'medio', 'normal': 'medio',
-        'dificil': 'dificil', 'difícil': 'dificil', 'hard': 'dificil',
-    }
-
     if request.method == 'POST':
         question = request.form.get('question', '').strip()
         options = [request.form.get(f'option_{letter}', '').strip() for letter in ('a','b','c','d')]
         code = request.form.get('code', '').strip()
         correct_index = request.form.get('correct', '').strip()
-        difficulty_raw = request.form.get('difficulty', 'medio').strip().lower()
-        difficulty = difficulty_aliases.get(difficulty_raw, 'medio')
-        category = request.form.get('category', '').strip()[:120] or None
-        tags = ', '.join(dict.fromkeys(t.strip().lower() for t in request.form.get('tags', '').split(',') if t.strip()))[:500] or None
+        difficulty = request.form.get('difficulty', 'medio').strip().lower()
         sid = request.form.get('series_id', '').strip(); subid = request.form.get('subject_id', '').strip()
         ser = db.session.get(Series, int(sid)) if sid.isdigit() else None
         sub = db.session.get(Subject, int(subid)) if subid.isdigit() else None
@@ -729,57 +628,13 @@ def question_bank():
         elif any(options[i] and not options[i-1] for i in range(1,4)):
             flash('Preencha as alternativas em sequência.', 'error')
         else:
-            item = QuestionBank(question=question, correct=options[int(correct_index)], code=code[:8000] or None,
-                                difficulty=difficulty, category=category, tags=tags,
-                                series_id=ser.id, subject_id=sub.id)
+            item = QuestionBank(question=question, correct=options[int(correct_index)], code=code[:8000] or None, difficulty=difficulty if difficulty in {'facil','medio','dificil'} else 'medio', series_id=ser.id, subject_id=sub.id)
             item.set_options([x for x in options if x])
             db.session.add(item); db.session.commit()
             flash('Questão adicionada ao banco.', 'success')
             return redirect(url_for('admin.question_bank'))
-
-    q = request.args.get('q', '').strip()
-    series_id = request.args.get('series_id', '').strip()
-    subject_id = request.args.get('subject_id', '').strip()
-    difficulty_raw = request.args.get('difficulty', '').strip().lower()
-    difficulty = difficulty_aliases.get(difficulty_raw, '') if difficulty_raw else ''
-    category = request.args.get('category', '').strip()
-    tag = request.args.get('tag', '').strip().lower()
-    sort = request.args.get('sort', 'newest').strip().lower()
-
-    query = QuestionBank.query
-    if q:
-        needle = f'%{q}%'
-        query = query.filter(or_(QuestionBank.question.ilike(needle), QuestionBank.code.ilike(needle),
-                                 QuestionBank.category.ilike(needle), QuestionBank.tags.ilike(needle)))
-    if series_id.isdigit():
-        query = query.filter(QuestionBank.series_id == int(series_id))
-    if subject_id.isdigit():
-        query = query.filter(QuestionBank.subject_id == int(subject_id))
-    if difficulty:
-        query = query.filter(QuestionBank.difficulty == difficulty)
-    if category:
-        query = query.filter(func.lower(QuestionBank.category) == category.lower())
-    if tag:
-        query = query.filter(func.lower(QuestionBank.tags).contains(tag))
-
-    if sort == 'oldest':
-        query = query.order_by(QuestionBank.id.asc())
-    elif sort == 'difficulty':
-        query = query.order_by(case((QuestionBank.difficulty == 'facil', 1),
-                                       (QuestionBank.difficulty == 'medio', 2),
-                                       (QuestionBank.difficulty == 'dificil', 3), else_=4), QuestionBank.id.desc())
-    elif sort == 'alphabetical':
-        query = query.order_by(func.lower(QuestionBank.question).asc(), QuestionBank.id.desc())
-    else:
-        query = query.order_by(QuestionBank.id.desc())
-
-    items = query.all()
-    categories = [row[0] for row in db.session.query(QuestionBank.category).filter(QuestionBank.category.isnot(None), QuestionBank.category != '').distinct().order_by(func.lower(QuestionBank.category)).all()]
-    tags = sorted({tag.strip() for item in QuestionBank.query.with_entities(QuestionBank.tags).all()
-                   for tag in (item[0] or '').split(',') if tag.strip()})
-    return render_template('admin/question_bank.html', items=items, series=series, subjects=subjects,
-                           q=q, series_id=series_id, subject_id=subject_id, difficulty=difficulty,
-                           category=category, tag=tag, sort=sort, categories=categories, tags=tags)
+    items = QuestionBank.query.order_by(QuestionBank.id.desc()).all()
+    return render_template('admin/question_bank.html', items=items, series=series, subjects=subjects)
 
 @admin_bp.post('/question-bank/<int:id>/delete')
 def question_bank_delete(id):
@@ -801,7 +656,7 @@ def activity_import_questions(id):
         opts = item.get_options()
         current.append({'question': item.question, 'options': opts, 'correct': item.correct, **({'code': item.code} if item.code else {})})
         added += 1
-    activity.set_questions(current); db.session.flush(); _record_history(activity, 'questions_imported'); db.session.commit()
+    activity.set_questions(current); db.session.commit()
     flash(f'{added} questão(ões) importada(s) para a atividade.', 'success' if added else 'error')
     return redirect(url_for('admin.activity_edit', id=id))
 
@@ -812,7 +667,6 @@ def activities():
     subject_id = request.args.get('subject_id', '').strip()
     status = request.args.get('status', '').strip().lower()
     difficulty = request.args.get('difficulty', '').strip().lower()
-    archived = request.args.get('archived', '').strip()
     if request.method == 'POST':
         title = request.form.get('title', '').strip()
         description = request.form.get('description', '').strip()
@@ -828,24 +682,13 @@ def activities():
         elif due_error:
             flash(due_error, 'error')
         else:
-            try:
-                max_attempts = int(request.form.get('max_attempts', '0') or 0)
-            except ValueError:
-                max_attempts = -1
-            if max_attempts < 0 or max_attempts > 100:
-                flash('O limite de tentativas deve ficar entre 0 (ilimitado) e 100.', 'error')
-                max_attempts = None
-            else:
-                a = Activity(title=title, description=description[:5000], series_id=s.id, subject_id=sub.id, due_at=due_at, difficulty=difficulty_value if difficulty_value in {'facil','medio','dificil'} else 'medio', max_attempts=max_attempts, review_enabled=request.form.get('review_enabled') == '1', shuffle_questions=request.form.get('shuffle_questions') == '1', shuffle_options=request.form.get('shuffle_options') == '1')
-                a.set_questions([])
-                db.session.add(a)
-                db.session.flush(); _record_history(a, 'created')
-                db.session.commit()
-                flash('Atividade criada. Agora adicione as questões.', 'success')
-                return redirect(url_for('admin.activity_edit', id=a.id))
+            a = Activity(title=title, description=description[:5000], series_id=s.id, subject_id=sub.id, due_at=due_at, difficulty=difficulty_value if difficulty_value in {'facil','medio','dificil'} else 'medio')
+            a.set_questions([])
+            db.session.add(a)
+            db.session.commit()
+            flash('Atividade criada. Agora adicione as questões.', 'success')
+            return redirect(url_for('admin.activity_edit', id=a.id))
     query = Activity.query
-    if archived == '1': query = query.filter(Activity.archived_at.is_not(None))
-    elif archived != 'all': query = query.filter(Activity.archived_at.is_(None))
     if q:
         like = f'%{q}%'
         query = query.filter(or_(Activity.title.ilike(like), Activity.description.ilike(like)))
@@ -856,7 +699,7 @@ def activities():
     items = query.order_by(Activity.id.desc()).all()
     if status == 'pending': items = [a for a in items if not a.due_at or a.due_at >= now]
     elif status == 'expired': items = [a for a in items if a.due_at and a.due_at < now]
-    return render_template('admin/activities.html', activities=items, series=Series.query.order_by(Series.id).all(), subjects=Subject.query.order_by(Subject.name).all(), q=q, series_id=series_id, subject_id=subject_id, status=status, difficulty=difficulty, archived=archived, now=now)
+    return render_template('admin/activities.html', activities=items, series=Series.query.order_by(Series.id).all(), subjects=Subject.query.order_by(Subject.name).all(), q=q, series_id=series_id, subject_id=subject_id, status=status, difficulty=difficulty, now=now)
 
 
 @admin_bp.route('/activities/prontas', methods=['GET', 'POST'])
@@ -941,20 +784,12 @@ def read_activity_questions_from_form():
     questions = []
     for i in range(20):
         question = request.form.get(f'question_{i}', '').strip()
-        kind = request.form.get(f'kind_{i}', 'multiple_choice').strip().lower()
         options = [request.form.get(f'option_{i}_{letter}', '').strip() for letter in ('a', 'b', 'c', 'd')]
         correct_index = request.form.get(f'correct_{i}', '').strip()
         if not question and not any(options) and not correct_index:
             continue
-        if not question or len(question) > 1000:
-            return None, 'Cada questão preenchida precisa de um enunciado válido.'
-        if kind == 'essay':
-            questions.append({'question': question, 'kind': 'essay', 'options': [], 'correct': ''})
-            continue
-        if kind not in {'multiple_choice', 'essay'}:
-            kind = 'multiple_choice'
-        if sum(bool(option) for option in options) < 2 or correct_index not in {'0', '1', '2', '3'}:
-            return None, 'Cada questão objetiva precisa de pelo menos duas alternativas e uma resposta correta.'
+        if not question or len(question) > 1000 or sum(bool(option) for option in options) < 2 or correct_index not in {'0', '1', '2', '3'}:
+            return None, 'Cada questão preenchida precisa de enunciado, pelo menos duas alternativas e uma resposta correta.'
         if any(len(option) > 500 for option in options):
             return None, 'Cada alternativa pode ter no máximo 500 caracteres.'
         filled = [bool(option) for option in options]
@@ -963,7 +798,7 @@ def read_activity_questions_from_form():
         index = int(correct_index)
         if not options[index]:
             return None, 'A resposta correta precisa apontar para uma alternativa preenchida.'
-        questions.append({'question': question, 'kind': 'multiple_choice', 'options': options, 'correct': options[index]})
+        questions.append({'question': question, 'options': options, 'correct': options[index]})
     if not questions:
         return None, 'Informe pelo menos uma questão.'
     return questions, None
@@ -985,31 +820,18 @@ def activity_edit(id):
         elif error:
             flash(error, 'error')
         else:
-            try:
-                max_attempts = int(request.form.get('max_attempts', '0') or 0)
-            except ValueError:
-                max_attempts = -1
-            if max_attempts < 0 or max_attempts > 100:
-                flash('O limite de tentativas deve ficar entre 0 (ilimitado) e 100.', 'error')
-                max_attempts = None
-            else:
-                was_empty = len(a.get_questions()) == 0
-                a.title = title
-                a.description = desc[:5000]
-                a.due_at = due_at
-                a.difficulty = difficulty_value if difficulty_value in {'facil','medio','dificil'} else 'medio'
-                a.max_attempts = max_attempts
-                a.review_enabled = request.form.get('review_enabled') == '1'
-                a.shuffle_questions = request.form.get('shuffle_questions') == '1'
-                a.shuffle_options = request.form.get('shuffle_options') == '1'
-                a.set_questions(questions)
-                db.session.flush(); _record_history(a, 'updated')
+            was_empty = len(a.get_questions()) == 0
+            a.title = title
+            a.description = desc[:5000]
+            a.due_at = due_at
+            a.difficulty = difficulty_value if difficulty_value in {'facil','medio','dificil'} else 'medio'
+            a.set_questions(questions)
+            db.session.commit()
+            if was_empty:
+                notify_students(f'Nova atividade: {a.title}', url_for('student.activity', id=a.id))
                 db.session.commit()
-                if was_empty:
-                    notify_students(f'Nova atividade: {a.title}', url_for('student.activity', id=a.id))
-                    db.session.commit()
-                flash('Atividade salva.', 'success')
-                return redirect(url_for('admin.activities'))
+            flash('Atividade salva.', 'success')
+            return redirect(url_for('admin.activities'))
         questions = []
         for i in range(20):
             q = request.form.get(f'question_{i}', '').strip()
@@ -1025,39 +847,10 @@ def activity_edit(id):
 @admin_bp.post('/activities/<int:id>/delete')
 def activity_delete(id):
     a = Activity.query.get_or_404(id)
-    _record_history(a, 'deleted')
-    db.session.delete(a); db.session.commit()
+    db.session.delete(a)
+    db.session.commit()
     flash('Atividade excluída.', 'success')
     return redirect(url_for('admin.activities'))
-
-@admin_bp.post('/activities/<int:id>/duplicate')
-def activity_duplicate(id):
-    source = Activity.query.get_or_404(id)
-    duplicate = Activity(title=f'{source.title} (cópia)', description=source.description, series_id=source.series_id, subject_id=source.subject_id, due_at=source.due_at, difficulty=source.difficulty, archived_at=None, max_attempts=source.max_attempts, review_enabled=source.review_enabled, shuffle_questions=source.shuffle_questions, shuffle_options=source.shuffle_options)
-    duplicate.set_questions(source.get_questions()); db.session.add(duplicate); db.session.flush(); _record_history(duplicate, 'duplicated'); db.session.commit()
-    flash('Atividade duplicada.', 'success')
-    return redirect(url_for('admin.activity_edit', id=duplicate.id))
-
-@admin_bp.post('/activities/<int:id>/archive')
-def activity_archive(id):
-    a = Activity.query.get_or_404(id)
-    if a.archived_at is None:
-        a.archived_at = utcnow(); _record_history(a, 'archived'); db.session.commit()
-        flash('Atividade arquivada.', 'success')
-    return redirect(url_for('admin.activities'))
-
-@admin_bp.post('/activities/<int:id>/restore')
-def activity_restore(id):
-    a = Activity.query.get_or_404(id)
-    a.archived_at = None; _record_history(a, 'restored'); db.session.commit()
-    flash('Atividade restaurada.', 'success')
-    return redirect(url_for('admin.activities'))
-
-@admin_bp.get('/activities/<int:id>/history')
-def activity_history(id):
-    activity = Activity.query.get_or_404(id)
-    history = ContentHistory.query.filter_by(entity_type='activity', entity_id=id).order_by(ContentHistory.created_at.desc()).all()
-    return render_template('admin/activity_history.html', activity=activity, history=history)
 
 @admin_bp.route('/experiments', methods=['GET', 'POST'])
 def experiments():
@@ -1102,106 +895,6 @@ def experiment_edit(id):
 @admin_bp.post('/experiments/<int:id>/delete')
 def experiment_delete(id):
     e=Experiment.query.get_or_404(id); db.session.delete(e); db.session.commit(); flash('Experimento excluído.','success'); return redirect(url_for('admin.experiments'))
-
-@admin_bp.route('/experiments/<int:id>/submissions', methods=['GET', 'POST'])
-def experiment_submissions(id):
-    experiment = Experiment.query.get_or_404(id)
-    if request.method == 'POST':
-        action = request.form.get('action', '').strip()
-        if action == 'feedback':
-            submission = ProjectSubmission.query.get_or_404(request.form.get('submission_id', type=int))
-            if submission.experiment_id != experiment.id:
-                abort(404)
-            feedback = request.form.get('teacher_feedback', '').strip()[:10000]
-            raw_score = request.form.get('score', '').strip()
-            try:
-                score = float(raw_score) if raw_score else None
-                if score is not None and (score < 0 or score > 100):
-                    raise ValueError
-            except ValueError:
-                flash('A nota deve estar entre 0 e 100.', 'error')
-            else:
-                submission.teacher_feedback = feedback
-                submission.score = score
-                submission.status = 'reviewed'
-                db.session.commit()
-                flash('Feedback salvo.', 'success')
-                return redirect(url_for('admin.experiment_submissions', id=id))
-        elif action == 'moderate_comment':
-            comment = ProjectComment.query.get_or_404(request.form.get('comment_id', type=int))
-            if comment.submission.experiment_id != experiment.id:
-                abort(404)
-            status = request.form.get('status', 'visible')
-            if status not in {'visible', 'hidden'}:
-                abort(400)
-            comment.status = status
-            db.session.commit()
-            flash('Moderação do comentário atualizada.', 'success')
-            return redirect(url_for('admin.experiment_submissions', id=id))
-        elif action == 'rubric':
-            title = request.form.get('rubric_title', '').strip()[:160] or 'Rubrica do projeto'
-            rubric = ProjectRubric.query.filter_by(experiment_id=experiment.id).first()
-            if not rubric:
-                rubric = ProjectRubric(experiment_id=experiment.id, title=title)
-                db.session.add(rubric)
-            else:
-                rubric.title = title
-            names = request.form.getlist('criterion_name')
-            descriptions = request.form.getlist('criterion_description')
-            points = request.form.getlist('criterion_points')
-            rubric.criteria.clear()
-            db.session.flush()
-            for pos, name in enumerate(names):
-                name = name.strip()[:160]
-                if not name:
-                    continue
-                try:
-                    maximum = float(points[pos]) if pos < len(points) else 10
-                    if maximum <= 0 or maximum > 100:
-                        raise ValueError
-                except (ValueError, TypeError):
-                    maximum = 10
-                rubric.criteria.append(ProjectRubricCriterion(name=name, description=(descriptions[pos].strip()[:500] if pos < len(descriptions) else ''), max_points=maximum, position=pos))
-            db.session.commit()
-            flash('Rubrica salva.', 'success')
-            return redirect(url_for('admin.experiment_submissions', id=id))
-        elif action == 'rubric_score':
-            submission = ProjectSubmission.query.get_or_404(request.form.get('submission_id', type=int))
-            if submission.experiment_id != experiment.id:
-                abort(404)
-            rubric = ProjectRubric.query.filter_by(experiment_id=experiment.id).first()
-            if not rubric:
-                flash('Crie uma rubrica antes de atribuir critérios.', 'error')
-                return redirect(url_for('admin.experiment_submissions', id=id))
-            for criterion in rubric.criteria:
-                raw = request.form.get(f'criterion_{criterion.id}', '').strip()
-                if not raw:
-                    continue
-                try:
-                    points = float(raw)
-                    if points < 0 or points > criterion.max_points:
-                        raise ValueError
-                except ValueError:
-                    flash(f'Pontuação inválida para {criterion.name}.', 'error')
-                    return redirect(url_for('admin.experiment_submissions', id=id))
-                score = ProjectRubricScore.query.filter_by(submission_id=submission.id, criterion_id=criterion.id).first()
-                if not score:
-                    score = ProjectRubricScore(submission_id=submission.id, criterion_id=criterion.id)
-                    db.session.add(score)
-                score.points = points
-                score.feedback = request.form.get(f'criterion_feedback_{criterion.id}', '').strip()[:500]
-            db.session.flush()
-            total_max = sum(c.max_points for c in rubric.criteria)
-            total_points = sum(s.points for s in submission.rubric_scores if s.criterion_id in {c.id for c in rubric.criteria})
-            submission.score = round((total_points / total_max) * 100, 2) if total_max else None
-            submission.status = 'reviewed'
-            db.session.commit()
-            flash('Avaliação por rubrica salva.', 'success')
-            return redirect(url_for('admin.experiment_submissions', id=id))
-    submissions = ProjectSubmission.query.filter_by(experiment_id=experiment.id).order_by(ProjectSubmission.submitted_at.desc()).all()
-    rubric = ProjectRubric.query.filter_by(experiment_id=experiment.id).first()
-    return render_template('admin/project_submissions.html', experiment=experiment, submissions=submissions, rubric=rubric)
-
 
 @admin_bp.get('/activities/<int:id>/resultados')
 def activity_results(id):
@@ -1380,30 +1073,5 @@ def reports_xlsx():
     resp.headers['Content-Disposition'] = 'attachment; filename=portal-python-relatorio.xlsx'
     return resp
 
-@admin_bp.route('/settings', methods=['GET', 'POST'])
-def settings():
-    if request.method == 'POST':
-        institution_name = request.form.get('institution_name', '').strip()
-        upload_mb = request.form.get('max_upload_mb', type=int)
-        if not institution_name or len(institution_name) > 160:
-            flash('Informe um nome de instituição válido.', 'error')
-        elif upload_mb is None or not MIN_UPLOAD_MB <= upload_mb <= MAX_UPLOAD_MB:
-            flash(f'O limite de upload deve ficar entre {MIN_UPLOAD_MB} e {MAX_UPLOAD_MB} MB.', 'error')
-        else:
-            set_system_setting('institution_name', institution_name)
-            set_system_setting('max_upload_mb', upload_mb)
-            set_system_setting('public_registration', 'true' if request.form.get('public_registration') == 'on' else 'false')
-            set_system_setting('google_oauth_enabled', 'true' if request.form.get('google_oauth_enabled') == 'on' else 'false')
-            set_system_setting('notifications_enabled', 'true' if request.form.get('notifications_enabled') == 'on' else 'false')
-            set_system_setting('alerts_enabled', 'true' if request.form.get('alerts_enabled') == 'on' else 'false')
-            db.session.commit()
-            flash('Configurações salvas com sucesso.', 'success')
-            return redirect(url_for('admin.settings'))
-    return render_template('admin/settings.html',
-        public_registration=get_system_bool('public_registration', True),
-        max_upload_mb=get_system_int('max_upload_mb', 25),
-        google_oauth_enabled=get_system_bool('google_oauth_enabled', True),
-        institution_name=get_system_setting('institution_name', 'Portal Python'),
-        notifications_enabled=get_system_bool('notifications_enabled', True),
-        alerts_enabled=get_system_bool('alerts_enabled', True),
-    )
+@admin_bp.get('/settings')
+def settings(): return render_template('admin/settings.html')

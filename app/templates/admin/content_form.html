@@ -18,8 +18,6 @@
             <label class="field-block">Matéria<select name="subject_id" required>{% for s in subjects %}<option value="{{s.id}}" {% if content and content.subject_id==s.id %}selected{% endif %}>{{s.series.name}} · {{s.name}}</option>{% endfor %}</select></label>
             <label class="field-block full">Tipo de material<select name="kind" required>{% for value,label in [('file','Arquivo'),('pdf','PDF'),('slide','Slides'),('video','Vídeo'),('link','Link externo'),('explanation','Explicação')] %}<option value="{{value}}" {% if content and content.kind==value %}selected{% endif %}>{{label}}</option>{% endfor %}</select></label>
             <label class="field-block full">Descrição<textarea name="description" placeholder="Explique rapidamente o que o aluno encontrará neste material.">{{content.description if content else ''}}</textarea></label>
-            <label class="field-block">Status de publicação<select name="status" id="contentStatus"><option value="draft" {% if content and content.status=='draft' %}selected{% endif %}>Rascunho</option><option value="published" {% if not content or content.status=='published' %}selected{% endif %}>Publicado</option><option value="scheduled" {% if content and content.status=='scheduled' %}selected{% endif %}>Programado</option></select></label>
-            <label class="field-block">Publicar em<input type="datetime-local" name="scheduled_at" value="{{content.scheduled_at.strftime('%Y-%m-%dT%H:%M') if content and content.scheduled_at else ''}}"><small>Obrigatório quando o status for Programado.</small></label>
           </div>
         </div>
         <div class="publisher-card form-section">

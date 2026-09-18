@@ -76,11 +76,6 @@ def create_app(test_config=None):
         pieces.append(escape(text[last_end:]))
         return Markup('').join(pieces)
 
-    @app.context_processor
-    def inject_portal_settings():
-        from .services import get_system_setting
-        return {'institution_name': get_system_setting('institution_name', 'Portal Python')}
-
     @app.after_request
     def add_security_headers(response):
         response.headers.setdefault('X-Content-Type-Options', 'nosniff')
@@ -99,11 +94,6 @@ def create_app(test_config=None):
     from .models import User
     @login.user_loader
     def load_user(uid): return db.session.get(User,int(uid))
-
-    @app.before_request
-    def _apply_dynamic_upload_limit():
-        from .services import get_system_int
-        app.config['MAX_CONTENT_LENGTH'] = max(1, min(1024, get_system_int('max_upload_mb', 25))) * 1024 * 1024
 
     @app.before_request
     def _enforce_session_version():
@@ -142,9 +132,7 @@ def create_app(test_config=None):
     @app.errorhandler(404)
     def not_found(e): return render_template('error.html',message='Página não encontrada.'),404
     @app.errorhandler(413)
-    def too_large(e):
-        from .services import get_system_int
-        return render_template('error.html', message=f"Arquivo muito grande. Limite: {get_system_int('max_upload_mb', 25)} MB."), 413
+    def too_large(e): return render_template('error.html',message='Arquivo muito grande. Limite: 25 MB.'),413
 
     @app.errorhandler(400)
     def bad_request(e): return render_template('error.html', message='Solicitação inválida.'), 400
@@ -194,31 +182,6 @@ def create_app(test_config=None):
         # Migração leve para instalações existentes: adiciona as colunas de
         # autenticação (item 3 do ITEM 3) sem apagar ou recriar tabelas.
         inspector = inspect(db.engine)
-        # Fase 5.3/5.4: publicação, agendamento, arquivamento e histórico.
-        # Migração aditiva para instalações existentes; nenhum dado é removido.
-        inspector = inspect(db.engine)
-        tables = inspector.get_table_names()
-        if 'contents' in tables:
-            cols = {c['name'] for c in inspector.get_columns('contents')}
-            with db.engine.begin() as conn:
-                if 'status' not in cols:
-                    if db.engine.dialect.name == 'postgresql': conn.execute(text("ALTER TABLE contents ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'published'"))
-                    elif db.engine.dialect.name == 'sqlite': conn.execute(text("ALTER TABLE contents ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'published'"))
-                if 'scheduled_at' not in cols:
-                    if db.engine.dialect.name == 'postgresql': conn.execute(text('ALTER TABLE contents ADD COLUMN IF NOT EXISTS scheduled_at TIMESTAMP'))
-                    elif db.engine.dialect.name == 'sqlite': conn.execute(text('ALTER TABLE contents ADD COLUMN scheduled_at DATETIME'))
-                if 'archived_at' not in cols:
-                    if db.engine.dialect.name == 'postgresql': conn.execute(text('ALTER TABLE contents ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP'))
-                    elif db.engine.dialect.name == 'sqlite': conn.execute(text('ALTER TABLE contents ADD COLUMN archived_at DATETIME'))
-        if 'activities' in tables:
-            cols = {c['name'] for c in inspector.get_columns('activities')}
-            if 'archived_at' not in cols:
-                with db.engine.begin() as conn:
-                    if db.engine.dialect.name == 'postgresql': conn.execute(text('ALTER TABLE activities ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP'))
-                    elif db.engine.dialect.name == 'sqlite': conn.execute(text('ALTER TABLE activities ADD COLUMN archived_at DATETIME'))
-        db.create_all()
-
-        inspector = inspect(db.engine)
         if 'users' in inspector.get_table_names():
             existing_cols = {c['name'] for c in inspector.get_columns('users')}
             with db.engine.begin() as conn:
@@ -236,31 +199,6 @@ def create_app(test_config=None):
         # As tabelas novas (password_reset_tokens, email_verification_tokens,
         # login_attempts) são criadas automaticamente pelo db.create_all()
         # abaixo, sem afetar as tabelas já existentes.
-        # Fase 5.6: opções de execução das atividades e ordem exibida em cada tentativa.
-        # Migração aditiva e retrocompatível para instalações existentes.
-        inspector = inspect(db.engine)
-        if 'activities' in inspector.get_table_names():
-            activity_cols = {c['name'] for c in inspector.get_columns('activities')}
-            with db.engine.begin() as conn:
-                additions = {
-                    'max_attempts': "ALTER TABLE activities ADD COLUMN max_attempts INTEGER NOT NULL DEFAULT 0",
-                    'review_enabled': "ALTER TABLE activities ADD COLUMN review_enabled BOOLEAN NOT NULL DEFAULT true",
-                    'shuffle_questions': "ALTER TABLE activities ADD COLUMN shuffle_questions BOOLEAN NOT NULL DEFAULT false",
-                    'shuffle_options': "ALTER TABLE activities ADD COLUMN shuffle_options BOOLEAN NOT NULL DEFAULT false",
-                }
-                for col, statement in additions.items():
-                    if col not in activity_cols:
-                        if db.engine.dialect.name == 'postgresql':
-                            conn.execute(text(statement.replace('ADD COLUMN ', 'ADD COLUMN IF NOT EXISTS ')))
-                        elif db.engine.dialect.name == 'sqlite':
-                            conn.execute(text(statement.replace(' BOOLEAN', ' INTEGER').replace('true', '1').replace('false', '0')))
-        inspector = inspect(db.engine)
-        if 'activity_attempts' in inspector.get_table_names() and 'question_order_json' not in {c['name'] for c in inspector.get_columns('activity_attempts')}:
-            with db.engine.begin() as conn:
-                if db.engine.dialect.name == 'postgresql':
-                    conn.execute(text("ALTER TABLE activity_attempts ADD COLUMN IF NOT EXISTS question_order_json TEXT NOT NULL DEFAULT '[]'"))
-                elif db.engine.dialect.name == 'sqlite':
-                    conn.execute(text("ALTER TABLE activity_attempts ADD COLUMN question_order_json TEXT NOT NULL DEFAULT '[]'"))
         db.create_all()
         inspector = inspect(db.engine)
         if 'question_bank' in inspector.get_table_names() and 'code' not in {c['name'] for c in inspector.get_columns('question_bank')}:
@@ -269,23 +207,6 @@ def create_app(test_config=None):
                     conn.execute(text('ALTER TABLE question_bank ADD COLUMN IF NOT EXISTS code TEXT'))
                 elif db.engine.dialect.name == 'sqlite':
                     conn.execute(text('ALTER TABLE question_bank ADD COLUMN code TEXT'))
-        if 'question_bank' in inspector.get_table_names():
-            qb_cols = {c['name'] for c in inspector.get_columns('question_bank')}
-            with db.engine.begin() as conn:
-                if 'category' not in qb_cols:
-                    if db.engine.dialect.name == 'postgresql':
-                        conn.execute(text('ALTER TABLE question_bank ADD COLUMN IF NOT EXISTS category VARCHAR(120)'))
-                    elif db.engine.dialect.name == 'sqlite':
-                        conn.execute(text('ALTER TABLE question_bank ADD COLUMN category VARCHAR(120)'))
-                if 'tags' not in qb_cols:
-                    if db.engine.dialect.name == 'postgresql':
-                        conn.execute(text('ALTER TABLE question_bank ADD COLUMN IF NOT EXISTS tags VARCHAR(500)'))
-                    elif db.engine.dialect.name == 'sqlite':
-                        conn.execute(text('ALTER TABLE question_bank ADD COLUMN tags VARCHAR(500)'))
-                # Normaliza dificuldades legadas para os três valores canônicos.
-                conn.execute(text("UPDATE question_bank SET difficulty='facil' WHERE lower(trim(difficulty)) IN ('fácil','facil','easy','easy_level')"))
-                conn.execute(text("UPDATE question_bank SET difficulty='medio' WHERE lower(trim(difficulty)) IN ('médio','medio','medium','normal') OR difficulty IS NULL OR trim(difficulty)=''"))
-                conn.execute(text("UPDATE question_bank SET difficulty='dificil' WHERE lower(trim(difficulty)) IN ('difícil','dificil','hard')"))
         from .services import ensure_admin,seed_initial_content,migrate_legacy_python_subjects
         ensure_admin(); seed_initial_content(); migrate_legacy_python_subjects()
         from .question_seed_service import seed_generated_question_bank

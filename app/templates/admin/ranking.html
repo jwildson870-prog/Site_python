@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Ranking semanal · Área do Professor{% endblock %}
+{% block content %}
+<section class="admin-shell workspace-shell ranking-admin-page">
+  <div class="workspace-head">
+    <div><span class="eyebrow">ENGAJAMENTO</span><h1>Ranking semanal</h1><p>Visualização do engajamento dos alunos na semana atual.</p></div>
+    <a class="btn secondary" href="{{ url_for('admin.dashboard') }}">← Painel</a>
+  </div>
+  <div class="professor-panel">
+    <div class="professor-panel-head"><div><span class="eyebrow">SEMANA</span><h2>{{ week_start.strftime('%d/%m/%Y') }}</h2><p>1 ponto por material concluído e 1 ponto por atividade respondida. Professores não participam.</p></div></div>
+    <div class="performance-table-wrap"><table class="professor-table performance-table"><thead><tr><th>Posição</th><th>Aluno</th><th>Materiais</th><th>Atividades</th><th>Pontos</th></tr></thead><tbody>
+      {% for row in rows %}<tr><td><strong>#{{ row.position }}</strong></td><td><strong>{{ row.student.name }}</strong><small class="table-subline">{{ row.student.email }}</small></td><td>{{ row.materials }}</td><td>{{ row.activities }}</td><td class="professor-score">{{ row.points }} pts</td></tr>{% else %}<tr><td colspan="5"><div class="professor-empty">Nenhum aluno cadastrado.</div></td></tr>{% endfor %}
+    </tbody></table></div>
+  </div>
+</section>
+{% endblock %}

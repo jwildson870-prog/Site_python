@@ -91,6 +91,11 @@
     <div><span class="eyebrow">CONQUISTAS</span><h2>{{ achievement_count }} de 6 desbloqueadas</h2><p>Transforme constância em pequenas metas de estudo.</p></div><a class="btn secondary" href="{{ url_for('student.achievements') }}">Ver conquistas</a>
   </section>
 
+  <section class="student-panel engagement-summary">
+    <div><span class="eyebrow">META SEMANAL</span><h2>{{ weekly_completed }}/{{ weekly_target }} ações de estudo</h2><p>Materiais concluídos e atividades respondidas nesta semana.</p></div>
+    <div class="engagement-summary-progress"><div class="engagement-bar"><span style="width: {{ weekly_percent }}%"></span></div><strong>{{ weekly_percent }}%</strong><a class="btn secondary" href="{{ url_for('student.engagement') }}">Acompanhar</a></div>
+  </section>
+
   <section class="student-panel student-quick-panel">
     <div class="student-panel-head"><div><span class="eyebrow">ACESSO RÁPIDO</span><h2>Onde você quer ir?</h2></div></div>
     <div class="student-quick-grid">

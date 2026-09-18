@@ -4,14 +4,6 @@ from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from .extensions import db
 
-class SystemSetting(db.Model):
-    __tablename__ = 'system_settings'
-    id = db.Column(db.Integer, primary_key=True)
-    key = db.Column(db.String(100), unique=True, nullable=False, index=True)
-    value = db.Column(db.Text, nullable=False)
-    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow, nullable=False)
-
-
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -74,9 +66,6 @@ class Content(db.Model):
     subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow, nullable=False)
-    status = db.Column(db.String(20), nullable=False, default='published', index=True)
-    scheduled_at = db.Column(db.DateTime, nullable=True, index=True)
-    archived_at = db.Column(db.DateTime, nullable=True, index=True)
     favorites = db.relationship('Favorite', backref='content', cascade='all, delete-orphan')
     progress = db.relationship('Progress', backref='content', cascade='all, delete-orphan')
 
@@ -90,30 +79,13 @@ class Activity(db.Model):
     questions_json = db.Column(db.Text, nullable=False, default='[]')
     created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow, nullable=False)
-    archived_at = db.Column(db.DateTime, nullable=True, index=True)
     due_at = db.Column(db.DateTime, nullable=True, index=True)
     difficulty = db.Column(db.String(20), nullable=False, default='medio', index=True)
-    max_attempts = db.Column(db.Integer, nullable=False, default=0)  # 0 = ilimitado
-    review_enabled = db.Column(db.Boolean, nullable=False, default=True)
-    shuffle_questions = db.Column(db.Boolean, nullable=False, default=False)
-    shuffle_options = db.Column(db.Boolean, nullable=False, default=False)
     attempts = db.relationship('ActivityAttempt', back_populates='activity', cascade='all, delete-orphan')
     def get_questions(self):
         try: return json.loads(self.questions_json or '[]')
         except (TypeError, ValueError): return []
     def set_questions(self, questions): self.questions_json = json.dumps(questions, ensure_ascii=False)
-
-
-class ContentHistory(db.Model):
-    __tablename__ = 'content_history'
-    id = db.Column(db.Integer, primary_key=True)
-    entity_type = db.Column(db.String(20), nullable=False, index=True)
-    entity_id = db.Column(db.Integer, nullable=False, index=True)
-    action = db.Column(db.String(40), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    snapshot_json = db.Column(db.Text, nullable=False, default='{}')
-    created_at = db.Column(db.DateTime, default=utcnow, nullable=False, index=True)
-    user = db.relationship('User')
 
 
 class QuestionBank(db.Model):
@@ -123,9 +95,7 @@ class QuestionBank(db.Model):
     options_json = db.Column(db.Text, nullable=False, default='[]')
     correct = db.Column(db.String(500), nullable=False)
     code = db.Column(db.Text, nullable=True)
-    difficulty = db.Column(db.String(20), nullable=False, default='medio', index=True)
-    category = db.Column(db.String(120), nullable=True, index=True)
-    tags = db.Column(db.String(500), nullable=True)
+    difficulty = db.Column(db.String(20), nullable=False, default='medio')
     series_id = db.Column(db.Integer, db.ForeignKey('series.id'), nullable=False)
     subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
@@ -143,7 +113,6 @@ class ActivityAttempt(db.Model):
     answers_json = db.Column(db.Text, nullable=False, default='{}')
     score = db.Column(db.Float, nullable=False, default=0)
     total = db.Column(db.Integer, nullable=False, default=0)
-    question_order_json = db.Column(db.Text, nullable=False, default='[]')
     created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
     user = db.relationship('User', back_populates='activity_attempts')
     activity = db.relationship('Activity', back_populates='attempts')
@@ -166,73 +135,6 @@ class Experiment(db.Model):
     created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow, nullable=False)
 
-class ProjectSubmission(db.Model):
-    __tablename__ = 'project_submissions'
-    id = db.Column(db.Integer, primary_key=True)
-    experiment_id = db.Column(db.Integer, db.ForeignKey('experiments.id'), nullable=False, index=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
-    content = db.Column(db.Text, nullable=True)
-    status = db.Column(db.String(20), nullable=False, default='submitted', index=True)
-    teacher_feedback = db.Column(db.Text, nullable=True)
-    score = db.Column(db.Float, nullable=True)
-    submitted_at = db.Column(db.DateTime, default=utcnow, nullable=False)
-    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow, nullable=False)
-    experiment = db.relationship('Experiment', backref=db.backref('submissions', cascade='all, delete-orphan'))
-    user = db.relationship('User', backref=db.backref('project_submissions', cascade='all, delete-orphan'))
-    attachments = db.relationship('ProjectAttachment', backref='submission', cascade='all, delete-orphan')
-    comments = db.relationship('ProjectComment', backref='submission', cascade='all, delete-orphan')
-    rubric_scores = db.relationship('ProjectRubricScore', backref='submission', cascade='all, delete-orphan')
-    __table_args__ = (db.UniqueConstraint('experiment_id', 'user_id', name='uq_project_submission_student'),)
-
-class ProjectAttachment(db.Model):
-    __tablename__ = 'project_attachments'
-    id = db.Column(db.Integer, primary_key=True)
-    submission_id = db.Column(db.Integer, db.ForeignKey('project_submissions.id'), nullable=False, index=True)
-    filename = db.Column(db.String(255), nullable=False)
-    storage_key = db.Column(db.String(1000), nullable=False)
-    content_type = db.Column(db.String(150), nullable=True)
-    size = db.Column(db.Integer, nullable=True)
-    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
-
-class ProjectComment(db.Model):
-    __tablename__ = 'project_comments'
-    id = db.Column(db.Integer, primary_key=True)
-    submission_id = db.Column(db.Integer, db.ForeignKey('project_submissions.id'), nullable=False, index=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
-    body = db.Column(db.Text, nullable=False)
-    status = db.Column(db.String(20), nullable=False, default='visible', index=True)
-    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
-    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow, nullable=False)
-    user = db.relationship('User')
-
-class ProjectRubric(db.Model):
-    __tablename__ = 'project_rubrics'
-    id = db.Column(db.Integer, primary_key=True)
-    experiment_id = db.Column(db.Integer, db.ForeignKey('experiments.id'), nullable=False, unique=True)
-    title = db.Column(db.String(160), nullable=False, default='Rubrica do projeto')
-    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
-    experiment = db.relationship('Experiment', backref=db.backref('rubric', uselist=False, cascade='all, delete-orphan'))
-    criteria = db.relationship('ProjectRubricCriterion', backref='rubric', cascade='all, delete-orphan', order_by='ProjectRubricCriterion.position')
-
-class ProjectRubricCriterion(db.Model):
-    __tablename__ = 'project_rubric_criteria'
-    id = db.Column(db.Integer, primary_key=True)
-    rubric_id = db.Column(db.Integer, db.ForeignKey('project_rubrics.id'), nullable=False, index=True)
-    name = db.Column(db.String(160), nullable=False)
-    description = db.Column(db.String(500), nullable=True)
-    max_points = db.Column(db.Float, nullable=False, default=10)
-    position = db.Column(db.Integer, nullable=False, default=0)
-
-class ProjectRubricScore(db.Model):
-    __tablename__ = 'project_rubric_scores'
-    id = db.Column(db.Integer, primary_key=True)
-    submission_id = db.Column(db.Integer, db.ForeignKey('project_submissions.id'), nullable=False, index=True)
-    criterion_id = db.Column(db.Integer, db.ForeignKey('project_rubric_criteria.id'), nullable=False, index=True)
-    points = db.Column(db.Float, nullable=False, default=0)
-    feedback = db.Column(db.String(500), nullable=True)
-    criterion = db.relationship('ProjectRubricCriterion')
-    __table_args__ = (db.UniqueConstraint('submission_id', 'criterion_id', name='uq_project_rubric_score'),)
-
 class Favorite(db.Model):
     __tablename__ = 'favorites'
     id = db.Column(db.Integer, primary_key=True)
@@ -248,6 +150,18 @@ class Progress(db.Model):
     content_id = db.Column(db.Integer, db.ForeignKey('contents.id'), nullable=False)
     completed_at = db.Column(db.DateTime, default=utcnow, nullable=False)
     __table_args__ = (db.UniqueConstraint('user_id', 'content_id', name='uq_progress'),)
+
+class WeeklyGoal(db.Model):
+    __tablename__ = 'weekly_goals'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    week_start = db.Column(db.Date, nullable=False, index=True)
+    target = db.Column(db.Integer, nullable=False, default=3)
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow, nullable=False)
+    user = db.relationship('User', backref=db.backref('weekly_goals', cascade='all, delete-orphan'))
+    __table_args__ = (db.UniqueConstraint('user_id', 'week_start', name='uq_weekly_goal_user_week'),)
+
 
 class Notification(db.Model):
     __tablename__ = 'notifications'
