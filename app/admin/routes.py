@@ -1138,3 +1138,154 @@ def reports_xlsx():
 
 @admin_bp.get('/settings')
 def settings(): return render_template('admin/settings.html')
+
+# ---------------------------------------------------------------------------
+# FASE 5.11 — Importação e exportação de alunos/progresso
+# ---------------------------------------------------------------------------
+def _parse_student_rows(upload):
+    """Lê CSV/XLSX e devolve (linhas, erros). Cabeçalhos aceitos: nome/name,
+    email/e-mail e senha/password (opcional). Não lê nem exporta senhas."""
+    import csv
+    filename = secure_filename(upload.filename or '')
+    ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
+    rows, errors = [], []
+    if ext == 'csv':
+        raw = upload.read()
+        text_data = None
+        for enc in ('utf-8-sig', 'utf-8', 'latin-1'):
+            try:
+                text_data = raw.decode(enc); break
+            except UnicodeDecodeError:
+                pass
+        if text_data is None:
+            return [], ['CSV não pôde ser lido como texto.']
+        reader = csv.DictReader(io.StringIO(text_data))
+        if not reader.fieldnames:
+            return [], ['CSV sem cabeçalho.']
+        for n, row in enumerate(reader, 2):
+            rows.append((n, {str(k or '').strip().casefold(): (v or '').strip() for k, v in row.items()}))
+    elif ext == 'xlsx':
+        try:
+            from openpyxl import load_workbook
+            wb = load_workbook(upload, read_only=True, data_only=True)
+            ws = wb.active
+            values = list(ws.iter_rows(values_only=True))
+            if not values:
+                return [], ['Planilha vazia.']
+            headers = [str(v or '').strip().casefold() for v in values[0]]
+            for n, values_row in enumerate(values[1:], 2):
+                rows.append((n, {headers[i]: str(values_row[i] or '').strip() for i in range(len(headers))}))
+        except Exception as exc:
+            current_app.logger.warning('Falha ao ler XLSX: %s', exc)
+            return [], ['Planilha XLSX inválida ou corrompida.']
+    else:
+        return [], ['Formato não suportado. Use CSV ou XLSX.']
+    return rows, errors
+
+
+def _student_field(row, *names):
+    for name in names:
+        value = row.get(name)
+        if value is not None:
+            return str(value).strip()
+    return ''
+
+
+@admin_bp.route('/importacao-exportacao', methods=['GET', 'POST'])
+def import_export():
+    result = None
+    if request.method == 'POST':
+        action = request.form.get('action', '')
+        if action == 'import_students':
+            upload = request.files.get('file')
+            if not upload or not upload.filename:
+                flash('Selecione um arquivo CSV ou XLSX.', 'error')
+            else:
+                rows, parse_errors = _parse_student_rows(upload)
+                imported, duplicates, errors = [], [], list(parse_errors)
+                seen = set()
+                temporary_passwords = []
+                from secrets import token_urlsafe
+                for line, row in rows:
+                    name = _student_field(row, 'nome', 'name')
+                    email = _student_field(row, 'email', 'e-mail', 'e_mail').lower()
+                    password = _student_field(row, 'senha', 'password')
+                    if not name or not email or '@' not in email:
+                        errors.append(f'Linha {line}: nome e e-mail válido são obrigatórios.')
+                        continue
+                    if email in seen:
+                        duplicates.append({'line': line, 'email': email, 'reason': 'duplicado no arquivo'})
+                        continue
+                    seen.add(email)
+                    if User.query.filter_by(email=email).first():
+                        duplicates.append({'line': line, 'email': email, 'reason': 'já cadastrado'})
+                        continue
+                    user = User(name=name[:120], email=email, role='student')
+                    temporary_password = '' if password else token_urlsafe(9)
+                    user.set_password(password if password else temporary_password)
+                    db.session.add(user)
+                    imported.append({'line': line, 'email': email, 'name': name})
+                    if temporary_password:
+                        temporary_passwords.append({'email': email, 'password': temporary_password})
+                try:
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+                    current_app.logger.exception('Falha na importação de alunos')
+                    errors.append('Não foi possível salvar os alunos. Nenhuma alteração desta importação foi aplicada.')
+                    imported = []
+                flash(f'Importação concluída: {len(imported)} aluno(s) criado(s), {len(duplicates)} duplicado(s), {len(errors)} erro(s).', 'success' if not errors else 'error')
+                result = {'imported': imported, 'duplicates': duplicates, 'errors': errors, 'temporary_passwords': temporary_passwords}
+        else:
+            flash('Ação de importação inválida.', 'error')
+    return render_template('admin/import_export.html', result=result)
+
+
+@admin_bp.get('/exportar/alunos.csv')
+def export_students_csv():
+    import csv
+    out = io.StringIO()
+    writer = csv.writer(out)
+    writer.writerow(['id', 'nome', 'email', 'perfil', 'criado_em'])
+    for user in User.query.filter_by(role='student').order_by(User.name.asc()).all():
+        writer.writerow([user.id, user.name, user.email, user.role, user.created_at.strftime('%Y-%m-%d %H:%M:%S')])
+    response = make_response('\ufeff' + out.getvalue())
+    response.headers['Content-Type'] = 'text/csv; charset=utf-8'
+    response.headers['Content-Disposition'] = 'attachment; filename=portal-python-alunos.csv'
+    return response
+
+
+@admin_bp.get('/exportar/alunos.xlsx')
+def export_students_xlsx():
+    from openpyxl import Workbook
+    wb = Workbook(); ws = wb.active; ws.title = 'Alunos'
+    ws.append(['id', 'nome', 'email', 'perfil', 'criado_em'])
+    for user in User.query.filter_by(role='student').order_by(User.name.asc()).all():
+        ws.append([user.id, user.name, user.email, user.role, user.created_at.strftime('%Y-%m-%d %H:%M:%S')])
+    output = io.BytesIO(); wb.save(output); output.seek(0)
+    return Response(output.getvalue(), mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', headers={'Content-Disposition': 'attachment; filename=portal-python-alunos.xlsx'})
+
+
+@admin_bp.get('/exportar/progresso.csv')
+def export_progress_csv():
+    import csv
+    out = io.StringIO(); writer = csv.writer(out)
+    writer.writerow(['aluno_id', 'aluno', 'email', 'material_id', 'material', 'concluido_em'])
+    query = Progress.query.join(User).join(Content).order_by(User.name.asc(), Progress.completed_at.asc())
+    for p in query.all():
+        writer.writerow([p.user_id, p.user.name, p.user.email, p.content_id, p.content.title, p.completed_at.strftime('%Y-%m-%d %H:%M:%S')])
+    response = make_response('\ufeff' + out.getvalue())
+    response.headers['Content-Type'] = 'text/csv; charset=utf-8'
+    response.headers['Content-Disposition'] = 'attachment; filename=portal-python-progresso.csv'
+    return response
+
+
+@admin_bp.get('/exportar/progresso.xlsx')
+def export_progress_xlsx():
+    from openpyxl import Workbook
+    wb = Workbook(); ws = wb.active; ws.title = 'Progresso'
+    ws.append(['aluno_id', 'aluno', 'email', 'material_id', 'material', 'concluido_em'])
+    for p in Progress.query.join(User).join(Content).order_by(User.name.asc(), Progress.completed_at.asc()).all():
+        ws.append([p.user_id, p.user.name, p.user.email, p.content_id, p.content.title, p.completed_at.strftime('%Y-%m-%d %H:%M:%S')])
+    output = io.BytesIO(); wb.save(output); output.seek(0)
+    return Response(output.getvalue(), mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', headers={'Content-Disposition': 'attachment; filename=portal-python-progresso.xlsx'})

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Importação e exportação · Portal Python{% endblock %}
+{% block content %}
+<section class="admin-shell workspace-shell">
+  <div class="workspace-head"><div><span class="eyebrow">DADOS</span><h1>Importação e exportação</h1><p>Gerencie alunos e exporte dados de progresso sem expor senhas.</p></div><a class="btn secondary" href="{{ url_for('admin.dashboard') }}">← Painel</a></div>
+  <div class="professor-grid dashboard-insight-grid">
+    <div class="professor-panel"><div class="professor-panel-head"><div><span class="eyebrow">IMPORTAR</span><h2>Alunos</h2><p>CSV ou XLSX com as colunas nome e email. senha/password é opcional.</p></div></div>
+      <form method="post" enctype="multipart/form-data"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="import_students"><label class="file-picker"><span>Arquivo CSV/XLSX</span><input type="file" name="file" accept=".csv,.xlsx" required></label><button class="btn admin-primary" type="submit">Importar alunos</button></form>
+    </div>
+    <div class="professor-panel"><div class="professor-panel-head"><div><span class="eyebrow">EXPORTAR</span><h2>Alunos</h2><p>Dados cadastrais, sem senhas.</p></div></div><div class="report-head-actions"><a class="btn secondary" href="{{url_for('admin.export_students_csv')}}">CSV</a><a class="btn secondary" href="{{url_for('admin.export_students_xlsx')}}">Excel</a></div></div>
+  </div>
+  <div class="professor-panel"><div class="professor-panel-head"><div><span class="eyebrow">PROGRESSO</span><h2>Exportar progresso</h2><p>Registro dos materiais concluídos por aluno.</p></div><div class="report-head-actions"><a class="btn secondary" href="{{url_for('admin.export_progress_csv')}}">CSV</a><a class="btn secondary" href="{{url_for('admin.export_progress_xlsx')}}">Excel</a></div></div></div>
+  {% if result %}<div class="professor-panel"><div class="professor-panel-head"><div><span class="eyebrow">RELATÓRIO</span><h2>Resultado da importação</h2></div></div><p><strong>{{result.imported|length}}</strong> criado(s) · <strong>{{result.duplicates|length}}</strong> duplicado(s) · <strong>{{result.errors|length}}</strong> erro(s).</p>{% if result.temporary_passwords %}<h3>Senhas temporárias geradas</h3><p>Guarde estas senhas com segurança e entregue-as aos respectivos alunos. Elas não são exportadas.</p><ul>{% for item in result.temporary_passwords %}<li>{{item.email}} — <strong>{{item.password}}</strong></li>{% endfor %}</ul>{% endif %}{% if result.errors %}<ul>{% for item in result.errors %}<li>{{item}}</li>{% endfor %}</ul>{% endif %}{% if result.duplicates %}<ul>{% for item in result.duplicates %}<li>Linha {{item.line}} — {{item.email}}: {{item.reason}}.</li>{% endfor %}</ul>{% endif %}</div>{% endif %}
+</section>
+{% endblock %}
