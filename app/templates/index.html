@@ -13,23 +13,29 @@
       <a class="btn" href="{{url_for('auth.login')}}">Já tenho uma conta</a>
       <a class="btn secondary" href="{{url_for('auth.register')}}">Ainda não tenho uma conta</a>
     </div>
-    <div class="home-highlights pjm-card-grid">
-      <div class="pjm-card pjm-card--feature home-highlight">
-        <div class="pjm-card__icon"><img src="{{ url_for('static',filename='icons/ui/file.svg') }}" alt="" aria-hidden="true"></div>
-        <strong>Materiais</strong><small>Conteúdo organizado por série</small>
-      </div>
-      <div class="pjm-card pjm-card--feature home-highlight">
-        <div class="pjm-card__icon"><img src="{{ url_for('static',filename='icons/ui/check.svg') }}" alt="" aria-hidden="true"></div>
-        <strong>Atividades</strong><small>Exercícios com correção</small>
-      </div>
-      <div class="pjm-card pjm-card--feature home-highlight">
-        <div class="pjm-card__icon"><img src="{{ url_for('static',filename='icons/ui/code.svg') }}" alt="" aria-hidden="true"></div>
-        <strong>Projetos</strong><small>Prática aplicada de Python</small>
-      </div>
-      <div class="pjm-card pjm-card--feature home-highlight">
-        <div class="pjm-card__icon"><img src="{{ url_for('static',filename='icons/ui/terminal.svg') }}" alt="" aria-hidden="true"></div>
-        <strong>Experimentos</strong><small>Aprenda testando</small>
-      </div>
+  </div>
+</section>
+<section class="home-resources">
+  <div class="home-resources-head center">
+    <span class="eyebrow">NO PORTAL</span>
+    <h2>O que você encontra por aqui</h2>
+  </div>
+  <div class="home-highlights pjm-card-grid">
+    <div class="pjm-card pjm-card--feature home-highlight">
+      <div class="pjm-card__icon"><img src="{{ url_for('static',filename='icons/ui/file.svg') }}" alt="" aria-hidden="true"></div>
+      <strong>Materiais</strong><small>Conteúdo organizado por série</small>
+    </div>
+    <div class="pjm-card pjm-card--feature home-highlight">
+      <div class="pjm-card__icon"><img src="{{ url_for('static',filename='icons/ui/check.svg') }}" alt="" aria-hidden="true"></div>
+      <strong>Atividades</strong><small>Exercícios com correção</small>
+    </div>
+    <div class="pjm-card pjm-card--feature home-highlight">
+      <div class="pjm-card__icon"><img src="{{ url_for('static',filename='icons/ui/code.svg') }}" alt="" aria-hidden="true"></div>
+      <strong>Projetos</strong><small>Prática aplicada de Python</small>
+    </div>
+    <div class="pjm-card pjm-card--feature home-highlight">
+      <div class="pjm-card__icon"><img src="{{ url_for('static',filename='icons/ui/terminal.svg') }}" alt="" aria-hidden="true"></div>
+      <strong>Experimentos</strong><small>Aprenda testando</small>
     </div>
   </div>
 </section>

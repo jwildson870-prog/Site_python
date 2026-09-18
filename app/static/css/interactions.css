@@ -26,11 +26,27 @@
   letter-spacing:.01em;
 }
 
+/* Seção "recursos" da Home: separada do card de introdução, com seu
+   próprio respiro lateral/vertical — ver .home-resources abaixo. */
+.home-resources{
+  padding:8px clamp(16px,4vw,34px) clamp(40px,7vw,64px);
+  max-width:920px;
+  margin:0 auto;
+}
+
+.home-resources-head{
+  margin-bottom:18px;
+}
+.home-resources-head h2{
+  margin:6px 0 0;
+  font-size:clamp(1.3rem,3vw,1.6rem);
+}
+
 .home-highlights{
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
   gap:10px;
-  margin-top:22px;
+  margin-top:0;
   text-align:left;
 }
 
@@ -678,15 +694,22 @@ textarea.field-invalid{
 }
 
 /* --------------------------------------------------------------------
-   10) Confirmação de sucesso: a mensagem de sucesso ganha um selo com
-   um pequeno "pop" na entrada, além do fade-up que toda .flash já tem.
-   Erro e aviso continuam exatamente como estavam.
+   10) Mensagens flash: cada categoria ganha o mesmo selo circular com
+   ícone (não só cor) — sucesso, erro e, por consistência futura, aviso
+   e informação, caso passem a ser usadas. Mesmo espaçamento e "pop" de
+   entrada para as quatro, para que pareçam uma única família visual.
    -------------------------------------------------------------------- */
-.flash.success{
+.flash.success,
+.flash.error,
+.flash.warning,
+.flash.info{
   padding-left:44px;
 }
 
-.flash.success::before{
+.flash.success::before,
+.flash.error::before,
+.flash.warning::before,
+.flash.info::before{
   content:"";
   position:absolute;
   left:14px;
@@ -695,9 +718,28 @@ textarea.field-invalid{
   height:18px;
   margin-top:-9px;
   border-radius:50%;
-  background:rgba(52,211,153,.16) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2334d399' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") center/11px no-repeat;
   animation:pjm-success-pop .4s cubic-bezier(.34,1.56,.64,1) .1s both;
 }
+
+.flash.success::before{
+  background:rgba(52,211,153,.16) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2334d399' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") center/11px no-repeat;
+}
+
+.flash.error::before{
+  background:rgba(248,113,113,.16) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f87171' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='18' y1='6' x2='6' y2='18'/%3E%3Cline x1='6' y1='6' x2='18' y2='18'/%3E%3C/svg%3E") center/11px no-repeat;
+}
+
+.flash.warning::before{
+  background:rgba(245,158,11,.16) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f59e0b' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='12' y1='9' x2='12' y2='13'/%3E%3Cline x1='12' y1='17' x2='12.01' y2='17'/%3E%3C/svg%3E") center/11px no-repeat;
+}
+
+.flash.warning{background:rgba(245,158,11,.08);color:#fde3b8;border-color:rgba(245,158,11,.22)}
+
+.flash.info::before{
+  background:rgba(56,189,248,.16) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='12' y1='16' x2='12' y2='11'/%3E%3Cline x1='12' y1='8' x2='12.01' y2='8'/%3E%3C/svg%3E") center/11px no-repeat;
+}
+
+.flash.info{background:rgba(56,189,248,.08);color:#bde4fb;border-color:rgba(56,189,248,.22)}
 
 @keyframes pjm-success-pop{
   from{opacity:0;transform:scale(.4)}
@@ -705,7 +747,10 @@ textarea.field-invalid{
 }
 
 @media (prefers-reduced-motion:reduce){
-  .flash.success::before{animation:none}
+  .flash.success::before,
+  .flash.error::before,
+  .flash.warning::before,
+  .flash.info::before{animation:none}
 }
 
 /* --------------------------------------------------------------------

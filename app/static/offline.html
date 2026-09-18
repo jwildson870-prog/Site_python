@@ -1,2 +1,32 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#003b35"><title>Portal Python</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f5f7f6;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#2f3539}.box{max-width:420px;margin:24px;padding:32px;border-radius:22px;background:#fff;box-shadow:0 12px 35px rgba(25,35,40,.1);text-align:center}.mark{display:grid;place-items:center;height:86px}.mark img{width:86px;height:86px;object-fit:contain;filter:drop-shadow(0 10px 18px rgba(33,150,243,.18))}.box h1{margin:10px 0}.box p{color:#737c82;line-height:1.6}</style><link rel="stylesheet" href="css/portal-jm-suap-theme.css">
-</head><body><main class="box"><div class="mark"><img src="icons/python-brand.png" alt="Python"></div><h1>Você está offline</h1><p>O Portal Python continua instalado no seu aparelho. Reconecte-se à internet para acessar os conteúdos e sua conta.</p></main></body></html>
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#06111f"><title>Portal Python</title><style>
+  *{box-sizing:border-box}
+  html{background:#06111f}
+  body{
+    margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;
+    font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    color:#f3f7ff;
+    background:
+      radial-gradient(circle at 10% -10%,rgba(56,189,248,.10),transparent 30%),
+      radial-gradient(circle at 100% 0%,rgba(59,130,246,.10),transparent 27%),
+      #06111f;
+  }
+  .box{
+    max-width:420px;width:100%;margin:24px;padding:32px;border-radius:18px;
+    background:linear-gradient(180deg,rgba(15,34,57,.96),rgba(10,27,46,.96));
+    border:1px solid #1d3552;
+    box-shadow:0 14px 34px rgba(0,0,0,.30);
+    text-align:center;
+  }
+  .mark{display:grid;place-items:center;height:86px;margin-bottom:6px}
+  .mark img{width:76px;height:76px;object-fit:contain;filter:drop-shadow(0 10px 18px rgba(33,150,243,.25))}
+  .box h1{margin:10px 0;font-size:1.5rem;letter-spacing:-.02em;color:#f3f7ff}
+  .box p{margin:0;color:#94a8bf;line-height:1.6}
+  .status-pill{
+    display:inline-flex;align-items:center;gap:6px;margin-bottom:14px;
+    padding:5px 12px;border-radius:999px;
+    background:rgba(248,113,113,.10);border:1px solid rgba(248,113,113,.28);
+    color:#f87171;font-size:.72rem;font-weight:750;letter-spacing:.04em;text-transform:uppercase;
+  }
+  .status-pill i{width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block}
+</style>
+</head><body><main class="box"><div class="mark"><img src="icons/python-brand.png" alt="Python"></div><span class="status-pill"><i></i>Sem conexão</span><h1>Você está offline</h1><p>O Portal Python continua instalado no seu aparelho. Reconecte-se à internet para acessar os conteúdos e sua conta.</p></main></body></html>
