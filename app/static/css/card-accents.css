@@ -1,0 +1,220 @@
+/* ==========================================================================
+   Portal Python — cores de destaque por categoria de card
+   ==========================================================================
+   O que é isto:
+   Uma camada fina, carregada por último, que dá a cada TIPO de card já
+   existente (materiais, atividades, progresso, notificações, alertas,
+   conquistas, estatísticas, projetos) uma cor de identificação discreta —
+   sem redesenhar nada, sem trocar a paleta principal do portal e sem
+   duplicar as dezenas de regras que já existem em style.css/interactions.css.
+
+   Como funciona:
+   1) Cada grupo de seletores abaixo define 2 variáveis CSS próprias:
+        --card-accent        cor sólida da categoria (ícones, texto de apoio)
+        --card-accent-soft   mesma cor bem transparente (fundo de ícone)
+        --card-accent-border mesma cor em opacidade média (bordas, brilho)
+      Isso é só "pintar a variável" — a aparência (raio, sombra, espaçamento,
+      tamanho) continua sendo a que já existe em style.css.
+   2) Um segundo bloco aplica essas variáveis em pontos discretos: uma borda
+      esquerda fina, o fundo/borda do ícone, um brilho suave da cor no hover.
+      Nunca no fundo inteiro do card.
+
+   Cores reaproveitadas do sistema já existente (nenhuma cor nova e saturada
+   foi introduzida): --pjm-primary (azul/ciano), --pjm-success (verde),
+   --pjm-danger (vermelho), --python-yellow (amarelo da marca) e os tons de
+   roxo/âmbar que já apareciam em pontos isolados do style.css.
+   ========================================================================== */
+
+:root{
+  --card-warning:#f59e0b;   /* já usado em .deadline-badge */
+  --card-gold:#fbbf24;      /* conquistas desbloqueadas */
+  --card-purple:#a78bfa;    /* já usado em .type-icon.video */
+  --card-purple-2:#8b5cf6;  /* projetos — roxo um pouco mais profundo */
+  --card-notify:var(--python-yellow,#ffd43b);
+}
+
+/* --------------------------------------------------------------------
+   1) Categoria → variáveis de cor
+   -------------------------------------------------------------------- */
+
+/* Materiais, estatísticas e progresso: azul/ciano — a cor principal do
+   portal, então aqui o "destaque" é sutil por natureza. */
+.student-material-card,
+.material-row,
+.search-result-card,
+.professor-metric,
+.student-stat,
+.student-summary-card,
+.performance-summary-card,
+.progress-hero-card,
+.progress-next,
+.pjm-card--stat{
+  --card-accent:var(--pjm-primary,#38bdf8);
+  --card-accent-soft:rgba(56,189,248,.14);
+  --card-accent-border:rgba(56,189,248,.40);
+}
+
+/* Atividades (em andamento): roxo/azul. */
+.activity-admin-card,
+.student-activity-card,
+.ready-activity-card,
+.question-student-card{
+  --card-accent:var(--card-purple);
+  --card-accent-soft:rgba(167,139,250,.14);
+  --card-accent-border:rgba(167,139,250,.40);
+}
+
+/* Projetos: roxo mais profundo, para diferenciar de "atividades".
+   Aplicado apenas onde o template marca explicitamente o card como
+   projeto (ver student/experiments.html e admin/experiments.html). */
+.card-accent-project{
+  --card-accent:var(--card-purple-2);
+  --card-accent-soft:rgba(139,92,246,.14);
+  --card-accent-border:rgba(139,92,246,.40);
+}
+
+/* Notificações: amarelo. */
+.notification-card{
+  --card-accent:var(--card-notify);
+  --card-accent-soft:rgba(255,212,59,.12);
+  --card-accent-border:rgba(255,212,59,.36);
+}
+
+/* Alertas importantes: vermelho (a prioridade média já usa laranja e
+   continua como está — só reforçamos o brilho no hover). */
+.smart-alert-card,
+.smart-alert-mini{
+  --card-accent:var(--pjm-danger,#f87171);
+  --card-accent-soft:rgba(248,113,113,.12);
+  --card-accent-border:rgba(248,113,113,.36);
+}
+.smart-alert-card.priority-medium,
+.smart-alert-mini.priority-medium{
+  --card-accent:var(--card-warning);
+  --card-accent-soft:rgba(245,158,11,.12);
+  --card-accent-border:rgba(245,158,11,.34);
+}
+
+/* Conquistas: dourado — só quando desbloqueada. Bloqueada mantém o tom
+   neutro que já existe (opacidade reduzida). */
+.achievement-card.unlocked{
+  --card-accent:var(--card-gold);
+  --card-accent-soft:rgba(251,191,36,.14);
+  --card-accent-border:rgba(251,191,36,.42);
+}
+
+/* Atividade pendente: laranja (o badge de "Concluída" já é verde). */
+.status-pending{
+  background:rgba(245,158,11,.10)!important;
+  border-color:rgba(245,158,11,.24)!important;
+  color:#f7c66b!important;
+}
+
+/* --------------------------------------------------------------------
+   2) Aplicação discreta da cor: borda lateral fina + ícone + hover
+   -------------------------------------------------------------------- */
+
+/* Borda esquerda fina — o identificador mais discreto de categoria. */
+.student-material-card,.material-row,.search-result-card,
+.professor-metric,.student-stat,.student-summary-card,.performance-summary-card,
+.progress-hero-card,.progress-next,.pjm-card--stat,
+.activity-admin-card,.student-activity-card,.ready-activity-card,.question-student-card,
+.card-accent-project,
+.notification-card,
+.smart-alert-card,.smart-alert-mini,
+.achievement-card.unlocked{
+  border-left:3px solid var(--card-accent-border)!important;
+}
+
+/* Ícone do card ganha o fundo/borda da categoria — mesmo tamanho e
+   posição de sempre, só a cor muda. */
+.student-material-card .material-icon,
+.card-accent-project .material-icon,
+.search-result-card .search-result-icon,
+.professor-metric .professor-metric-icon,
+.student-stat .student-stat-icon,
+.student-summary-card .student-stat-icon,
+.performance-summary-card .performance-icon,
+.pjm-card--stat .pjm-card__icon,
+.card-accent-project .resource-icon,
+.notification-card .notification-icon,
+.smart-alert-card .smart-alert-icon,
+.achievement-card.unlocked .achievement-mark{
+  background:var(--card-accent-soft)!important;
+  border-color:var(--card-accent-border)!important;
+}
+.smart-alert-mini b{color:var(--card-accent)!important}
+.alert-dot.high{background:var(--pjm-danger,#f87171)!important}
+.alert-dot.medium{background:var(--card-warning)!important}
+
+/* Brilho suave da cor da categoria ao passar o mouse — discreto, some
+   junto com a sombra existente, nunca substitui o fundo escuro. */
+.student-material-card:hover,.material-row:hover,.search-result-card:hover,
+.professor-metric:hover,.student-stat:hover,.student-summary-card:hover,.performance-summary-card:hover,
+.progress-hero-card:hover,.progress-next:hover,.pjm-card--stat:hover,
+.activity-admin-card:hover,.student-activity-card:hover,.ready-activity-card:hover,
+.card-accent-project:hover,
+.notification-card:hover,
+.smart-alert-card:hover,.smart-alert-mini:hover,
+.achievement-card.unlocked:hover{
+  box-shadow:0 22px 46px rgba(0,0,0,.28),0 0 0 1px var(--card-accent-border),0 0 24px var(--card-accent-soft)!important;
+}
+
+/* Pequena animação do ícone junto com o hover do card (sutil). */
+.material-icon img,.search-result-icon img,.professor-metric-icon img,.student-stat-icon img,
+.performance-icon img,.notification-icon img,.smart-alert-icon img,.achievement-mark img,
+.resource-icon img{
+  transition:transform .2s ease-out;
+}
+.student-material-card:hover .material-icon img,
+.card-accent-project:hover .material-icon img,
+.card-accent-project:hover .resource-icon img,
+.search-result-card:hover .search-result-icon img,
+.professor-metric:hover .professor-metric-icon img,
+.student-stat:hover .student-stat-icon img,
+.student-summary-card:hover .student-stat-icon img,
+.performance-summary-card:hover .performance-icon img,
+.notification-card:hover .notification-icon img,
+.smart-alert-card:hover .smart-alert-icon img,
+.achievement-card.unlocked:hover .achievement-mark img{
+  transform:translateY(-1px) scale(1.06);
+}
+
+/* --------------------------------------------------------------------
+   3) Acessibilidade e responsividade
+   -------------------------------------------------------------------- */
+@media (prefers-reduced-motion:reduce){
+  .material-icon img,.search-result-icon img,.professor-metric-icon img,.student-stat-icon img,
+  .performance-icon img,.notification-icon img,.smart-alert-icon img,.achievement-mark img,
+  .resource-icon img{
+    transition:none;
+  }
+  .student-material-card:hover .material-icon img,
+  .card-accent-project:hover .material-icon img,
+  .card-accent-project:hover .resource-icon img,
+  .search-result-card:hover .search-result-icon img,
+  .professor-metric:hover .professor-metric-icon img,
+  .student-stat:hover .student-stat-icon img,
+  .student-summary-card:hover .student-stat-icon img,
+  .performance-summary-card:hover .performance-icon img,
+  .notification-card:hover .notification-icon img,
+  .smart-alert-card:hover .smart-alert-icon img,
+  .achievement-card.unlocked:hover .achievement-mark img{
+    transform:none;
+  }
+}
+
+/* Em telas bem estreitas a borda lateral de 3px soma ao padding; reduzimos
+   1px para não apertar o conteúdo dos cards mais compactos no celular. */
+@media (max-width:430px){
+  .student-material-card,.material-row,.search-result-card,
+  .professor-metric,.student-stat,.student-summary-card,.performance-summary-card,
+  .progress-hero-card,.progress-next,.pjm-card--stat,
+  .activity-admin-card,.student-activity-card,.ready-activity-card,.question-student-card,
+  .card-accent-project,
+  .notification-card,
+  .smart-alert-card,.smart-alert-mini,
+  .achievement-card.unlocked{
+    border-left-width:2px!important;
+  }
+}
