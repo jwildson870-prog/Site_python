@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Entregas · {{ experiment.title }} · Portal Python{% endblock %}
+{% block content %}
+<section class="admin-shell workspace-shell">
+  <div class="workspace-head"><div><a class="back-link" href="{{ url_for('admin.experiments') }}">← Projetos práticos</a><span class="eyebrow">AVALIAÇÃO DE PROJETOS</span><h1>{{ experiment.title }}</h1><p>Feedback, rubrica, anexos e moderação em um só lugar.</p></div></div>
+
+  <section class="publisher-card form-section">
+    <div class="form-section-head"><div class="step-number">1</div><div><span class="eyebrow">RUBRICA</span><h2>Critérios de avaliação</h2><p>Defina os critérios e a pontuação máxima de cada um.</p></div></div>
+    <form method="post" class="form-grid">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="rubric">
+      <label class="field-block full">Título da rubrica<input name="rubric_title" value="{{ rubric.title if rubric else 'Rubrica do projeto' }}"></label>
+      {% for c in (rubric.criteria if rubric else []) %}
+      <label class="field-block">Critério<input name="criterion_name" value="{{ c.name }}"></label>
+      <label class="field-block">Pontos máximos<input type="number" step="0.5" min="0.5" max="100" name="criterion_points" value="{{ c.max_points }}"></label>
+      <label class="field-block full">Descrição<input name="criterion_description" value="{{ c.description or '' }}"></label>
+      {% endfor %}
+      <label class="field-block">Novo critério<input name="criterion_name" placeholder="Ex.: Organização do código"></label><label class="field-block">Pontos máximos<input type="number" step="0.5" min="0.5" max="100" name="criterion_points" value="10"></label><label class="field-block full">Descrição<input name="criterion_description" placeholder="O que será observado?"></label>
+      <div class="full"><button class="btn admin-primary">Salvar rubrica</button></div>
+    </form>
+  </section>
+
+  {% for submission in submissions %}
+  <article class="publisher-card form-section" style="margin-top:1rem">
+    <div class="form-section-head"><div class="step-number">{{ loop.index }}</div><div><span class="eyebrow">ENTREGA</span><h2>{{ submission.user.name }}</h2><p>{{ submission.user.email }} · {{ submission.submitted_at.strftime('%d/%m/%Y %H:%M') }}</p></div><span class="badge">{{ submission.status }}</span></div>
+    {% if submission.content %}<div class="card prose" style="margin-bottom:1rem"><h3>Resposta do aluno</h3><div style="white-space:pre-wrap">{{ submission.content }}</div></div>{% endif %}
+    {% if submission.attachments %}<div class="card" style="margin-bottom:1rem"><h3>Anexos</h3>{% for a in submission.attachments %}<a class="back-link" href="{{ url_for('student.project_attachment', id=a.id) }}">{{ a.filename }}</a>{% if not loop.last %} · {% endif %}{% endfor %}</div>{% endif %}
+    <form method="post" class="form-grid">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="feedback"><input type="hidden" name="submission_id" value="{{ submission.id }}">
+      <label class="field-block full">Feedback do professor<textarea name="teacher_feedback" rows="4">{{ submission.teacher_feedback or '' }}</textarea></label>
+      <label class="field-block">Nota (0–100)<input type="number" min="0" max="100" step="0.01" name="score" value="{{ submission.score if submission.score is not none else '' }}"></label>
+      <div class="full"><button class="btn admin-primary">Salvar feedback</button></div>
+    </form>
+    {% if rubric and rubric.criteria %}
+    <form method="post" class="form-grid" style="margin-top:1rem">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="rubric_score"><input type="hidden" name="submission_id" value="{{ submission.id }}">
+      <div class="full"><h3>Avaliação por rubrica</h3></div>
+      {% for c in rubric.criteria %}{% set existing = (submission.rubric_scores|selectattr('criterion_id','equalto',c.id)|list|first) %}
+      <label class="field-block">{{ c.name }} (máx. {{ c.max_points }})<input type="number" min="0" max="{{ c.max_points }}" step="0.5" name="criterion_{{ c.id }}" value="{{ existing.points if existing else '' }}"></label>
+      <label class="field-block">Feedback do critério<input name="criterion_feedback_{{ c.id }}" value="{{ existing.feedback if existing else '' }}"></label>
+      {% endfor %}<div class="full"><button class="btn secondary">Salvar avaliação</button></div>
+    </form>{% endif %}
+    {% if submission.comments %}<div style="margin-top:1rem"><h3>Comentários</h3>{% for comment in submission.comments %}<div class="card" style="margin:.5rem 0"><strong>{{ comment.user.name }}</strong> <span class="badge">{{ comment.status }}</span><p>{{ comment.body }}</p><form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="moderate_comment"><input type="hidden" name="comment_id" value="{{ comment.id }}"><input type="hidden" name="status" value="{{ 'hidden' if comment.status == 'visible' else 'visible' }}"><button class="btn secondary" type="submit">{{ 'Ocultar' if comment.status == 'visible' else 'Mostrar' }}</button></form></div>{% endfor %}</div>{% endif %}
+  </article>
+  {% else %}<div class="publisher-card empty-state"><span>&gt;_</span><h2>Nenhuma entrega ainda</h2><p>As entregas dos alunos aparecerão aqui.</p></div>{% endfor %}
+</section>
+{% endblock %}

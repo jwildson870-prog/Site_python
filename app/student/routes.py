@@ -3,8 +3,10 @@ from flask_login import login_required,current_user
 from sqlalchemy import or_
 from ..extensions import db
 from ..timeutils import utcnow
-from ..models import Series,Subject,Content,Activity,ActivityAttempt,Experiment,Favorite,Progress,Notification
-from ..storage import get_file, b2_enabled, StorageError
+from ..models import Series,Subject,Content,Activity,ActivityAttempt,Experiment,Favorite,Progress,Notification,ProjectSubmission,ProjectAttachment,ProjectComment,ProjectRubric,ProjectRubricScore
+from ..storage import get_file, upload as storage_upload, b2_enabled, StorageError
+from ..services import get_system_int
+from werkzeug.utils import secure_filename
 import json
 import random
 from datetime import date
@@ -257,8 +259,94 @@ def activity(id):
     return render_template('student/activity.html', activity=a, questions=display_questions, expired=expired, now=now, remaining_attempts=remaining_attempts, attempt_count=len(attempts))
 @student_bp.get('/experimentos')
 def experiments(): return render_template('student/experiments.html',experiments=Experiment.query.order_by(Experiment.id.desc()).all())
-@student_bp.get('/experimento/<int:id>')
-def experiment(id): return render_template('student/experiment.html',experiment=Experiment.query.get_or_404(id))
+@student_bp.route('/experimento/<int:id>', methods=['GET', 'POST'])
+def experiment(id):
+    experiment = Experiment.query.get_or_404(id)
+    submission = ProjectSubmission.query.filter_by(experiment_id=experiment.id, user_id=current_user.id).first()
+    if request.method == 'POST':
+        # O limite configurável da Fase 5.1 também vale para entregas de projetos.
+        current_app.config['MAX_CONTENT_LENGTH'] = max(1, min(1024, get_system_int('max_upload_mb', 25))) * 1024 * 1024
+        action = request.form.get('action', 'submit').strip()
+        if action == 'submit':
+            content = request.form.get('content', '').strip()[:20000]
+            if not content and not request.files.getlist('attachments'):
+                flash('Envie uma descrição ou pelo menos um arquivo do projeto.', 'error')
+                return redirect(url_for('student.experiment', id=id))
+            if not submission:
+                submission = ProjectSubmission(experiment_id=experiment.id, user_id=current_user.id, content=content, status='submitted')
+                db.session.add(submission)
+                db.session.flush()
+            else:
+                submission.content = content
+                submission.status = 'submitted'
+                submission.updated_at = utcnow()
+            max_mb = max(1, min(1024, get_system_int('max_upload_mb', 25)))
+            max_bytes = max_mb * 1024 * 1024
+            allowed = {'pdf','png','jpg','jpeg','webp','gif','doc','docx','ppt','pptx','txt','py','zip','csv'}
+            for file in request.files.getlist('attachments'):
+                if not file or not file.filename:
+                    continue
+                original = secure_filename(file.filename)
+                ext = original.rsplit('.', 1)[-1].lower() if '.' in original else ''
+                if ext not in allowed:
+                    flash(f'Arquivo não permitido: {original}.', 'error')
+                    continue
+                file.stream.seek(0, 2)
+                size = file.stream.tell()
+                file.stream.seek(0)
+                if size > max_bytes:
+                    flash(f'{original} excede o limite de {max_mb} MB.', 'error')
+                    continue
+                try:
+                    key = storage_upload(file, original, file.mimetype)
+                except StorageError as exc:
+                    flash(exc.message, 'error')
+                    continue
+                db.session.add(ProjectAttachment(submission_id=submission.id, filename=original, storage_key=key, content_type=file.mimetype, size=size))
+            db.session.commit()
+            flash('Projeto enviado para avaliação.', 'success')
+            return redirect(url_for('student.experiment', id=id))
+        if action == 'comment':
+            body = request.form.get('body', '').strip()[:2000]
+            if not body:
+                flash('O comentário não pode ficar vazio.', 'error')
+            else:
+                if not submission:
+                    submission = ProjectSubmission(experiment_id=experiment.id, user_id=current_user.id, status='submitted')
+                    db.session.add(submission); db.session.flush()
+                db.session.add(ProjectComment(submission_id=submission.id, user_id=current_user.id, body=body, status='visible'))
+                db.session.commit()
+                flash('Comentário adicionado.', 'success')
+            return redirect(url_for('student.experiment', id=id))
+    comments = ProjectComment.query.filter_by(submission_id=submission.id, status='visible').order_by(ProjectComment.created_at.asc()).all() if submission else []
+    rubric = ProjectRubric.query.filter_by(experiment_id=experiment.id).first()
+    rubric_scores = {s.criterion_id: s for s in ProjectRubricScore.query.filter_by(submission_id=submission.id).all()} if submission else {}
+    return render_template('student/experiment.html', experiment=experiment, submission=submission, comments=comments, rubric=rubric, rubric_scores=rubric_scores)
+
+@student_bp.get('/projeto-anexo/<int:id>')
+def project_attachment(id):
+    attachment = ProjectAttachment.query.get_or_404(id)
+    if attachment.submission.user_id != current_user.id and current_user.role != 'admin':
+        abort(403)
+    if not b2_enabled():
+        from pathlib import Path
+        path = Path(current_app.config['UPLOAD_FOLDER']) / attachment.storage_key
+        if not path.is_file():
+            abort(404)
+        return send_from_directory(current_app.config['UPLOAD_FOLDER'], attachment.storage_key, as_attachment=True, download_name=attachment.filename)
+    try:
+        obj = get_file(attachment.storage_key)
+    except StorageError:
+        abort(404)
+    if not obj:
+        abort(404)
+    return Response(obj['Body'].iter_chunks(chunk_size=64 * 1024), content_type=attachment.content_type or 'application/octet-stream', headers={
+        'Content-Length': str(obj['ContentLength']),
+        'Content-Disposition': f'attachment; filename="{attachment.filename.replace(chr(34), "")}"',
+        'Cache-Control': 'private, no-store',
+        'X-Content-Type-Options': 'nosniff',
+    })
+
 @student_bp.get('/progresso')
 def progress():
     total=_published_content_query(Content.query).count(); completed=Progress.query.filter_by(user_id=current_user.id).count(); percent=round(completed/total*100) if total else 0

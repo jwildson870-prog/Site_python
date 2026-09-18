@@ -9,7 +9,7 @@ from werkzeug.utils import secure_filename
 from ..storage import upload as storage_upload, delete as storage_delete, get_file, b2_enabled, StorageError
 from ..extensions import db
 from ..timeutils import utcnow
-from ..models import Series, Subject, Content, ContentHistory, User, Activity, ActivityAttempt, Experiment, Notification, Alert, QuestionBank
+from ..models import Series, Subject, Content, ContentHistory, User, Activity, ActivityAttempt, Experiment, Notification, Alert, QuestionBank, ProjectSubmission, ProjectAttachment, ProjectComment, ProjectRubric, ProjectRubricCriterion, ProjectRubricScore
 from ..pptx_preview import convert_pptx_to_images
 from ..activity_library import PREBUILT_ACTIVITIES, BY_SLUG
 from ..services import get_system_bool, get_system_int, get_system_setting, set_system_setting
@@ -1102,6 +1102,106 @@ def experiment_edit(id):
 @admin_bp.post('/experiments/<int:id>/delete')
 def experiment_delete(id):
     e=Experiment.query.get_or_404(id); db.session.delete(e); db.session.commit(); flash('Experimento excluído.','success'); return redirect(url_for('admin.experiments'))
+
+@admin_bp.route('/experiments/<int:id>/submissions', methods=['GET', 'POST'])
+def experiment_submissions(id):
+    experiment = Experiment.query.get_or_404(id)
+    if request.method == 'POST':
+        action = request.form.get('action', '').strip()
+        if action == 'feedback':
+            submission = ProjectSubmission.query.get_or_404(request.form.get('submission_id', type=int))
+            if submission.experiment_id != experiment.id:
+                abort(404)
+            feedback = request.form.get('teacher_feedback', '').strip()[:10000]
+            raw_score = request.form.get('score', '').strip()
+            try:
+                score = float(raw_score) if raw_score else None
+                if score is not None and (score < 0 or score > 100):
+                    raise ValueError
+            except ValueError:
+                flash('A nota deve estar entre 0 e 100.', 'error')
+            else:
+                submission.teacher_feedback = feedback
+                submission.score = score
+                submission.status = 'reviewed'
+                db.session.commit()
+                flash('Feedback salvo.', 'success')
+                return redirect(url_for('admin.experiment_submissions', id=id))
+        elif action == 'moderate_comment':
+            comment = ProjectComment.query.get_or_404(request.form.get('comment_id', type=int))
+            if comment.submission.experiment_id != experiment.id:
+                abort(404)
+            status = request.form.get('status', 'visible')
+            if status not in {'visible', 'hidden'}:
+                abort(400)
+            comment.status = status
+            db.session.commit()
+            flash('Moderação do comentário atualizada.', 'success')
+            return redirect(url_for('admin.experiment_submissions', id=id))
+        elif action == 'rubric':
+            title = request.form.get('rubric_title', '').strip()[:160] or 'Rubrica do projeto'
+            rubric = ProjectRubric.query.filter_by(experiment_id=experiment.id).first()
+            if not rubric:
+                rubric = ProjectRubric(experiment_id=experiment.id, title=title)
+                db.session.add(rubric)
+            else:
+                rubric.title = title
+            names = request.form.getlist('criterion_name')
+            descriptions = request.form.getlist('criterion_description')
+            points = request.form.getlist('criterion_points')
+            rubric.criteria.clear()
+            db.session.flush()
+            for pos, name in enumerate(names):
+                name = name.strip()[:160]
+                if not name:
+                    continue
+                try:
+                    maximum = float(points[pos]) if pos < len(points) else 10
+                    if maximum <= 0 or maximum > 100:
+                        raise ValueError
+                except (ValueError, TypeError):
+                    maximum = 10
+                rubric.criteria.append(ProjectRubricCriterion(name=name, description=(descriptions[pos].strip()[:500] if pos < len(descriptions) else ''), max_points=maximum, position=pos))
+            db.session.commit()
+            flash('Rubrica salva.', 'success')
+            return redirect(url_for('admin.experiment_submissions', id=id))
+        elif action == 'rubric_score':
+            submission = ProjectSubmission.query.get_or_404(request.form.get('submission_id', type=int))
+            if submission.experiment_id != experiment.id:
+                abort(404)
+            rubric = ProjectRubric.query.filter_by(experiment_id=experiment.id).first()
+            if not rubric:
+                flash('Crie uma rubrica antes de atribuir critérios.', 'error')
+                return redirect(url_for('admin.experiment_submissions', id=id))
+            for criterion in rubric.criteria:
+                raw = request.form.get(f'criterion_{criterion.id}', '').strip()
+                if not raw:
+                    continue
+                try:
+                    points = float(raw)
+                    if points < 0 or points > criterion.max_points:
+                        raise ValueError
+                except ValueError:
+                    flash(f'Pontuação inválida para {criterion.name}.', 'error')
+                    return redirect(url_for('admin.experiment_submissions', id=id))
+                score = ProjectRubricScore.query.filter_by(submission_id=submission.id, criterion_id=criterion.id).first()
+                if not score:
+                    score = ProjectRubricScore(submission_id=submission.id, criterion_id=criterion.id)
+                    db.session.add(score)
+                score.points = points
+                score.feedback = request.form.get(f'criterion_feedback_{criterion.id}', '').strip()[:500]
+            db.session.flush()
+            total_max = sum(c.max_points for c in rubric.criteria)
+            total_points = sum(s.points for s in submission.rubric_scores if s.criterion_id in {c.id for c in rubric.criteria})
+            submission.score = round((total_points / total_max) * 100, 2) if total_max else None
+            submission.status = 'reviewed'
+            db.session.commit()
+            flash('Avaliação por rubrica salva.', 'success')
+            return redirect(url_for('admin.experiment_submissions', id=id))
+    submissions = ProjectSubmission.query.filter_by(experiment_id=experiment.id).order_by(ProjectSubmission.submitted_at.desc()).all()
+    rubric = ProjectRubric.query.filter_by(experiment_id=experiment.id).first()
+    return render_template('admin/project_submissions.html', experiment=experiment, submissions=submissions, rubric=rubric)
+
 
 @admin_bp.get('/activities/<int:id>/resultados')
 def activity_results(id):

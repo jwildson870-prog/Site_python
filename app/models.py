@@ -166,6 +166,73 @@ class Experiment(db.Model):
     created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow, nullable=False)
 
+class ProjectSubmission(db.Model):
+    __tablename__ = 'project_submissions'
+    id = db.Column(db.Integer, primary_key=True)
+    experiment_id = db.Column(db.Integer, db.ForeignKey('experiments.id'), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    content = db.Column(db.Text, nullable=True)
+    status = db.Column(db.String(20), nullable=False, default='submitted', index=True)
+    teacher_feedback = db.Column(db.Text, nullable=True)
+    score = db.Column(db.Float, nullable=True)
+    submitted_at = db.Column(db.DateTime, default=utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow, nullable=False)
+    experiment = db.relationship('Experiment', backref=db.backref('submissions', cascade='all, delete-orphan'))
+    user = db.relationship('User', backref=db.backref('project_submissions', cascade='all, delete-orphan'))
+    attachments = db.relationship('ProjectAttachment', backref='submission', cascade='all, delete-orphan')
+    comments = db.relationship('ProjectComment', backref='submission', cascade='all, delete-orphan')
+    rubric_scores = db.relationship('ProjectRubricScore', backref='submission', cascade='all, delete-orphan')
+    __table_args__ = (db.UniqueConstraint('experiment_id', 'user_id', name='uq_project_submission_student'),)
+
+class ProjectAttachment(db.Model):
+    __tablename__ = 'project_attachments'
+    id = db.Column(db.Integer, primary_key=True)
+    submission_id = db.Column(db.Integer, db.ForeignKey('project_submissions.id'), nullable=False, index=True)
+    filename = db.Column(db.String(255), nullable=False)
+    storage_key = db.Column(db.String(1000), nullable=False)
+    content_type = db.Column(db.String(150), nullable=True)
+    size = db.Column(db.Integer, nullable=True)
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
+
+class ProjectComment(db.Model):
+    __tablename__ = 'project_comments'
+    id = db.Column(db.Integer, primary_key=True)
+    submission_id = db.Column(db.Integer, db.ForeignKey('project_submissions.id'), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    body = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), nullable=False, default='visible', index=True)
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow, nullable=False)
+    user = db.relationship('User')
+
+class ProjectRubric(db.Model):
+    __tablename__ = 'project_rubrics'
+    id = db.Column(db.Integer, primary_key=True)
+    experiment_id = db.Column(db.Integer, db.ForeignKey('experiments.id'), nullable=False, unique=True)
+    title = db.Column(db.String(160), nullable=False, default='Rubrica do projeto')
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
+    experiment = db.relationship('Experiment', backref=db.backref('rubric', uselist=False, cascade='all, delete-orphan'))
+    criteria = db.relationship('ProjectRubricCriterion', backref='rubric', cascade='all, delete-orphan', order_by='ProjectRubricCriterion.position')
+
+class ProjectRubricCriterion(db.Model):
+    __tablename__ = 'project_rubric_criteria'
+    id = db.Column(db.Integer, primary_key=True)
+    rubric_id = db.Column(db.Integer, db.ForeignKey('project_rubrics.id'), nullable=False, index=True)
+    name = db.Column(db.String(160), nullable=False)
+    description = db.Column(db.String(500), nullable=True)
+    max_points = db.Column(db.Float, nullable=False, default=10)
+    position = db.Column(db.Integer, nullable=False, default=0)
+
+class ProjectRubricScore(db.Model):
+    __tablename__ = 'project_rubric_scores'
+    id = db.Column(db.Integer, primary_key=True)
+    submission_id = db.Column(db.Integer, db.ForeignKey('project_submissions.id'), nullable=False, index=True)
+    criterion_id = db.Column(db.Integer, db.ForeignKey('project_rubric_criteria.id'), nullable=False, index=True)
+    points = db.Column(db.Float, nullable=False, default=0)
+    feedback = db.Column(db.String(500), nullable=True)
+    criterion = db.relationship('ProjectRubricCriterion')
+    __table_args__ = (db.UniqueConstraint('submission_id', 'criterion_id', name='uq_project_rubric_score'),)
+
 class Favorite(db.Model):
     __tablename__ = 'favorites'
     id = db.Column(db.Integer, primary_key=True)

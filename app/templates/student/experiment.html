@@ -1,1 +1,21 @@
-{% extends 'base.html' %}{% block title %}{{experiment.title}} · Portal Python{% endblock %}{% block content %}<section class="student-shell"><a class="back-link" href="{{url_for('student.experiments')}}">← Projetos práticos</a><article class="card prose"><span class="badge">{{experiment.series.name}} · {{experiment.subject.name}}</span><h1>{{experiment.title}}</h1><p>{{experiment.description or ''}}</p>{% for title,body in [('Objetivo',experiment.objective),('Recursos',experiment.materials),('Passo a passo',experiment.steps),('Boas práticas',experiment.safety),('Conclusão',experiment.conclusion)] %}{% if body %}<h2>{{title}}</h2><div style="white-space:pre-wrap">{{body}}</div>{% endif %}{% endfor %}</article></section>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}{{experiment.title}} · Portal Python{% endblock %}
+{% block content %}
+<section class="student-shell">
+  <a class="back-link" href="{{url_for('student.experiments')}}">← Projetos práticos</a>
+  <article class="card prose"><span class="badge">{{experiment.series.name}} · {{experiment.subject.name}}</span><h1>{{experiment.title}}</h1><p>{{experiment.description or ''}}</p>{% for title,body in [('Objetivo',experiment.objective),('Recursos',experiment.materials),('Passo a passo',experiment.steps),('Boas práticas',experiment.safety),('Conclusão',experiment.conclusion)] %}{% if body %}<h2>{{title}}</h2><div style="white-space:pre-wrap">{{body}}</div>{% endif %}{% endfor %}</article>
+
+  <section class="card" style="margin-top:1rem"><h2>Minha entrega</h2><p>Envie sua solução, código, documentação ou outros arquivos do projeto.</p>
+    <form method="post" enctype="multipart/form-data" class="form-grid"><input type="hidden" name="csrf_token" value="{{csrf_token()}}"><input type="hidden" name="action" value="submit">
+      <label class="field-block full">Descrição da entrega<textarea name="content" rows="7" maxlength="20000" placeholder="Explique o que você fez, decisões importantes e o que gostaria de receber de feedback.">{{ submission.content if submission else '' }}</textarea></label>
+      <label class="field-block full">Anexos<input type="file" name="attachments" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.doc,.docx,.ppt,.pptx,.txt,.py,.zip,.csv"><small>Respeita o limite de upload configurado pelo professor.</small></label>
+      <div class="full"><button class="btn admin-primary">Enviar projeto</button></div>
+    </form>
+    {% if submission and submission.attachments %}<h3>Arquivos enviados</h3><div class="list">{% for a in submission.attachments %}<a class="card row" href="{{url_for('student.project_attachment',id=a.id)}}">{{a.filename}} <span class="badge">{{ ((a.size or 0) / 1024 / 1024)|round(2) }} MB</span></a>{% endfor %}</div>{% endif %}
+    {% if submission and submission.teacher_feedback %}<div class="card" style="margin-top:1rem"><h3>Feedback do professor</h3><p style="white-space:pre-wrap">{{submission.teacher_feedback}}</p>{% if submission.score is not none %}<strong>Nota: {{submission.score}}</strong>{% endif %}</div>{% endif %}
+    {% if rubric and rubric.criteria %}<div class="card" style="margin-top:1rem"><h3>{{rubric.title}}</h3>{% for c in rubric.criteria %}{% set rs = rubric_scores.get(c.id) %}<p><strong>{{c.name}}</strong> — {{ rs.points if rs else '—' }}/{{c.max_points}}{% if rs and rs.feedback %}<br>{{rs.feedback}}{% endif %}</p>{% endfor %}</div>{% endif %}
+  </section>
+
+  <section class="card" style="margin-top:1rem"><h2>Dúvidas e comentários</h2><form method="post" class="form-grid"><input type="hidden" name="csrf_token" value="{{csrf_token()}}"><input type="hidden" name="action" value="comment"><label class="field-block full"><textarea name="body" rows="3" maxlength="2000" placeholder="Escreva uma dúvida ou comentário para o professor."></textarea></label><div class="full"><button class="btn secondary">Adicionar comentário</button></div></form>{% for c in comments %}<div class="card" style="margin:.7rem 0"><strong>{{c.user.name}}</strong><small> · {{c.created_at.strftime('%d/%m/%Y %H:%M')}}</small><p style="white-space:pre-wrap">{{c.body}}</p></div>{% else %}<p>Nenhum comentário ainda.</p>{% endfor %}</section>
+</section>
+{% endblock %}
