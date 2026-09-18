@@ -236,6 +236,31 @@ def create_app(test_config=None):
         # As tabelas novas (password_reset_tokens, email_verification_tokens,
         # login_attempts) são criadas automaticamente pelo db.create_all()
         # abaixo, sem afetar as tabelas já existentes.
+        # Fase 5.6: opções de execução das atividades e ordem exibida em cada tentativa.
+        # Migração aditiva e retrocompatível para instalações existentes.
+        inspector = inspect(db.engine)
+        if 'activities' in inspector.get_table_names():
+            activity_cols = {c['name'] for c in inspector.get_columns('activities')}
+            with db.engine.begin() as conn:
+                additions = {
+                    'max_attempts': "ALTER TABLE activities ADD COLUMN max_attempts INTEGER NOT NULL DEFAULT 0",
+                    'review_enabled': "ALTER TABLE activities ADD COLUMN review_enabled BOOLEAN NOT NULL DEFAULT true",
+                    'shuffle_questions': "ALTER TABLE activities ADD COLUMN shuffle_questions BOOLEAN NOT NULL DEFAULT false",
+                    'shuffle_options': "ALTER TABLE activities ADD COLUMN shuffle_options BOOLEAN NOT NULL DEFAULT false",
+                }
+                for col, statement in additions.items():
+                    if col not in activity_cols:
+                        if db.engine.dialect.name == 'postgresql':
+                            conn.execute(text(statement.replace('ADD COLUMN ', 'ADD COLUMN IF NOT EXISTS ')))
+                        elif db.engine.dialect.name == 'sqlite':
+                            conn.execute(text(statement.replace(' BOOLEAN', ' INTEGER').replace('true', '1').replace('false', '0')))
+        inspector = inspect(db.engine)
+        if 'activity_attempts' in inspector.get_table_names() and 'question_order_json' not in {c['name'] for c in inspector.get_columns('activity_attempts')}:
+            with db.engine.begin() as conn:
+                if db.engine.dialect.name == 'postgresql':
+                    conn.execute(text("ALTER TABLE activity_attempts ADD COLUMN IF NOT EXISTS question_order_json TEXT NOT NULL DEFAULT '[]'"))
+                elif db.engine.dialect.name == 'sqlite':
+                    conn.execute(text("ALTER TABLE activity_attempts ADD COLUMN question_order_json TEXT NOT NULL DEFAULT '[]'"))
         db.create_all()
         inspector = inspect(db.engine)
         if 'question_bank' in inspector.get_table_names() and 'code' not in {c['name'] for c in inspector.get_columns('question_bank')}:

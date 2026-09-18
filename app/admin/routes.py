@@ -74,7 +74,7 @@ CONTENT_STATUSES = {'draft', 'published', 'scheduled'}
 def _history_snapshot(item):
     if isinstance(item, Content):
         return {'title': item.title, 'description': item.description, 'kind': item.kind, 'body': item.body, 'external_url': item.external_url, 'file_name': item.file_name, 'preview_manifest': item.preview_manifest, 'series_id': item.series_id, 'subject_id': item.subject_id, 'status': item.status, 'scheduled_at': item.scheduled_at.isoformat() if item.scheduled_at else None, 'archived_at': item.archived_at.isoformat() if item.archived_at else None}
-    return {'title': item.title, 'description': item.description, 'series_id': item.series_id, 'subject_id': item.subject_id, 'difficulty': item.difficulty, 'due_at': item.due_at.isoformat() if item.due_at else None, 'archived_at': item.archived_at.isoformat() if item.archived_at else None, 'questions': item.get_questions()}
+    return {'title': item.title, 'description': item.description, 'series_id': item.series_id, 'subject_id': item.subject_id, 'difficulty': item.difficulty, 'max_attempts': item.max_attempts, 'review_enabled': item.review_enabled, 'shuffle_questions': item.shuffle_questions, 'shuffle_options': item.shuffle_options, 'due_at': item.due_at.isoformat() if item.due_at else None, 'archived_at': item.archived_at.isoformat() if item.archived_at else None, 'questions': item.get_questions()}
 
 def _record_history(item, action):
     db.session.add(ContentHistory(entity_type='content' if isinstance(item, Content) else 'activity', entity_id=item.id, action=action, user_id=current_user.id, snapshot_json=json.dumps(_history_snapshot(item), ensure_ascii=False)))
@@ -828,13 +828,21 @@ def activities():
         elif due_error:
             flash(due_error, 'error')
         else:
-            a = Activity(title=title, description=description[:5000], series_id=s.id, subject_id=sub.id, due_at=due_at, difficulty=difficulty_value if difficulty_value in {'facil','medio','dificil'} else 'medio')
-            a.set_questions([])
-            db.session.add(a)
-            db.session.flush(); _record_history(a, 'created')
-            db.session.commit()
-            flash('Atividade criada. Agora adicione as questões.', 'success')
-            return redirect(url_for('admin.activity_edit', id=a.id))
+            try:
+                max_attempts = int(request.form.get('max_attempts', '0') or 0)
+            except ValueError:
+                max_attempts = -1
+            if max_attempts < 0 or max_attempts > 100:
+                flash('O limite de tentativas deve ficar entre 0 (ilimitado) e 100.', 'error')
+                max_attempts = None
+            else:
+                a = Activity(title=title, description=description[:5000], series_id=s.id, subject_id=sub.id, due_at=due_at, difficulty=difficulty_value if difficulty_value in {'facil','medio','dificil'} else 'medio', max_attempts=max_attempts, review_enabled=request.form.get('review_enabled') == '1', shuffle_questions=request.form.get('shuffle_questions') == '1', shuffle_options=request.form.get('shuffle_options') == '1')
+                a.set_questions([])
+                db.session.add(a)
+                db.session.flush(); _record_history(a, 'created')
+                db.session.commit()
+                flash('Atividade criada. Agora adicione as questões.', 'success')
+                return redirect(url_for('admin.activity_edit', id=a.id))
     query = Activity.query
     if archived == '1': query = query.filter(Activity.archived_at.is_not(None))
     elif archived != 'all': query = query.filter(Activity.archived_at.is_(None))
@@ -933,12 +941,20 @@ def read_activity_questions_from_form():
     questions = []
     for i in range(20):
         question = request.form.get(f'question_{i}', '').strip()
+        kind = request.form.get(f'kind_{i}', 'multiple_choice').strip().lower()
         options = [request.form.get(f'option_{i}_{letter}', '').strip() for letter in ('a', 'b', 'c', 'd')]
         correct_index = request.form.get(f'correct_{i}', '').strip()
         if not question and not any(options) and not correct_index:
             continue
-        if not question or len(question) > 1000 or sum(bool(option) for option in options) < 2 or correct_index not in {'0', '1', '2', '3'}:
-            return None, 'Cada questão preenchida precisa de enunciado, pelo menos duas alternativas e uma resposta correta.'
+        if not question or len(question) > 1000:
+            return None, 'Cada questão preenchida precisa de um enunciado válido.'
+        if kind == 'essay':
+            questions.append({'question': question, 'kind': 'essay', 'options': [], 'correct': ''})
+            continue
+        if kind not in {'multiple_choice', 'essay'}:
+            kind = 'multiple_choice'
+        if sum(bool(option) for option in options) < 2 or correct_index not in {'0', '1', '2', '3'}:
+            return None, 'Cada questão objetiva precisa de pelo menos duas alternativas e uma resposta correta.'
         if any(len(option) > 500 for option in options):
             return None, 'Cada alternativa pode ter no máximo 500 caracteres.'
         filled = [bool(option) for option in options]
@@ -947,7 +963,7 @@ def read_activity_questions_from_form():
         index = int(correct_index)
         if not options[index]:
             return None, 'A resposta correta precisa apontar para uma alternativa preenchida.'
-        questions.append({'question': question, 'options': options, 'correct': options[index]})
+        questions.append({'question': question, 'kind': 'multiple_choice', 'options': options, 'correct': options[index]})
     if not questions:
         return None, 'Informe pelo menos uma questão.'
     return questions, None
@@ -969,19 +985,31 @@ def activity_edit(id):
         elif error:
             flash(error, 'error')
         else:
-            was_empty = len(a.get_questions()) == 0
-            a.title = title
-            a.description = desc[:5000]
-            a.due_at = due_at
-            a.difficulty = difficulty_value if difficulty_value in {'facil','medio','dificil'} else 'medio'
-            a.set_questions(questions)
-            db.session.flush(); _record_history(a, 'updated')
-            db.session.commit()
-            if was_empty:
-                notify_students(f'Nova atividade: {a.title}', url_for('student.activity', id=a.id))
+            try:
+                max_attempts = int(request.form.get('max_attempts', '0') or 0)
+            except ValueError:
+                max_attempts = -1
+            if max_attempts < 0 or max_attempts > 100:
+                flash('O limite de tentativas deve ficar entre 0 (ilimitado) e 100.', 'error')
+                max_attempts = None
+            else:
+                was_empty = len(a.get_questions()) == 0
+                a.title = title
+                a.description = desc[:5000]
+                a.due_at = due_at
+                a.difficulty = difficulty_value if difficulty_value in {'facil','medio','dificil'} else 'medio'
+                a.max_attempts = max_attempts
+                a.review_enabled = request.form.get('review_enabled') == '1'
+                a.shuffle_questions = request.form.get('shuffle_questions') == '1'
+                a.shuffle_options = request.form.get('shuffle_options') == '1'
+                a.set_questions(questions)
+                db.session.flush(); _record_history(a, 'updated')
                 db.session.commit()
-            flash('Atividade salva.', 'success')
-            return redirect(url_for('admin.activities'))
+                if was_empty:
+                    notify_students(f'Nova atividade: {a.title}', url_for('student.activity', id=a.id))
+                    db.session.commit()
+                flash('Atividade salva.', 'success')
+                return redirect(url_for('admin.activities'))
         questions = []
         for i in range(20):
             q = request.form.get(f'question_{i}', '').strip()
@@ -1005,7 +1033,7 @@ def activity_delete(id):
 @admin_bp.post('/activities/<int:id>/duplicate')
 def activity_duplicate(id):
     source = Activity.query.get_or_404(id)
-    duplicate = Activity(title=f'{source.title} (cópia)', description=source.description, series_id=source.series_id, subject_id=source.subject_id, due_at=source.due_at, difficulty=source.difficulty, archived_at=None)
+    duplicate = Activity(title=f'{source.title} (cópia)', description=source.description, series_id=source.series_id, subject_id=source.subject_id, due_at=source.due_at, difficulty=source.difficulty, archived_at=None, max_attempts=source.max_attempts, review_enabled=source.review_enabled, shuffle_questions=source.shuffle_questions, shuffle_options=source.shuffle_options)
     duplicate.set_questions(source.get_questions()); db.session.add(duplicate); db.session.flush(); _record_history(duplicate, 'duplicated'); db.session.commit()
     flash('Atividade duplicada.', 'success')
     return redirect(url_for('admin.activity_edit', id=duplicate.id))

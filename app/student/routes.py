@@ -6,6 +6,7 @@ from ..timeutils import utcnow
 from ..models import Series,Subject,Content,Activity,ActivityAttempt,Experiment,Favorite,Progress,Notification
 from ..storage import get_file, b2_enabled, StorageError
 import json
+import random
 from datetime import date
 import calendar as pycalendar
 student_bp=Blueprint('student',__name__,url_prefix='/aluno')
@@ -191,19 +192,69 @@ def activities():
     elif status == 'expired': items = [a for a in items if a.due_at and now > a.due_at]
     return render_template('student/activities.html', activities=items, attempted_ids=attempted_ids, now=now, q=q, series_id=series_id, subject_id=subject_id, status=status, series=Series.query.order_by(Series.id).all(), subjects=Subject.query.order_by(Subject.name).all())
 
-@student_bp.route('/atividade/<int:id>',methods=['GET','POST'])
+@student_bp.route('/atividade/<int:id>', methods=['GET', 'POST'])
 def activity(id):
-    a=Activity.query.get_or_404(id)
-    if a.archived_at is not None: abort(404)
-    questions=a.get_questions(); now=utcnow()
+    a = Activity.query.get_or_404(id)
+    if a.archived_at is not None:
+        abort(404)
+    questions = a.get_questions()
+    now = utcnow()
     expired = bool(a.due_at and now > a.due_at)
-    if request.method=='POST':
+    attempts = ActivityAttempt.query.filter_by(user_id=current_user.id, activity_id=a.id).order_by(ActivityAttempt.id.desc()).all()
+    if request.method == 'POST':
         if expired:
             flash('O prazo desta atividade já terminou.', 'error')
             return redirect(url_for('student.activity', id=a.id))
-        answers={str(i):request.form.get(f'q{i}','') for i in range(len(questions))}; valid_answers={str(i): set(q.get('options') or []) for i,q in enumerate(questions)}; answers={k:v for k,v in answers.items() if v in valid_answers.get(k,set())}; correct=sum(1 for i,q in enumerate(questions) if answers.get(str(i))==q.get('correct')); total=len(questions); score=(correct/total*10) if total else 0
-        attempt=ActivityAttempt(user_id=current_user.id,activity_id=a.id,answers_json=json.dumps(answers,ensure_ascii=False),score=score,total=total); db.session.add(attempt); db.session.commit(); return render_template('student/activity_result.html',activity=a,score=score,correct=correct,total=total)
-    return render_template('student/activity.html',activity=a,questions=questions,expired=expired,now=now)
+        if a.max_attempts and len(attempts) >= a.max_attempts:
+            flash('Você já atingiu o limite de tentativas desta atividade.', 'error')
+            return redirect(url_for('student.activity', id=a.id))
+        answers = {}
+        review_items = []
+        correct = 0
+        objective_total = 0
+        for i, q in enumerate(questions):
+            kind = q.get('kind', 'multiple_choice')
+            raw = request.form.get(f'q{i}', '').strip()
+            if kind == 'essay':
+                answer = raw[:5000]
+                answers[str(i)] = answer
+                review_items.append({'question': q.get('question', ''), 'kind': 'essay', 'answer': answer, 'correct': None, 'options': []})
+                continue
+            options = q.get('options') or []
+            answer = raw if raw in options else ''
+            answers[str(i)] = answer
+            objective_total += 1
+            is_correct = bool(answer and answer == q.get('correct'))
+            if is_correct:
+                correct += 1
+            review_items.append({'question': q.get('question', ''), 'kind': 'multiple_choice', 'answer': answer, 'correct': q.get('correct', ''), 'options': options})
+        total = len(questions)
+        score = (correct / total * 10) if total else 0
+        order = []
+        try:
+            order = [int(x) for x in request.form.get('question_order', '').split(',') if x.strip().isdigit()]
+        except (TypeError, ValueError):
+            order = []
+        if sorted(order) != list(range(total)):
+            order = list(range(total))
+        attempt = ActivityAttempt(user_id=current_user.id, activity_id=a.id, answers_json=json.dumps(answers, ensure_ascii=False), score=score, total=total, question_order_json=json.dumps(order))
+        db.session.add(attempt)
+        db.session.commit()
+        return render_template('student/activity_result.html', activity=a, score=score, correct=correct, total=total, review_enabled=a.review_enabled, review_items=review_items, objective_total=objective_total, essay_count=total-objective_total, attempt_number=len(attempts)+1, max_attempts=a.max_attempts)
+
+    order = list(range(len(questions)))
+    if a.shuffle_questions:
+        random.shuffle(order)
+    display_questions = []
+    for index in order:
+        q = dict(questions[index])
+        q['_index'] = index
+        if a.shuffle_options and q.get('kind', 'multiple_choice') != 'essay':
+            q['options'] = list(q.get('options') or [])
+            random.shuffle(q['options'])
+        display_questions.append(q)
+    remaining_attempts = max(0, a.max_attempts - len(attempts)) if a.max_attempts else None
+    return render_template('student/activity.html', activity=a, questions=display_questions, expired=expired, now=now, remaining_attempts=remaining_attempts, attempt_count=len(attempts))
 @student_bp.get('/experimentos')
 def experiments(): return render_template('student/experiments.html',experiments=Experiment.query.order_by(Experiment.id.desc()).all())
 @student_bp.get('/experimento/<int:id>')

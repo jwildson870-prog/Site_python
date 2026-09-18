@@ -16,6 +16,8 @@
       <label class="field-block">Matéria<select name="subject_id" required>{% for s in series %}{% for sub in s.subjects %}<option value="{{sub.id}}">{{s.name}} · {{sub.name}}</option>{% endfor %}{% endfor %}</select></label>
       <label class="field-block">Nível<select name="difficulty"><option value="facil">Fácil</option><option value="medio" selected>Médio</option><option value="dificil">Difícil</option></select></label>
       <label class="field-block">Prazo de entrega<input type="datetime-local" name="due_at"><small>Opcional. Deixe vazio para uma atividade sem prazo.</small></label>
+      <label class="field-block">Limite de tentativas<input type="number" name="max_attempts" min="0" max="100" value="0"><small>0 = ilimitado.</small></label>
+      <label class="field-block full"><span>Opções da atividade</span><span class="check-row"><input type="checkbox" name="review_enabled" value="1" checked> Permitir revisão das respostas</span><span class="check-row"><input type="checkbox" name="shuffle_questions" value="1"> Embaralhar questões</span><span class="check-row"><input type="checkbox" name="shuffle_options" value="1"> Embaralhar alternativas</span></label>
       <label class="field-block full">Descrição<textarea name="description" maxlength="5000" placeholder="Explique o objetivo da atividade."></textarea></label>
     </div>
     <button class="btn admin-primary" type="submit">Criar atividade</button>
