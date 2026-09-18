@@ -2939,7 +2939,7 @@ input:focus,select:focus,textarea:focus{
   opacity:.72;
   mix-blend-mode:screen;
 }
-.app-authenticated > *:not(.space-particles):not(.page-loader){
+.app-authenticated > *:not(.space-particles):not(.page-loader):not(.side-menu){
   position:relative;
   z-index:1;
 }
@@ -3737,4 +3737,15 @@ a.card:active,a.tile:active,a.student-material-card:active,a.student-summary-car
   .ready-stat,.report-card,.smart-alert-card,.side-link{transition:none}
   .admin-stat:hover,.student-shell .tile:hover,.admin-action-card:hover,
   .ready-stat:hover{transform:none}
+}
+
+/* ==========================================================
+   PORTAL PYTHON — FIX: alinhamento sidebar fixa x conteúdo (desktop)
+   Garante que a largura da sidebar e a margem do conteúdo batem,
+   evitando sobreposição/gap. Fica sempre por último, só afeta >=901px.
+   ========================================================== */
+@media (min-width:901px){
+  body.app-authenticated .side-menu{position:fixed!important;width:250px!important}
+  body.app-authenticated .site-main{margin-left:250px!important}
+  body.app-authenticated .site-footer{margin-left:250px!important}
 }
