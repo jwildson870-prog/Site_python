@@ -8,6 +8,7 @@ from sqlalchemy import or_
 from werkzeug.utils import secure_filename
 from ..storage import upload as storage_upload, delete as storage_delete, get_file, b2_enabled, StorageError
 from ..extensions import db
+from ..timeutils import utcnow
 from ..models import Series, Subject, Content, User, Activity, ActivityAttempt, Experiment, Notification, Alert, QuestionBank
 from ..pptx_preview import convert_pptx_to_images
 from ..activity_library import PREBUILT_ACTIVITIES, BY_SLUG
@@ -177,7 +178,7 @@ def dashboard():
     average_score = round(float(average_score), 1) if average_score is not None else 0
 
     # Visão executiva do professor: agregações pequenas e prontas para o dashboard.
-    now = datetime.utcnow()
+    now = utcnow()
     all_activities = Activity.query.order_by(Activity.id.desc()).all()
     all_attempts = ActivityAttempt.query.order_by(ActivityAttempt.id.desc()).all()
     latest_by_pair = {}
@@ -243,14 +244,14 @@ def alerts():
         if not alert or alert.resolved:
             abort(404)
         alert.resolved = True
-        alert.resolved_at = datetime.utcnow()
+        alert.resolved_at = utcnow()
         db.session.commit()
         flash('Alerta marcado como resolvido.', 'success')
         return redirect(url_for('admin.alerts'))
     students = User.query.filter_by(role='student').order_by(User.name).all()
     activities = Activity.query.order_by(Activity.due_at.asc().nullslast(), Activity.id.desc()).all()
     attempts = ActivityAttempt.query.order_by(ActivityAttempt.created_at.desc()).all()
-    now = datetime.utcnow()
+    now = utcnow()
     _sync_smart_alerts(students, activities, attempts, now)
     all_alerts = Alert.query.filter_by(resolved=False).order_by(Alert.priority.desc(), Alert.created_at.desc()).all()
     return render_template('admin/alerts.html', alerts=all_alerts, now=now)
@@ -281,7 +282,7 @@ def series_delete(id):
 @admin_bp.route('/subjects', methods=['GET','POST'])
 def subjects_list():
     if request.method=='POST':
-        name=request.form.get('name','').strip(); sid=request.form.get('series_id',''); s=Series.query.get(int(sid)) if sid.isdigit() else None
+        name=request.form.get('name','').strip(); sid=request.form.get('series_id',''); s=db.session.get(Series, int(sid)) if sid.isdigit() else None
         if not name or not s: flash('Informe matéria e série.','error')
         elif Subject.query.filter_by(name=name,series_id=s.id).first(): flash('Matéria já existe nessa série.','error')
         else: db.session.add(Subject(name=name,series_id=s.id)); db.session.commit(); flash('Matéria criada.','success')
@@ -291,7 +292,7 @@ def subjects_list():
 def subject_edit(id):
     s=Subject.query.get_or_404(id)
     if request.method=='POST':
-        n=request.form.get('name','').strip(); sid=request.form.get('series_id',''); series=Series.query.get(int(sid)) if sid.isdigit() else None
+        n=request.form.get('name','').strip(); sid=request.form.get('series_id',''); series=db.session.get(Series, int(sid)) if sid.isdigit() else None
         dup=Subject.query.filter(Subject.name==n,Subject.series_id==series.id,Subject.id!=id).first() if series else None
         if not n or not series or dup: flash('Dados inválidos ou duplicados.','error')
         else: s.name=n; s.series_id=series.id; db.session.commit(); flash('Matéria atualizada.','success'); return redirect(url_for('admin.subjects_list'))
@@ -367,8 +368,8 @@ def content_form(content=None):
     body = request.form.get('body', '').strip()
     external_url = request.form.get('external_url', '').strip()
 
-    s = Series.query.get(int(sid)) if sid.isdigit() else None
-    sub = Subject.query.get(int(subid)) if subid.isdigit() else None
+    s = db.session.get(Series, int(sid)) if sid.isdigit() else None
+    sub = db.session.get(Subject, int(subid)) if subid.isdigit() else None
     if not title or len(title) > 200 or len(desc) > 5000 or not s or not sub or sub.series_id != s.id or kind not in ALLOWED_KINDS:
         flash('Preencha os dados obrigatórios corretamente.', 'error')
         return None, series, subjects
@@ -554,7 +555,7 @@ def user_performance(id):
     completed = len(by_activity)
     pending = max(len(activities) - completed, 0)
     completion = round(completed / len(activities) * 100) if activities else 0
-    return render_template('admin/user_performance.html', student=student, activities=activities, by_activity=by_activity, attempts=attempts, average=average, completed=completed, pending=pending, completion=completion, now=datetime.utcnow())
+    return render_template('admin/user_performance.html', student=student, activities=activities, by_activity=by_activity, attempts=attempts, average=average, completed=completed, pending=pending, completion=completion, now=utcnow())
 
 @admin_bp.get('/users')
 def users():
@@ -593,9 +594,10 @@ def question_bank():
         options = [request.form.get(f'option_{letter}', '').strip() for letter in ('a','b','c','d')]
         code = request.form.get('code', '').strip()
         correct_index = request.form.get('correct', '').strip()
+        difficulty = request.form.get('difficulty', 'medio').strip().lower()
         sid = request.form.get('series_id', '').strip(); subid = request.form.get('subject_id', '').strip()
-        ser = Series.query.get(int(sid)) if sid.isdigit() else None
-        sub = Subject.query.get(int(subid)) if subid.isdigit() else None
+        ser = db.session.get(Series, int(sid)) if sid.isdigit() else None
+        sub = db.session.get(Subject, int(subid)) if subid.isdigit() else None
         if not question or len(question) > 1000 or sum(bool(x) for x in options) < 2 or correct_index not in {'0','1','2','3'}:
             flash('Preencha a questão, pelo menos duas alternativas e a resposta correta.', 'error')
         elif not ser or not sub or sub.series_id != ser.id:
@@ -628,7 +630,7 @@ def activity_import_questions(id):
     added = 0
     for qid in ids:
         if len(current) >= 20: break
-        item = QuestionBank.query.get(qid)
+        item = db.session.get(QuestionBank, qid)
         if not item or item.series_id != activity.series_id or item.subject_id != activity.subject_id: continue
         opts = item.get_options()
         current.append({'question': item.question, 'options': opts, 'correct': item.correct, **({'code': item.code} if item.code else {})})
@@ -651,8 +653,8 @@ def activities():
         sid = request.form.get('series_id', '').strip()
         subid = request.form.get('subject_id', '').strip()
         due_raw = request.form.get('due_at', '').strip()
-        s = Series.query.get(int(sid)) if sid.isdigit() else None
-        sub = Subject.query.get(int(subid)) if subid.isdigit() else None
+        s = db.session.get(Series, int(sid)) if sid.isdigit() else None
+        sub = db.session.get(Subject, int(subid)) if subid.isdigit() else None
         due_at, due_error = parse_due_at(due_raw)
         if not title or len(title) > 200 or not s or not sub or sub.series_id != s.id:
             flash('Preencha título, série e matéria corretamente.', 'error')
@@ -672,7 +674,7 @@ def activities():
     if series_id.isdigit(): query = query.filter_by(series_id=int(series_id))
     if subject_id.isdigit(): query = query.filter_by(subject_id=int(subject_id))
     if difficulty in {'facil','medio','dificil'}: query = query.filter_by(difficulty=difficulty)
-    now = datetime.utcnow()
+    now = utcnow()
     items = query.order_by(Activity.id.desc()).all()
     if status == 'pending': items = [a for a in items if not a.due_at or a.due_at >= now]
     elif status == 'expired': items = [a for a in items if a.due_at and a.due_at < now]
@@ -721,8 +723,8 @@ def ready_activities():
         sid = request.form.get('series_id', '').strip()
         subid = request.form.get('subject_id', '').strip()
         due_raw = request.form.get('due_at', '').strip()
-        ser = Series.query.get(int(sid)) if sid.isdigit() else None
-        sub = Subject.query.get(int(subid)) if subid.isdigit() else None
+        ser = db.session.get(Series, int(sid)) if sid.isdigit() else None
+        sub = db.session.get(Subject, int(subid)) if subid.isdigit() else None
         due_at, due_error = parse_due_at(due_raw)
         if not item:
             flash('Selecione uma atividade pronta válida.', 'error')
@@ -752,7 +754,7 @@ def parse_due_at(value):
         due = datetime.fromisoformat(value)
     except ValueError:
         return None, 'O prazo informado é inválido.'
-    if due <= datetime.utcnow():
+    if due <= utcnow():
         return None, 'O prazo precisa ser uma data e hora futuras.'
     return due, None
 
@@ -835,8 +837,8 @@ def experiments():
         title = request.form.get('title', '').strip()
         sid = request.form.get('series_id', '').strip()
         subid = request.form.get('subject_id', '').strip()
-        s = Series.query.get(int(sid)) if sid.isdigit() else None
-        sub = Subject.query.get(int(subid)) if subid.isdigit() else None
+        s = db.session.get(Series, int(sid)) if sid.isdigit() else None
+        sub = db.session.get(Subject, int(subid)) if subid.isdigit() else None
         if not title or not s or not sub or sub.series_id != s.id:
             flash('Informe título, série e matéria.', 'error')
         else:
@@ -855,8 +857,8 @@ def experiment_edit(id):
     if request.method == 'POST':
         sid = request.form.get('series_id', '').strip()
         subid = request.form.get('subject_id', '').strip()
-        s = Series.query.get(int(sid)) if sid.isdigit() else None
-        sub = Subject.query.get(int(subid)) if subid.isdigit() else None
+        s = db.session.get(Series, int(sid)) if sid.isdigit() else None
+        sub = db.session.get(Subject, int(subid)) if subid.isdigit() else None
         if not request.form.get('title', '').strip() or not s or not sub or sub.series_id != s.id:
             flash('Dados inválidos.', 'error')
         else:
@@ -930,7 +932,7 @@ def _report_dataset():
     except ValueError:
         days = 30
     days = days if days in {7, 30, 90, 365} else 30
-    since = datetime.utcnow() - timedelta(days=days)
+    since = utcnow() - timedelta(days=days)
 
     students_q = User.query.filter_by(role='student')
     if q:
@@ -992,8 +994,8 @@ def _report_dataset():
     bucket_count = 7
     step = max(days // bucket_count, 1)
     for i in range(bucket_count - 1, -1, -1):
-        start = datetime.utcnow() - timedelta(days=(i+1)*step)
-        end = datetime.utcnow() - timedelta(days=i*step)
+        start = utcnow() - timedelta(days=(i+1)*step)
+        end = utcnow() - timedelta(days=i*step)
         vals = [float(a.score) for a in attempts if start <= a.created_at < end]
         buckets.append({'label': start.strftime('%d/%m'), 'average': round(sum(vals)/len(vals), 1) if vals else None, 'count': len(vals)})
     max_chart = max([b['average'] or 0 for b in buckets] + [10])

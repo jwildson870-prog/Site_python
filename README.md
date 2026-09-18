@@ -60,6 +60,14 @@ O `Procfile` já está configurado com esse comando.
 
 Configure no painel do Render `SECRET_KEY`, `DATABASE_URL`, `ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` e, se usar Google, as três variáveis OAuth. Para PostgreSQL, use a URL do banco do Render.
 
+### Preview de PowerPoint (PPTX) exige o ambiente Docker
+
+A conversão de slides PPTX em imagens (`app/pptx_preview.py`) depende do LibreOffice estar instalado no servidor. O `Dockerfile` deste projeto já instala o LibreOffice (`apt-get install libreoffice libreoffice-impress`), mas esse pacote **só é usado se o serviço no Render estiver configurado como ambiente "Docker"**, usando o `Dockerfile` do repositório.
+
+Se o serviço no Render estiver configurado como ambiente nativo Python (Build `pip install -r requirements.txt` / Start via `Procfile`, como descrito acima), o LibreOffice **não estará disponível**, pois esse fluxo de build não executa o `Dockerfile`. Nesse caso, o upload de PDF, imagens e outros materiais continua funcionando normalmente, mas a geração de preview de PPTX falhará com uma mensagem clara para o professor ("O servidor não possui LibreOffice instalado para converter apresentações PowerPoint."), em vez de um erro genérico.
+
+Para ativar o preview de PPTX em produção, configure o serviço no Render com **Environment: Docker**, apontando para o `Dockerfile` do repositório.
+
 ## Segurança
 
 Senhas são armazenadas somente como hash; CSRF é aplicado aos POST; rotas administrativas verificam o papel no servidor; cadastro não permite promoção a administrador; segredos ficam no `.env`; arquivos não executáveis são aceitos como PDF apenas.
@@ -138,7 +146,7 @@ O Portal Python usa Backblaze B2 para novos uploads quando as variáveis abaixo 
 ```env
 B2_KEY_ID=...
 B2_APPLICATION_KEY=...
-B2_BUCKET_NAME=SitPython
+B2_BUCKET_NAME=SitePython
 B2_ENDPOINT=https://s3.us-east-005.backblazeb2.com
 B2_REGION=us-east-005
 ```

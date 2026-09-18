@@ -3,7 +3,7 @@ import os
 import pytest
 from app import create_app
 from app.extensions import db
-from app.models import User, Series, Subject, Content
+from app.models import User, Series, Subject, Content, Activity, Experiment
 
 @pytest.fixture()
 def app(tmp_path, monkeypatch):
@@ -147,7 +147,23 @@ def test_activity_and_experiment_are_available_to_students(client, app):
         e = Experiment(title='Experimento seguro', description='Teste', objective='Observar', materials='Materiais', steps='Passo a passo', safety='Faça com supervisão.', conclusion='Conclusão', series_id=s.id, subject_id=sub.id)
         db.session.add_all([a,e]); db.session.commit(); aid,eid=a.id,e.id
     client.post('/auth/logout')
-    login(client, 'aluno@test.local', 'Senha1234!') if False else None
+    client.post('/auth/register', data={
+        'name': 'Aluno', 'email': 'aluno@test.local',
+        'password': 'Senha1234!', 'confirm_password': 'Senha1234!'
+    })
+    login(client, 'aluno@test.local', 'Senha1234!')
+    activities_page = client.get('/aluno/atividades')
+    assert activities_page.status_code == 200
+    assert 'Quiz de Química' in activities_page.text
+    activity_page = client.get(f'/aluno/atividade/{aid}')
+    assert activity_page.status_code == 200
+    assert 'Quiz de Química' in activity_page.text
+    experiments_page = client.get('/aluno/experimentos')
+    assert experiments_page.status_code == 200
+    assert 'Experimento seguro' in experiments_page.text
+    experiment_page = client.get(f'/aluno/experimento/{eid}')
+    assert experiment_page.status_code == 200
+    assert 'Experimento seguro' in experiment_page.text
 
 
 def test_public_pages_render_without_authenticated_user(client):

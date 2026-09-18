@@ -2,6 +2,7 @@ import os
 
 import pytest
 
+import app.storage as storage
 from app.storage import _client, _friendly_b2_error, StorageError
 
 
@@ -58,7 +59,7 @@ def test_native_upload_uses_b2_api(monkeypatch):
 
     calls = []
     responses = [
-        Resp(data={'accountId': 'acc', 'authorizationToken': 'auth', 'apiInfo': {'storageApi': {'apiUrl': 'https://api001.backblazeb2.com', 'allowed': {'buckets': [{'id': 'bucket-id', 'name': 'SitPython'}]}}}}),
+        Resp(data={'accountId': 'acc', 'authorizationToken': 'auth', 'apiInfo': {'storageApi': {'apiUrl': 'https://api001.backblazeb2.com', 'allowed': {'buckets': [{'id': 'bucket-id', 'name': 'SitePython'}]}}}}),
         Resp(data={'bucketId': 'bucket-id', 'uploadUrl': 'https://pod.backblaze.com/upload', 'authorizationToken': 'upload-token'}),
         Resp(data={'fileId': 'file-id'}),
     ]
@@ -84,10 +85,9 @@ def test_native_upload_uses_b2_api(monkeypatch):
     assert calls[2][2]['headers']['Content-Length'] == '3'
 
 
-def test_native_upload_bucket_keeps_real_name(monkeypatch):
-    import app.storage as storage
-    monkeypatch.setenv('B2_BUCKET_NAME', 'SitPython')
-    assert storage._bucket() == 'SitPython'
+def test_native_upload_bucket_keeps_custom_name(monkeypatch):
+    monkeypatch.setenv('B2_BUCKET_NAME', 'OutroBucketQualquer')
+    assert storage._bucket() == 'OutroBucketQualquer'
 
 
 def test_bucket_legacy_sitpython_aliases_to_real_sitepython(monkeypatch):

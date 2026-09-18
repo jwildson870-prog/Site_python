@@ -1,4 +1,4 @@
-from datetime import datetime
+from .timeutils import utcnow
 import json
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -12,7 +12,7 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(255))
     role = db.Column(db.String(20), nullable=False, default='student')
     google_sub = db.Column(db.String(255), unique=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
     def set_password(self, p): self.password_hash = generate_password_hash(p)
     def check_password(self, p): return bool(self.password_hash) and check_password_hash(self.password_hash, p)
     @property
@@ -55,8 +55,8 @@ class Content(db.Model):
     preview_manifest = db.Column(db.Text)  # JSON com imagens geradas para PPTX
     series_id = db.Column(db.Integer, db.ForeignKey('series.id'), nullable=False)
     subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow, nullable=False)
     favorites = db.relationship('Favorite', backref='content', cascade='all, delete-orphan')
     progress = db.relationship('Progress', backref='content', cascade='all, delete-orphan')
 
@@ -68,8 +68,8 @@ class Activity(db.Model):
     series_id = db.Column(db.Integer, db.ForeignKey('series.id'), nullable=False)
     subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False)
     questions_json = db.Column(db.Text, nullable=False, default='[]')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow, nullable=False)
     due_at = db.Column(db.DateTime, nullable=True, index=True)
     difficulty = db.Column(db.String(20), nullable=False, default='medio', index=True)
     attempts = db.relationship('ActivityAttempt', back_populates='activity', cascade='all, delete-orphan')
@@ -89,7 +89,7 @@ class QuestionBank(db.Model):
     difficulty = db.Column(db.String(20), nullable=False, default='medio')
     series_id = db.Column(db.Integer, db.ForeignKey('series.id'), nullable=False)
     subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
     def get_options(self):
         try: return json.loads(self.options_json or '[]')
         except (TypeError, ValueError): return []
@@ -104,7 +104,7 @@ class ActivityAttempt(db.Model):
     answers_json = db.Column(db.Text, nullable=False, default='{}')
     score = db.Column(db.Float, nullable=False, default=0)
     total = db.Column(db.Integer, nullable=False, default=0)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
     user = db.relationship('User', back_populates='activity_attempts')
     activity = db.relationship('Activity', back_populates='attempts')
     def get_answers(self):
@@ -123,15 +123,15 @@ class Experiment(db.Model):
     conclusion = db.Column(db.Text)
     series_id = db.Column(db.Integer, db.ForeignKey('series.id'), nullable=False)
     subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow, nullable=False)
 
 class Favorite(db.Model):
     __tablename__ = 'favorites'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     content_id = db.Column(db.Integer, db.ForeignKey('contents.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
     __table_args__ = (db.UniqueConstraint('user_id', 'content_id', name='uq_favorite'),)
 
 class Progress(db.Model):
@@ -139,7 +139,7 @@ class Progress(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     content_id = db.Column(db.Integer, db.ForeignKey('contents.id'), nullable=False)
-    completed_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    completed_at = db.Column(db.DateTime, default=utcnow, nullable=False)
     __table_args__ = (db.UniqueConstraint('user_id', 'content_id', name='uq_progress'),)
 
 class Notification(db.Model):
@@ -149,7 +149,7 @@ class Notification(db.Model):
     message = db.Column(db.String(500), nullable=False)
     link = db.Column(db.String(500))
     read = db.Column(db.Boolean, default=False, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
 
 
 class Alert(db.Model):
@@ -162,7 +162,7 @@ class Alert(db.Model):
     link = db.Column(db.String(500))
     priority = db.Column(db.String(12), nullable=False, default='medium')
     resolved = db.Column(db.Boolean, default=False, nullable=False, index=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
     resolved_at = db.Column(db.DateTime, nullable=True)
 
     user = db.relationship('User', foreign_keys=[user_id])

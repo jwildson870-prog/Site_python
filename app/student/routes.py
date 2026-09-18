@@ -2,10 +2,11 @@ from flask import Blueprint,render_template,abort,send_from_directory,current_ap
 from flask_login import login_required,current_user
 from sqlalchemy import or_
 from ..extensions import db
+from ..timeutils import utcnow
 from ..models import Series,Subject,Content,Activity,ActivityAttempt,Experiment,Favorite,Progress,Notification
 from ..storage import get_file, b2_enabled, StorageError
 import json
-from datetime import datetime, date, timedelta
+from datetime import date
 import calendar as pycalendar
 student_bp=Blueprint('student',__name__,url_prefix='/aluno')
 
@@ -50,7 +51,7 @@ def dashboard():
     activities = Activity.query.order_by(Activity.id.desc()).all()
     attempts = ActivityAttempt.query.filter_by(user_id=current_user.id).order_by(ActivityAttempt.id.desc()).all()
     attempted_ids = {a.activity_id for a in attempts}
-    pending_activities = sum(1 for a in activities if a.id not in attempted_ids and not (a.due_at and datetime.utcnow() > a.due_at))
+    pending_activities = sum(1 for a in activities if a.id not in attempted_ids and not (a.due_at and utcnow() > a.due_at))
     average = round(sum(a.score for a in attempts) / len(attempts), 1) if attempts else None
     recent_contents = Content.query.order_by(Content.id.desc()).limit(5).all()
     recent_activities = activities[:5]
@@ -60,7 +61,7 @@ def dashboard():
     continue_content = next((c for c in recent_contents if c.id not in completed_ids), None)
     if continue_content is None:
         continue_content = Content.query.filter(~Content.id.in_(completed_ids)).order_by(Content.id.desc()).first() if total_contents else None
-    upcoming = [a for a in activities if a.due_at and a.due_at >= datetime.utcnow() and a.id not in attempted_ids]
+    upcoming = [a for a in activities if a.due_at and a.due_at >= utcnow() and a.id not in attempted_ids]
     upcoming = sorted(upcoming, key=lambda a: a.due_at)[:4]
     achievement_count = sum([
         completed >= 1, completed >= 5, len(attempts) >= 1, len(attempts) >= 5,
@@ -171,7 +172,7 @@ def activities():
     if subject_id.isdigit(): query = query.filter_by(subject_id=int(subject_id))
     items = query.order_by(Activity.id.desc()).all()
     attempted_ids = {a.activity_id for a in ActivityAttempt.query.filter_by(user_id=current_user.id).all()}
-    now = datetime.utcnow()
+    now = utcnow()
     if status == 'pending': items = [a for a in items if a.id not in attempted_ids and not (a.due_at and now > a.due_at)]
     elif status == 'done': items = [a for a in items if a.id in attempted_ids]
     elif status == 'expired': items = [a for a in items if a.due_at and now > a.due_at]
@@ -179,7 +180,7 @@ def activities():
 
 @student_bp.route('/atividade/<int:id>',methods=['GET','POST'])
 def activity(id):
-    a=Activity.query.get_or_404(id); questions=a.get_questions(); now=datetime.utcnow()
+    a=Activity.query.get_or_404(id); questions=a.get_questions(); now=utcnow()
     expired = bool(a.due_at and now > a.due_at)
     if request.method=='POST':
         if expired:
@@ -199,7 +200,7 @@ def progress():
     return render_template('student/progress.html',total=total,completed=completed,percent=percent,attempts=attempts)
 @student_bp.get('/calendario')
 def calendar_view():
-    today = datetime.utcnow().date()
+    today = utcnow().date()
     try:
         year = int(request.args.get('year', today.year))
         month = int(request.args.get('month', today.month))
