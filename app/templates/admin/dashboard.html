@@ -23,6 +23,22 @@
 
   <div class="professor-grid dashboard-insight-grid">
     <div class="professor-panel">
+      <div class="professor-panel-head"><div><span class="eyebrow">ACOMPANHAMENTO</span><h2>Alunos inativos</h2><p>Sem tentativa registrada há 14 dias ou mais.</p></div><a class="text-link" href="{{url_for('admin.performance')}}">Abrir desempenho</a></div>
+      <div class="risk-list">{% for row in inactive_students %}<a class="risk-row" href="{{url_for('admin.user_performance',id=row.student.id)}}"><span class="risk-avatar">{{row.student.name[:1]|upper}}</span><span><strong>{{row.student.name}}</strong><small>{% if row.last_attempt %}Última atividade há {{row.days}} dia(s){% else %}Nenhuma tentativa registrada{% endif %}</small></span><b>›</b></a>{% else %}<div class="professor-empty">Nenhum aluno está inativo há 14 dias.</div>{% endfor %}</div>
+    </div>
+    <div class="professor-panel">
+      <div class="professor-panel-head"><div><span class="eyebrow">PENDÊNCIAS</span><h2>Atividades pendentes</h2><p>Atividades com alunos que ainda não registraram tentativa.</p></div><a class="text-link" href="{{url_for('admin.activities')}}">Gerenciar</a></div>
+      <div class="deadline-list">{% for row in pending_activity_stats %}<a class="deadline-row dashboard-pending-link" href="{{url_for('admin.activity_results',id=row.activity.id)}}"><span class="deadline-icon"><img src="{{url_for('static',filename='icons/ui/check.svg')}}" alt=""></span><span><strong>{{row.activity.title}}</strong><small>{{row.pending}} aluno(s) pendente(s){% if row.activity.due_at %} · vence {{row.activity.due_at.strftime('%d/%m às %H:%M')}}{% endif %}</small></span></a>{% else %}<div class="professor-empty">Nenhuma atividade com pendências.</div>{% endfor %}</div>
+    </div>
+  </div>
+
+  <div class="professor-panel">
+    <div class="professor-panel-head"><div><span class="eyebrow">INDICADORES POR SÉRIE</span><h2>Comparação agregada</h2><p>Dados consolidados por série, sem expor uma classificação individual.</p></div><a class="text-link" href="{{url_for('admin.performance')}}">Detalhar desempenho</a></div>
+    <div class="dashboard-series-grid">{% for item in series_indicators %}<article class="dashboard-series-card"><div class="dashboard-series-head"><strong>{{item.series.name}}</strong><span>{{item.activities}} atividade(s)</span></div><div class="dashboard-series-metrics"><div><strong>{{item.average if item.average is not none else '—'}}</strong><small>Média</small></div><div><strong>{{item.completion}}%</strong><small>Conclusão</small></div><div><strong>{{item.students_active}}</strong><small>Alunos ativos</small></div><div><strong>{{item.attempts}}</strong><small>Tentativas</small></div></div><div class="dashboard-series-bar"><span style="width:{{item.completion}}%"></span></div></article>{% else %}<div class="professor-empty">Cadastre séries para visualizar os indicadores agregados.</div>{% endfor %}</div>
+  </div>
+
+  <div class="professor-grid dashboard-insight-grid">
+    <div class="professor-panel">
       <div class="professor-panel-head"><div><span class="eyebrow">DESEMPENHO</span><h2>Visão da turma</h2><p>Indicadores para decidir onde concentrar atenção.</p></div><a class="text-link" href="{{url_for('admin.performance')}}">Abrir desempenho</a></div>
       <div class="dashboard-chart" aria-label="Média e conclusão da turma"><div class="chart-row"><span>Média</span><div class="chart-track"><i style="width:{{ (average_score / 10 * 100) if average_score else 0 }}%"></i></div><strong>{{average_score}}/10</strong></div><div class="chart-row"><span>Conclusão</span><div class="chart-track"><i style="width:{{overall_completion}}%"></i></div><strong>{{overall_completion}}%</strong></div><div class="dashboard-mini-stats"><span><strong>{{risk_students|length}}</strong> em atenção</span><span><strong>{{recent_activity_count}}</strong> atividades nos últimos 7 dias</span></div></div>
     </div>

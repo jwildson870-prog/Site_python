@@ -224,6 +224,57 @@ def dashboard():
     latest_attempt_dates = [a.created_at for a in all_attempts[:8]]
     recent_activity_count = sum(1 for a in all_activities if a.created_at and (now - a.created_at).days <= 7)
     overall_completion = round(sum(r['completion'] for r in student_rows) / len(student_rows)) if student_rows else 0
+
+    # Fase 5.10 — indicadores agregados por série. O projeto atual não possui
+    # vínculo aluno→turma; por isso não inventamos esse relacionamento.
+    # A comparação usa as séries já existentes como agrupamento acadêmico.
+    series_indicators = []
+    for serie in Series.query.order_by(Series.id).all():
+        serie_activities = [a for a in all_activities if a.series_id == serie.id]
+        serie_activity_ids = {a.id for a in serie_activities}
+        serie_attempts = [a for a in all_attempts if a.activity_id in serie_activity_ids]
+        unique_students = {a.user_id for a in serie_attempts}
+        latest_scores = {}
+        for attempt in sorted(serie_attempts, key=lambda a: a.id):
+            latest_scores[(attempt.user_id, attempt.activity_id)] = attempt.score
+        scores = list(latest_scores.values())
+        average = round(sum(scores) / len(scores), 1) if scores else None
+        possible = len(students) * len(serie_activities)
+        completed = len(latest_scores)
+        completion = round(completed / possible * 100) if possible else 0
+        series_indicators.append({
+            'series': serie, 'activities': len(serie_activities),
+            'attempts': len(serie_attempts), 'students_active': len(unique_students),
+            'average': average, 'completion': min(completion, 100),
+        })
+
+    # Alunos sem tentativa nos últimos 14 dias (ou sem nenhuma tentativa).
+    last_attempt_by_student = {}
+    for attempt in all_attempts:
+        if attempt.created_at:
+            last_attempt_by_student[attempt.user_id] = max(
+                last_attempt_by_student.get(attempt.user_id, datetime.min), attempt.created_at
+            )
+    inactive_students = []
+    for student in students:
+        last = last_attempt_by_student.get(student.id)
+        days = (now - last).days if last else None
+        if last is None or days >= 14:
+            inactive_students.append({'student': student, 'last_attempt': last, 'days': days})
+    inactive_students.sort(key=lambda row: (row['last_attempt'] is not None, row['last_attempt'] or datetime.min))
+    inactive_students = inactive_students[:8]
+
+    # Atividades pendentes: quantidade estimada de alunos que ainda não
+    # registraram tentativa. Mantém a mesma regra usada no monitoramento.
+    pending_activity_stats = []
+    for activity in all_activities:
+        attempted = {a.user_id for a in all_attempts if a.activity_id == activity.id}
+        pending_count = max(len(students) - len(attempted), 0)
+        if pending_count:
+            pending_activity_stats.append({'activity': activity, 'pending': pending_count})
+    pending_activity_stats.sort(key=lambda row: (-row['pending'], row['activity'].due_at or datetime.max))
+    pending_activity_stats = pending_activity_stats[:8]
+
     _sync_smart_alerts(students, all_activities, all_attempts, now)
     smart_alerts = Alert.query.filter_by(resolved=False).order_by(Alert.priority.desc(), Alert.created_at.desc()).limit(8).all()
     alert_counts = {'high': Alert.query.filter_by(resolved=False, priority='high').count(), 'medium': Alert.query.filter_by(resolved=False, priority='medium').count()}
@@ -234,7 +285,8 @@ def dashboard():
         recent_contents=recent_contents, recent_attempts=recent_attempts,
         total_attempts=total_attempts, average_score=average_score, unread_notifications=unread_notifications,
         risk_students=risk_students, activity_stats=activity_stats, deadline_activities=deadline_activities,
-        overall_completion=overall_completion, recent_activity_count=recent_activity_count, now=now, smart_alerts=smart_alerts, alert_counts=alert_counts)
+        overall_completion=overall_completion, recent_activity_count=recent_activity_count, now=now, smart_alerts=smart_alerts, alert_counts=alert_counts,
+        series_indicators=series_indicators, inactive_students=inactive_students, pending_activity_stats=pending_activity_stats)
 
 @admin_bp.get('/ranking')
 def ranking():
