@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Pré-visualização · {{ content.title }} · Portal Python{% endblock %}
+{% block content %}
+<section class="admin-shell workspace-shell content-preview-shell">
+  <div class="workspace-head">
+    <div>
+      <a class="back-link" href="{{ url_for('admin.contents') }}">← Materiais</a>
+      <span class="eyebrow">PRÉ-VISUALIZAÇÃO</span>
+      <h1>{{ content.title }}</h1>
+      <p>Revise o material exatamente antes de voltar à biblioteca ou editá-lo.</p>
+    </div>
+    <div class="material-actions organized-actions">
+      <a class="btn secondary" href="{{ url_for('admin.content_edit', id=content.id) }}">Editar</a>
+    </div>
+  </div>
+
+  <article class="publisher-card content-preview-card">
+    <div class="material-meta">
+      <span class="badge">{{ content.series.name }}</span>
+      <span class="badge subtle-badge">{{ content.subject.name }}</span>
+      <span class="type-label">{{ {'file':'Arquivo','pdf':'PDF','slide':'Slides','video':'Vídeo','link':'Link','explanation':'Explicação'}[content.kind] }}</span>
+    </div>
+    {% if content.description %}<p class="content-preview-description">{{ content.description }}</p>{% endif %}
+
+    {% if content.kind == 'explanation' %}
+      <div class="prose">{{ content.body|sanitize_html|safe }}</div>
+    {% elif content.kind == 'pdf' and content.file_name %}
+      <iframe class="preview-frame" src="{{ url_for('admin.file', filename=content.file_name) }}" title="Pré-visualização do PDF"></iframe>
+      <p><a class="btn secondary" href="{{ url_for('admin.file', filename=content.file_name) }}" target="_blank" rel="noopener noreferrer">Abrir PDF em nova aba</a></p>
+    {% elif content.kind == 'file' and content.file_name %}
+      {% if slides %}
+        <div class="pptx-slides" aria-label="Pré-visualização dos slides">
+          {% for key in slides %}
+          <figure class="pptx-slide">
+            <img src="{{ url_for('admin.content_preview_slide', id=content.id, slide=loop.index0) }}" alt="Slide {{ loop.index }}" loading="{% if loop.first %}eager{% else %}lazy{% endif %}">
+            <figcaption>Slide {{ loop.index }} de {{ slides|length }}</figcaption>
+          </figure>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="content-preview-file">
+          <p>Este arquivo não possui visualização incorporada. Você pode abri-lo em uma nova aba.</p>
+          <a class="btn admin-primary" href="{{ url_for('admin.file', filename=content.file_name) }}" target="_blank" rel="noopener noreferrer">Abrir arquivo</a>
+        </div>
+      {% endif %}
+    {% elif content.kind in ['slide', 'video', 'link'] and content.external_url %}
+      <div class="content-preview-external">
+        <span class="eyebrow">LINK EXTERNO</span>
+        <p>Por segurança, serviços externos continuam sendo abertos no endereço original.</p>
+        <a class="btn admin-primary" href="{{ content.external_url }}" target="_blank" rel="noopener noreferrer">Abrir link</a>
+      </div>
+    {% else %}
+      <div class="publisher-card empty-state">
+        <h2>Sem conteúdo para visualizar</h2>
+        <p>Edite o material e informe um arquivo, link ou texto válido.</p>
+      </div>
+    {% endif %}
+  </article>
+</section>
+{% endblock %}

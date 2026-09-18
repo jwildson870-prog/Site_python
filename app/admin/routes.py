@@ -9,7 +9,7 @@ from werkzeug.utils import secure_filename
 from ..storage import upload as storage_upload, delete as storage_delete, get_file, b2_enabled, StorageError
 from ..extensions import db
 from ..timeutils import utcnow
-from ..models import Series, Subject, Content, User, Activity, ActivityAttempt, Experiment, Notification, Alert, QuestionBank
+from ..models import Series, Subject, Content, ContentHistory, User, Activity, ActivityAttempt, Experiment, Notification, Alert, QuestionBank
 from ..pptx_preview import convert_pptx_to_images
 from ..activity_library import PREBUILT_ACTIVITIES, BY_SLUG
 from ..services import get_system_bool, get_system_int, get_system_setting, set_system_setting
@@ -68,6 +68,27 @@ def file_signature_ok(file_storage, extension):
     except (AttributeError, OSError):
         return False
     return any(head.startswith(signature) for signature in signatures)
+
+CONTENT_STATUSES = {'draft', 'published', 'scheduled'}
+
+def _history_snapshot(item):
+    if isinstance(item, Content):
+        return {'title': item.title, 'description': item.description, 'kind': item.kind, 'body': item.body, 'external_url': item.external_url, 'file_name': item.file_name, 'preview_manifest': item.preview_manifest, 'series_id': item.series_id, 'subject_id': item.subject_id, 'status': item.status, 'scheduled_at': item.scheduled_at.isoformat() if item.scheduled_at else None, 'archived_at': item.archived_at.isoformat() if item.archived_at else None}
+    return {'title': item.title, 'description': item.description, 'series_id': item.series_id, 'subject_id': item.subject_id, 'difficulty': item.difficulty, 'due_at': item.due_at.isoformat() if item.due_at else None, 'archived_at': item.archived_at.isoformat() if item.archived_at else None, 'questions': item.get_questions()}
+
+def _record_history(item, action):
+    db.session.add(ContentHistory(entity_type='content' if isinstance(item, Content) else 'activity', entity_id=item.id, action=action, user_id=current_user.id, snapshot_json=json.dumps(_history_snapshot(item), ensure_ascii=False)))
+
+def _parse_schedule(raw):
+    if not raw:
+        return None, None
+    try:
+        value = datetime.fromisoformat(raw)
+    except ValueError:
+        return None, 'A data e hora da publicação são inválidas.'
+    if value <= utcnow():
+        return None, 'A publicação programada precisa estar no futuro.'
+    return value, None
 
 def valid_url(value):
     parsed = urlparse(value or '')
@@ -317,6 +338,8 @@ def contents():
     kind = request.args.get('kind', '').strip().lower()
     series_id = request.args.get('series_id', '').strip()
     subject_id = request.args.get('subject_id', '').strip()
+    status = request.args.get('status', '').strip().lower()
+    archived = request.args.get('archived', '').strip()
     query = Content.query
     if q:
         like = f'%{q}%'
@@ -325,8 +348,11 @@ def contents():
         query = query.filter_by(kind=kind)
     if series_id.isdigit(): query = query.filter_by(series_id=int(series_id))
     if subject_id.isdigit(): query = query.filter_by(subject_id=int(subject_id))
+    if status in CONTENT_STATUSES: query = query.filter_by(status=status)
+    if archived == '1': query = query.filter(Content.archived_at.is_not(None))
+    elif archived != 'all': query = query.filter(Content.archived_at.is_(None))
     contents = query.order_by(Content.id.desc()).all()
-    return render_template('admin/contents.html', contents=contents, q=q, kind=kind, series_id=series_id, subject_id=subject_id,
+    return render_template('admin/contents.html', contents=contents, q=q, kind=kind, series_id=series_id, subject_id=subject_id, status=status, archived=archived,
                            series=Series.query.order_by(Series.id).all(), subjects=Subject.query.order_by(Subject.name).all())
 @admin_bp.get('/series/<int:id>')
 def series_detail(id): return render_template('admin/series_detail.html',series=Series.query.get_or_404(id))
@@ -376,9 +402,19 @@ def content_form(content=None):
     desc = request.form.get('description', '').strip()
     body = request.form.get('body', '').strip()
     external_url = request.form.get('external_url', '').strip()
+    status = request.form.get('status', 'published').strip().lower()
+    scheduled_raw = request.form.get('scheduled_at', '').strip()
 
     s = db.session.get(Series, int(sid)) if sid.isdigit() else None
     sub = db.session.get(Subject, int(subid)) if subid.isdigit() else None
+    if status not in CONTENT_STATUSES:
+        flash('Status de publicação inválido.', 'error')
+        return None, series, subjects
+    scheduled_at, schedule_error = _parse_schedule(scheduled_raw)
+    if schedule_error or (status == 'scheduled' and not scheduled_at):
+        flash(schedule_error or 'Informe uma data futura para a publicação programada.', 'error')
+        return None, series, subjects
+    if status != 'scheduled': scheduled_at = None
     if not title or len(title) > 200 or len(desc) > 5000 or not s or not sub or sub.series_id != s.id or kind not in ALLOWED_KINDS:
         flash('Preencha os dados obrigatórios corretamente.', 'error')
         return None, series, subjects
@@ -449,14 +485,20 @@ def content_form(content=None):
     content.preview_manifest = json.dumps(new_preview, ensure_ascii=False) if new_preview else None
     content.series_id = s.id
     content.subject_id = sub.id
+    content.status = status
+    content.scheduled_at = scheduled_at
+    if status != 'published' and content.archived_at:
+        content.archived_at = None
     db.session.add(content)
+    db.session.flush()
+    _record_history(content, 'created' if content.created_at == content.updated_at else 'updated')
     db.session.commit()
 
-    if old_file and old_file != new_file:
+    if old_file and old_file != new_file and not Content.query.filter_by(file_name=old_file).first():
         storage_delete(old_file)
     if old_preview and old_preview != new_preview:
         for key in old_preview:
-            if key not in new_preview:
+            if key not in new_preview and not Content.query.filter(Content.preview_manifest.ilike(f'%{key}%')).first():
                 storage_delete(key)
     return content, None, None
 
@@ -464,9 +506,10 @@ def content_form(content=None):
 def content_new():
     content, series, subjects = content_form()
     if request.method == 'POST' and content:
-        notify_students(f'Novo material: {content.title}', url_for('student.content', id=content.id))
+        if content.status == 'published':
+            notify_students(f'Novo material: {content.title}', url_for('student.content', id=content.id))
         db.session.commit()
-        flash('Material publicado com sucesso.', 'success')
+        flash('Material publicado com sucesso.' if content.status == 'published' else ('Material programado com sucesso.' if content.status == 'scheduled' else 'Rascunho salvo com sucesso.'), 'success')
         return redirect(url_for('admin.contents'))
     return render_template('admin/content_form.html', content=None, series=series, subjects=subjects)
 
@@ -479,17 +522,72 @@ def content_edit(id):
         return redirect(url_for('admin.contents'))
     return render_template('admin/content_form.html', content=content, series=series, subjects=subjects)
 
+@admin_bp.post('/contents/<int:id>/duplicate')
+def content_duplicate(id):
+    source = Content.query.get_or_404(id)
+    duplicate = Content(title=f'{source.title} (cópia)', description=source.description, kind=source.kind, body=source.body, external_url=source.external_url, file_name=source.file_name, preview_manifest=source.preview_manifest, series_id=source.series_id, subject_id=source.subject_id, status='draft', scheduled_at=None)
+    db.session.add(duplicate); db.session.flush(); _record_history(duplicate, 'duplicated'); db.session.commit()
+    flash('Material duplicado como rascunho.', 'success')
+    return redirect(url_for('admin.content_edit', id=duplicate.id))
+
+@admin_bp.post('/contents/<int:id>/archive')
+def content_archive(id):
+    content = Content.query.get_or_404(id)
+    if content.archived_at is None:
+        content.archived_at = utcnow(); _record_history(content, 'archived'); db.session.commit()
+        flash('Material arquivado.', 'success')
+    return redirect(url_for('admin.contents'))
+
+@admin_bp.post('/contents/<int:id>/restore')
+def content_restore(id):
+    content = Content.query.get_or_404(id)
+    content.archived_at = None; _record_history(content, 'restored'); db.session.commit()
+    flash('Material restaurado.', 'success')
+    return redirect(url_for('admin.contents'))
+
+@admin_bp.get('/contents/<int:id>/history')
+def content_history(id):
+    content = Content.query.get_or_404(id)
+    history = ContentHistory.query.filter_by(entity_type='content', entity_id=id).order_by(ContentHistory.created_at.desc()).all()
+    return render_template('admin/content_history.html', content=content, history=history)
+
+@admin_bp.get('/contents/<int:id>/preview')
+def content_preview(id):
+    """Pré-visualização exclusiva do professor para revisar um material antes de usá-lo."""
+    content = Content.query.get_or_404(id)
+    slides = _preview_files(content)
+    return render_template('admin/content_preview.html', content=content, slides=slides)
+
+@admin_bp.get('/contents/<int:id>/preview/slide/<int:slide>')
+def content_preview_slide(id, slide):
+    content = Content.query.get_or_404(id)
+    slides = _preview_files(content)
+    if content.kind != 'file' or slide < 0 or slide >= len(slides):
+        abort(404)
+    key = slides[slide]
+    if not isinstance(key, str) or not key:
+        abort(404)
+    if b2_enabled():
+        try:
+            obj = get_file(key)
+        except StorageError as exc:
+            current_app.logger.warning('Falha ao abrir prévia do slide %s do material %s: %s | %s', slide, content.id, exc.message, exc.technical)
+            abort(404)
+        return safe_file_response(obj, key, 'image/png')
+    return send_from_directory(current_app.config['UPLOAD_FOLDER'], key, mimetype='image/png')
+
 @admin_bp.post('/contents/<int:id>/delete')
 def content_delete(id):
     content = Content.query.get_or_404(id)
     filename = content.file_name
     preview_files = _preview_files(content)
+    _record_history(content, 'deleted')
     db.session.delete(content)
     db.session.commit()
-    if filename:
+    if filename and not Content.query.filter_by(file_name=filename).first():
         storage_delete(filename)
     for key in preview_files:
-        if isinstance(key, str):
+        if isinstance(key, str) and not Content.query.filter(Content.preview_manifest.ilike(f'%{key}%')).first():
             storage_delete(key)
     flash('Conteúdo excluído.', 'success')
     return redirect(url_for('admin.contents'))
@@ -644,7 +742,7 @@ def activity_import_questions(id):
         opts = item.get_options()
         current.append({'question': item.question, 'options': opts, 'correct': item.correct, **({'code': item.code} if item.code else {})})
         added += 1
-    activity.set_questions(current); db.session.commit()
+    activity.set_questions(current); db.session.flush(); _record_history(activity, 'questions_imported'); db.session.commit()
     flash(f'{added} questão(ões) importada(s) para a atividade.', 'success' if added else 'error')
     return redirect(url_for('admin.activity_edit', id=id))
 
@@ -655,6 +753,7 @@ def activities():
     subject_id = request.args.get('subject_id', '').strip()
     status = request.args.get('status', '').strip().lower()
     difficulty = request.args.get('difficulty', '').strip().lower()
+    archived = request.args.get('archived', '').strip()
     if request.method == 'POST':
         title = request.form.get('title', '').strip()
         description = request.form.get('description', '').strip()
@@ -673,10 +772,13 @@ def activities():
             a = Activity(title=title, description=description[:5000], series_id=s.id, subject_id=sub.id, due_at=due_at, difficulty=difficulty_value if difficulty_value in {'facil','medio','dificil'} else 'medio')
             a.set_questions([])
             db.session.add(a)
+            db.session.flush(); _record_history(a, 'created')
             db.session.commit()
             flash('Atividade criada. Agora adicione as questões.', 'success')
             return redirect(url_for('admin.activity_edit', id=a.id))
     query = Activity.query
+    if archived == '1': query = query.filter(Activity.archived_at.is_not(None))
+    elif archived != 'all': query = query.filter(Activity.archived_at.is_(None))
     if q:
         like = f'%{q}%'
         query = query.filter(or_(Activity.title.ilike(like), Activity.description.ilike(like)))
@@ -687,7 +789,7 @@ def activities():
     items = query.order_by(Activity.id.desc()).all()
     if status == 'pending': items = [a for a in items if not a.due_at or a.due_at >= now]
     elif status == 'expired': items = [a for a in items if a.due_at and a.due_at < now]
-    return render_template('admin/activities.html', activities=items, series=Series.query.order_by(Series.id).all(), subjects=Subject.query.order_by(Subject.name).all(), q=q, series_id=series_id, subject_id=subject_id, status=status, difficulty=difficulty, now=now)
+    return render_template('admin/activities.html', activities=items, series=Series.query.order_by(Series.id).all(), subjects=Subject.query.order_by(Subject.name).all(), q=q, series_id=series_id, subject_id=subject_id, status=status, difficulty=difficulty, archived=archived, now=now)
 
 
 @admin_bp.route('/activities/prontas', methods=['GET', 'POST'])
@@ -814,6 +916,7 @@ def activity_edit(id):
             a.due_at = due_at
             a.difficulty = difficulty_value if difficulty_value in {'facil','medio','dificil'} else 'medio'
             a.set_questions(questions)
+            db.session.flush(); _record_history(a, 'updated')
             db.session.commit()
             if was_empty:
                 notify_students(f'Nova atividade: {a.title}', url_for('student.activity', id=a.id))
@@ -835,10 +938,39 @@ def activity_edit(id):
 @admin_bp.post('/activities/<int:id>/delete')
 def activity_delete(id):
     a = Activity.query.get_or_404(id)
-    db.session.delete(a)
-    db.session.commit()
+    _record_history(a, 'deleted')
+    db.session.delete(a); db.session.commit()
     flash('Atividade excluída.', 'success')
     return redirect(url_for('admin.activities'))
+
+@admin_bp.post('/activities/<int:id>/duplicate')
+def activity_duplicate(id):
+    source = Activity.query.get_or_404(id)
+    duplicate = Activity(title=f'{source.title} (cópia)', description=source.description, series_id=source.series_id, subject_id=source.subject_id, due_at=source.due_at, difficulty=source.difficulty, archived_at=None)
+    duplicate.set_questions(source.get_questions()); db.session.add(duplicate); db.session.flush(); _record_history(duplicate, 'duplicated'); db.session.commit()
+    flash('Atividade duplicada.', 'success')
+    return redirect(url_for('admin.activity_edit', id=duplicate.id))
+
+@admin_bp.post('/activities/<int:id>/archive')
+def activity_archive(id):
+    a = Activity.query.get_or_404(id)
+    if a.archived_at is None:
+        a.archived_at = utcnow(); _record_history(a, 'archived'); db.session.commit()
+        flash('Atividade arquivada.', 'success')
+    return redirect(url_for('admin.activities'))
+
+@admin_bp.post('/activities/<int:id>/restore')
+def activity_restore(id):
+    a = Activity.query.get_or_404(id)
+    a.archived_at = None; _record_history(a, 'restored'); db.session.commit()
+    flash('Atividade restaurada.', 'success')
+    return redirect(url_for('admin.activities'))
+
+@admin_bp.get('/activities/<int:id>/history')
+def activity_history(id):
+    activity = Activity.query.get_or_404(id)
+    history = ContentHistory.query.filter_by(entity_type='activity', entity_id=id).order_by(ContentHistory.created_at.desc()).all()
+    return render_template('admin/activity_history.html', activity=activity, history=history)
 
 @admin_bp.route('/experiments', methods=['GET', 'POST'])
 def experiments():

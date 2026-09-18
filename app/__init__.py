@@ -194,6 +194,31 @@ def create_app(test_config=None):
         # Migração leve para instalações existentes: adiciona as colunas de
         # autenticação (item 3 do ITEM 3) sem apagar ou recriar tabelas.
         inspector = inspect(db.engine)
+        # Fase 5.3/5.4: publicação, agendamento, arquivamento e histórico.
+        # Migração aditiva para instalações existentes; nenhum dado é removido.
+        inspector = inspect(db.engine)
+        tables = inspector.get_table_names()
+        if 'contents' in tables:
+            cols = {c['name'] for c in inspector.get_columns('contents')}
+            with db.engine.begin() as conn:
+                if 'status' not in cols:
+                    if db.engine.dialect.name == 'postgresql': conn.execute(text("ALTER TABLE contents ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'published'"))
+                    elif db.engine.dialect.name == 'sqlite': conn.execute(text("ALTER TABLE contents ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'published'"))
+                if 'scheduled_at' not in cols:
+                    if db.engine.dialect.name == 'postgresql': conn.execute(text('ALTER TABLE contents ADD COLUMN IF NOT EXISTS scheduled_at TIMESTAMP'))
+                    elif db.engine.dialect.name == 'sqlite': conn.execute(text('ALTER TABLE contents ADD COLUMN scheduled_at DATETIME'))
+                if 'archived_at' not in cols:
+                    if db.engine.dialect.name == 'postgresql': conn.execute(text('ALTER TABLE contents ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP'))
+                    elif db.engine.dialect.name == 'sqlite': conn.execute(text('ALTER TABLE contents ADD COLUMN archived_at DATETIME'))
+        if 'activities' in tables:
+            cols = {c['name'] for c in inspector.get_columns('activities')}
+            if 'archived_at' not in cols:
+                with db.engine.begin() as conn:
+                    if db.engine.dialect.name == 'postgresql': conn.execute(text('ALTER TABLE activities ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP'))
+                    elif db.engine.dialect.name == 'sqlite': conn.execute(text('ALTER TABLE activities ADD COLUMN archived_at DATETIME'))
+        db.create_all()
+
+        inspector = inspect(db.engine)
         if 'users' in inspector.get_table_names():
             existing_cols = {c['name'] for c in inspector.get_columns('users')}
             with db.engine.begin() as conn:

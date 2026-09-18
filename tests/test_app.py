@@ -215,3 +215,40 @@ def test_admin_settings_google_toggle_and_upload_limit(client, app):
     assert 'Continuar com Google' not in page.text
     reg = client.get('/auth/register')
     assert reg.status_code == 200
+
+
+def test_admin_material_management_and_preview_are_available_only_to_admin(client, app):
+    login(client, 'professor@portaljm.com', 'PortalJM@2026')
+    with app.app_context():
+        s = Series.query.filter_by(name='1º ano').first()
+        sub = Subject.query.filter_by(series_id=s.id).first()
+        c = Content(title='Prévia do material', description='Descrição', kind='explanation',
+                    body='<p><strong>Conteúdo de teste</strong></p>', series_id=s.id, subject_id=sub.id)
+        db.session.add(c)
+        db.session.commit()
+        cid = c.id
+
+    page = client.get(f'/admin/contents/{cid}/preview')
+    assert page.status_code == 200
+    assert 'Prévia do material' in page.text
+    assert 'Conteúdo de teste' in page.text
+    assert 'Visualizar' in client.get('/admin/contents').text
+
+    edited = client.post(f'/admin/contents/{cid}/edit', data={
+        'title': 'Material editado', 'description': 'Nova descrição',
+        'series_id': str(s.id), 'subject_id': str(sub.id),
+        'kind': 'explanation', 'body': '<p>Novo conteúdo</p>'
+    })
+    assert edited.status_code == 302
+    with app.app_context():
+        assert db.session.get(Content, cid).title == 'Material editado'
+
+    client.post('/auth/logout')
+    client.post('/auth/register', data={
+        'name': 'Aluno', 'email': 'aluno@test.local',
+        'password': 'Senha1234!', 'confirm_password': 'Senha1234!'
+    })
+    login(client, 'aluno@test.local', 'Senha1234!')
+    assert client.get(f'/admin/contents/{cid}/preview').status_code == 403
+    assert client.get(f'/admin/contents/{cid}/edit').status_code == 403
+    assert client.post(f'/admin/contents/{cid}/delete').status_code == 403

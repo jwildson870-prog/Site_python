@@ -74,6 +74,9 @@ class Content(db.Model):
     subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow, nullable=False)
+    status = db.Column(db.String(20), nullable=False, default='published', index=True)
+    scheduled_at = db.Column(db.DateTime, nullable=True, index=True)
+    archived_at = db.Column(db.DateTime, nullable=True, index=True)
     favorites = db.relationship('Favorite', backref='content', cascade='all, delete-orphan')
     progress = db.relationship('Progress', backref='content', cascade='all, delete-orphan')
 
@@ -87,6 +90,7 @@ class Activity(db.Model):
     questions_json = db.Column(db.Text, nullable=False, default='[]')
     created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow, nullable=False)
+    archived_at = db.Column(db.DateTime, nullable=True, index=True)
     due_at = db.Column(db.DateTime, nullable=True, index=True)
     difficulty = db.Column(db.String(20), nullable=False, default='medio', index=True)
     attempts = db.relationship('ActivityAttempt', back_populates='activity', cascade='all, delete-orphan')
@@ -94,6 +98,18 @@ class Activity(db.Model):
         try: return json.loads(self.questions_json or '[]')
         except (TypeError, ValueError): return []
     def set_questions(self, questions): self.questions_json = json.dumps(questions, ensure_ascii=False)
+
+
+class ContentHistory(db.Model):
+    __tablename__ = 'content_history'
+    id = db.Column(db.Integer, primary_key=True)
+    entity_type = db.Column(db.String(20), nullable=False, index=True)
+    entity_id = db.Column(db.Integer, nullable=False, index=True)
+    action = db.Column(db.String(40), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    snapshot_json = db.Column(db.Text, nullable=False, default='{}')
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False, index=True)
+    user = db.relationship('User')
 
 
 class QuestionBank(db.Model):
