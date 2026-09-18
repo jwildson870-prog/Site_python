@@ -8,6 +8,7 @@ from ..models import User,PasswordResetToken,EmailVerificationToken,UserSession
 from ..timeutils import utcnow
 from ..emailing import send_email,mail_configured
 from ..rate_limit import client_ip,is_rate_limited,record_failed_attempt
+from ..services import get_system_bool
 
 auth_bp=Blueprint('auth',__name__,url_prefix='/auth'); oauth=OAuth()
 
@@ -48,7 +49,7 @@ def password_errors(p):
 
 
 def google_configured():
-    return bool(os.getenv('GOOGLE_CLIENT_ID') and os.getenv('GOOGLE_CLIENT_SECRET'))
+    return get_system_bool('google_oauth_enabled', True) and bool(os.getenv('GOOGLE_CLIENT_ID') and os.getenv('GOOGLE_CLIENT_SECRET'))
 
 
 def register_google():
@@ -109,6 +110,9 @@ def index(): return redirect(url_for('student.dashboard' if current_user.is_auth
 @auth_bp.route('/register',methods=['GET','POST'])
 def register():
     if current_user.is_authenticated:return redirect(url_for('auth.index'))
+    if not get_system_bool('public_registration', True):
+        flash('O cadastro público está temporariamente desativado.', 'error')
+        return redirect(url_for('auth.login'))
     if request.method=='POST':
         ip = client_ip(request)
         if is_rate_limited('register', ip=ip):

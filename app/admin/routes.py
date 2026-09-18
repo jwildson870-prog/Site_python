@@ -12,11 +12,16 @@ from ..timeutils import utcnow
 from ..models import Series, Subject, Content, User, Activity, ActivityAttempt, Experiment, Notification, Alert, QuestionBank
 from ..pptx_preview import convert_pptx_to_images
 from ..activity_library import PREBUILT_ACTIVITIES, BY_SLUG
+from ..services import get_system_bool, get_system_int, get_system_setting, set_system_setting
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 ALLOWED_KINDS = {'explanation','file','pdf','slide','video','link'}
 ALLOWED_EXTENSIONS = {'pdf','png','jpg','jpeg','webp','gif','ppt','pptx','doc','docx','txt'}
-MAX_UPLOAD = 25 * 1024 * 1024
+MIN_UPLOAD_MB = 1
+MAX_UPLOAD_MB = 1024
+
+def max_upload_bytes():
+    return max(MIN_UPLOAD_MB, min(MAX_UPLOAD_MB, get_system_int('max_upload_mb', 25))) * 1024 * 1024
 SAFE_INLINE_TYPES = {'pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp'}
 SAFE_TYPES = {
     'pdf': 'application/pdf', 'png': 'image/png', 'jpg': 'image/jpeg',
@@ -87,7 +92,7 @@ def save_uploaded_file(file, required_extension=None):
     original = secure_filename(file.filename); extension = Path(original).suffix.lower().lstrip('.')
     if not extension or extension not in ALLOWED_EXTENSIONS or (required_extension and extension != required_extension): return False, None
     if len(original) > 180 or any(ord(ch) < 32 for ch in original): return False, None
-    if request.content_length and request.content_length > MAX_UPLOAD: return 'too_large', None
+    if request.content_length and request.content_length > max_upload_bytes(): return 'too_large', None
     if not file_signature_ok(file, extension): return 'invalid_signature', None
     if not mime_ok(extension, file.mimetype): return 'invalid_mime', None
     try:
@@ -108,6 +113,8 @@ def save_uploaded_file(file, required_extension=None):
     return filename, original
 
 def notify_students(message, link=None):
+    if not get_system_bool('notifications_enabled', True):
+        return
     for student in User.query.filter_by(role='student').all():
         db.session.add(Notification(user_id=student.id, message=message, link=link))
 
@@ -118,6 +125,8 @@ def admin_guard():
 
 def _sync_smart_alerts(students, activities, attempts, now):
     """Cria alertas acionáveis sem duplicar alertas ativos."""
+    if not get_system_bool('alerts_enabled', True):
+        return
     latest_by_pair = {}
     attempts_by_student = {}
     for attempt in attempts:
@@ -400,7 +409,7 @@ def content_form(content=None):
             flash('O conteúdo do arquivo não corresponde ao tipo informado. Escolha um arquivo válido.', 'error')
             return None, series, subjects
         if uploaded == 'too_large':
-            flash('Arquivo muito grande. Limite: 25 MB.', 'error')
+            flash(f"Arquivo muito grande. Limite: {get_system_int('max_upload_mb', 25)} MB.", 'error')
             return None, series, subjects
         if isinstance(uploaded, StorageError):
             flash(uploaded.message, 'error')
@@ -1052,5 +1061,30 @@ def reports_xlsx():
     resp.headers['Content-Disposition'] = 'attachment; filename=portal-python-relatorio.xlsx'
     return resp
 
-@admin_bp.get('/settings')
-def settings(): return render_template('admin/settings.html')
+@admin_bp.route('/settings', methods=['GET', 'POST'])
+def settings():
+    if request.method == 'POST':
+        institution_name = request.form.get('institution_name', '').strip()
+        upload_mb = request.form.get('max_upload_mb', type=int)
+        if not institution_name or len(institution_name) > 160:
+            flash('Informe um nome de instituição válido.', 'error')
+        elif upload_mb is None or not MIN_UPLOAD_MB <= upload_mb <= MAX_UPLOAD_MB:
+            flash(f'O limite de upload deve ficar entre {MIN_UPLOAD_MB} e {MAX_UPLOAD_MB} MB.', 'error')
+        else:
+            set_system_setting('institution_name', institution_name)
+            set_system_setting('max_upload_mb', upload_mb)
+            set_system_setting('public_registration', 'true' if request.form.get('public_registration') == 'on' else 'false')
+            set_system_setting('google_oauth_enabled', 'true' if request.form.get('google_oauth_enabled') == 'on' else 'false')
+            set_system_setting('notifications_enabled', 'true' if request.form.get('notifications_enabled') == 'on' else 'false')
+            set_system_setting('alerts_enabled', 'true' if request.form.get('alerts_enabled') == 'on' else 'false')
+            db.session.commit()
+            flash('Configurações salvas com sucesso.', 'success')
+            return redirect(url_for('admin.settings'))
+    return render_template('admin/settings.html',
+        public_registration=get_system_bool('public_registration', True),
+        max_upload_mb=get_system_int('max_upload_mb', 25),
+        google_oauth_enabled=get_system_bool('google_oauth_enabled', True),
+        institution_name=get_system_setting('institution_name', 'Portal Python'),
+        notifications_enabled=get_system_bool('notifications_enabled', True),
+        alerts_enabled=get_system_bool('alerts_enabled', True),
+    )

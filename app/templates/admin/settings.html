@@ -1,1 +1,63 @@
-{% extends 'base.html' %}{% block title %}Configurações · Portal Python{% endblock %}{% block content %}<section class="admin-shell workspace-shell narrow-workspace"><div class="workspace-head"><div><span class="eyebrow">SISTEMA</span><h1>Configurações</h1><p>Orientações para manter o Portal Python seguro e pronto para produção.</p></div></div><div class="settings-grid"><div class="publisher-card settings-card"><span class="uiverse-feature-card"><img src="{{url_for('static', filename='icons/ui/settings.svg')}}" alt=""></span><h2>Segurança</h2><p>Configurações sensíveis ficam nas variáveis de ambiente. O cadastro público não pode promover um aluno a administrador.</p><p><a href="{{url_for('auth.sessions')}}">Ver sessões ativas da minha conta</a></p></div><div class="publisher-card settings-card"><span class="uiverse-feature-card"><img src="{{url_for('static', filename='icons/ui/settings.svg')}}" alt=""></span><h2>Produção</h2><p>Para produção, configure HTTPS, SECRET_KEY, PostgreSQL e armazenamento persistente para PDFs.</p></div></div></section>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Configurações · Portal Python{% endblock %}
+{% block content %}
+<section class="admin-shell workspace-shell narrow-workspace">
+  <div class="workspace-head">
+    <div>
+      <span class="eyebrow">SISTEMA</span>
+      <h1>Configurações</h1>
+      <p>Controle as opções administrativas do Portal Python sem alterar as credenciais sensíveis do servidor.</p>
+    </div>
+  </div>
+
+  <form method="post" class="settings-grid settings-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="publisher-card settings-card">
+      <span class="uiverse-feature-card"><img src="{{url_for('static', filename='icons/ui/settings.svg')}}" alt=""></span>
+      <h2>Configurações gerais</h2>
+      <label>Nome da instituição
+        <input class="form-input" type="text" name="institution_name" value="{{ institution_name }}" maxlength="160" required>
+      </label>
+      <label class="settings-toggle"><input type="checkbox" name="public_registration" {% if public_registration %}checked{% endif %}><span><strong>Cadastro público</strong><small>Permite que visitantes criem contas de aluno.</small></span></label>
+    </div>
+
+    <div class="publisher-card settings-card">
+      <span class="uiverse-feature-card"><img src="{{url_for('static', filename='icons/ui/settings.svg')}}" alt=""></span>
+      <h2>Uploads</h2>
+      <label>Limite máximo por arquivo (MB)
+        <input class="form-input" type="number" name="max_upload_mb" value="{{ max_upload_mb }}" min="1" max="1024" required>
+      </label>
+      <p>O limite é aplicado aos uploads de conteúdo existentes.</p>
+    </div>
+
+    <div class="publisher-card settings-card">
+      <span class="uiverse-feature-card"><img src="{{url_for('static', filename='icons/ui/users.svg')}}" alt=""></span>
+      <h2>Autenticação</h2>
+      <label class="settings-toggle"><input type="checkbox" name="google_oauth_enabled" {% if google_oauth_enabled %}checked{% endif %}><span><strong>Google OAuth</strong><small>Controla o login com Google. As credenciais continuam nas variáveis de ambiente.</small></span></label>
+    </div>
+
+    <div class="publisher-card settings-card">
+      <span class="uiverse-feature-card"><img src="{{url_for('static', filename='icons/ui/bell.svg')}}" alt=""></span>
+      <h2>Notificações</h2>
+      <label class="settings-toggle"><input type="checkbox" name="notifications_enabled" {% if notifications_enabled %}checked{% endif %}><span><strong>Notificações automáticas</strong><small>Controla as notificações automáticas já existentes no portal.</small></span></label>
+    </div>
+
+    <div class="publisher-card settings-card">
+      <span class="uiverse-feature-card"><img src="{{url_for('static', filename='icons/ui/bell.svg')}}" alt=""></span>
+      <h2>Alertas</h2>
+      <label class="settings-toggle"><input type="checkbox" name="alerts_enabled" {% if alerts_enabled %}checked{% endif %}><span><strong>Alertas automáticos</strong><small>Controla a geração dos alertas inteligentes já existentes.</small></span></label>
+    </div>
+
+    <div class="settings-save-row">
+      <button class="btn primary" type="submit">Salvar configurações</button>
+    </div>
+  </form>
+
+  <div class="publisher-card settings-card settings-note">
+    <h2>Segurança</h2>
+    <p>SECRET_KEY, credenciais do Google, chaves do Backblaze B2 e demais segredos continuam fora do banco, nas variáveis de ambiente.</p>
+    <p><a href="{{url_for('auth.sessions')}}">Ver sessões ativas da minha conta</a></p>
+  </div>
+</section>
+{% endblock %}

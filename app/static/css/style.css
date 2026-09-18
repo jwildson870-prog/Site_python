@@ -3676,3 +3676,6 @@ a.card:active,a.tile:active,a.student-material-card:active,a.student-summary-car
   body.app-authenticated .site-main{margin-left:250px!important}
   body.app-authenticated .site-footer{margin-left:250px!important}
 }
+
+/* Fase 5.1 — configurações administrativas */
+.settings-form{align-items:stretch}.settings-form .settings-card{display:flex;flex-direction:column;gap:12px}.settings-card label{display:grid;gap:7px;font-size:.78rem;color:#a8bbcc;font-weight:700}.settings-card .form-input{width:100%;box-sizing:border-box}.settings-toggle{display:flex!important;grid-template-columns:none!important;align-items:flex-start;gap:11px!important;padding-top:8px}.settings-toggle input{width:18px;height:18px;margin:2px 0 0;accent-color:#4dc7f3}.settings-toggle span{display:grid;gap:3px}.settings-toggle strong{color:#edf6ff}.settings-toggle small{color:#7f98ae;font-size:.72rem;font-weight:500;line-height:1.45}.settings-save-row{grid-column:1/-1;display:flex;justify-content:flex-end}.settings-note{margin-top:15px}.settings-note h2{margin-top:0}

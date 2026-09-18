@@ -76,6 +76,11 @@ def create_app(test_config=None):
         pieces.append(escape(text[last_end:]))
         return Markup('').join(pieces)
 
+    @app.context_processor
+    def inject_portal_settings():
+        from .services import get_system_setting
+        return {'institution_name': get_system_setting('institution_name', 'Portal Python')}
+
     @app.after_request
     def add_security_headers(response):
         response.headers.setdefault('X-Content-Type-Options', 'nosniff')
@@ -94,6 +99,11 @@ def create_app(test_config=None):
     from .models import User
     @login.user_loader
     def load_user(uid): return db.session.get(User,int(uid))
+
+    @app.before_request
+    def _apply_dynamic_upload_limit():
+        from .services import get_system_int
+        app.config['MAX_CONTENT_LENGTH'] = max(1, min(1024, get_system_int('max_upload_mb', 25))) * 1024 * 1024
 
     @app.before_request
     def _enforce_session_version():
@@ -132,7 +142,9 @@ def create_app(test_config=None):
     @app.errorhandler(404)
     def not_found(e): return render_template('error.html',message='Página não encontrada.'),404
     @app.errorhandler(413)
-    def too_large(e): return render_template('error.html',message='Arquivo muito grande. Limite: 25 MB.'),413
+    def too_large(e):
+        from .services import get_system_int
+        return render_template('error.html', message=f"Arquivo muito grande. Limite: {get_system_int('max_upload_mb', 25)} MB."), 413
 
     @app.errorhandler(400)
     def bad_request(e): return render_template('error.html', message='Solicitação inválida.'), 400

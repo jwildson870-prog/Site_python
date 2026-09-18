@@ -173,3 +173,45 @@ def test_public_pages_render_without_authenticated_user(client):
     assert 'Área do Professor' not in home.text
     assert client.get('/auth/login').status_code == 200
     assert client.get('/auth/register').status_code == 200
+
+
+def test_admin_settings_persist_and_control_registration(client, app):
+    login(client, 'professor@portaljm.com', 'PortalJM@2026')
+    r = client.post('/admin/settings', data={
+        'institution_name': 'Instituto Teste',
+        'max_upload_mb': '10',
+        'google_oauth_enabled': 'off',
+        'notifications_enabled': 'on',
+        'alerts_enabled': 'on',
+    })
+    assert r.status_code == 302
+    page = client.get('/admin/settings')
+    assert page.status_code == 200
+    assert 'Instituto Teste' in page.text
+    with app.app_context():
+        from app.models import SystemSetting
+        assert SystemSetting.query.filter_by(key='institution_name').first().value == 'Instituto Teste'
+        assert SystemSetting.query.filter_by(key='max_upload_mb').first().value == '10'
+    blocked = client.get('/auth/register')
+    assert blocked.status_code == 302
+    assert blocked.headers['Location'].endswith('/auth/login')
+
+
+def test_admin_settings_google_toggle_and_upload_limit(client, app):
+    login(client, 'professor@portaljm.com', 'PortalJM@2026')
+    client.post('/admin/settings', data={
+        'institution_name': 'Portal Python',
+        'max_upload_mb': '12',
+        'public_registration': 'on',
+        'google_oauth_enabled': 'off',
+        'notifications_enabled': 'on',
+        'alerts_enabled': 'on',
+    })
+    with app.app_context():
+        from app.services import get_system_bool, get_system_int
+        assert get_system_bool('google_oauth_enabled', True) is False
+        assert get_system_int('max_upload_mb', 25) == 12
+    page = client.get('/auth/login')
+    assert 'Continuar com Google' not in page.text
+    reg = client.get('/auth/register')
+    assert reg.status_code == 200
