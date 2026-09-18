@@ -252,3 +252,24 @@ def test_admin_material_management_and_preview_are_available_only_to_admin(clien
     assert client.get(f'/admin/contents/{cid}/preview').status_code == 403
     assert client.get(f'/admin/contents/{cid}/edit').status_code == 403
     assert client.post(f'/admin/contents/{cid}/delete').status_code == 403
+
+
+def test_question_bank_filters_search_tags_and_difficulty(client, app):
+    login(client, 'professor@portaljm.com', 'PortalJM@2026')
+    with app.app_context():
+        s = Series.query.filter_by(name='1º ano').first()
+        sub = Subject.query.filter_by(series_id=s.id).first()
+        from app.models import QuestionBank
+        q1 = QuestionBank(question='Questão sobre listas', correct='A', difficulty='facil', category='Listas', tags='listas, python', series_id=s.id, subject_id=sub.id)
+        q1.set_options(['A','B'])
+        q2 = QuestionBank(question='Questão sobre funções', correct='B', difficulty='medium', category='Funções', tags='funcoes, python', series_id=s.id, subject_id=sub.id)
+        q2.set_options(['A','B'])
+        db.session.add_all([q1,q2]); db.session.commit()
+    r = client.get('/admin/question-bank?q=funções&difficulty=medio&tag=funcoes')
+    assert r.status_code == 200
+    assert 'Questão sobre funções' in r.text
+    assert 'Questão sobre listas' not in r.text
+    with app.app_context():
+        from app.models import QuestionBank
+        rows = QuestionBank.query.all()
+        assert all(row.difficulty in {'facil','medio','dificil'} for row in rows)

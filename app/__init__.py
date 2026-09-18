@@ -244,6 +244,23 @@ def create_app(test_config=None):
                     conn.execute(text('ALTER TABLE question_bank ADD COLUMN IF NOT EXISTS code TEXT'))
                 elif db.engine.dialect.name == 'sqlite':
                     conn.execute(text('ALTER TABLE question_bank ADD COLUMN code TEXT'))
+        if 'question_bank' in inspector.get_table_names():
+            qb_cols = {c['name'] for c in inspector.get_columns('question_bank')}
+            with db.engine.begin() as conn:
+                if 'category' not in qb_cols:
+                    if db.engine.dialect.name == 'postgresql':
+                        conn.execute(text('ALTER TABLE question_bank ADD COLUMN IF NOT EXISTS category VARCHAR(120)'))
+                    elif db.engine.dialect.name == 'sqlite':
+                        conn.execute(text('ALTER TABLE question_bank ADD COLUMN category VARCHAR(120)'))
+                if 'tags' not in qb_cols:
+                    if db.engine.dialect.name == 'postgresql':
+                        conn.execute(text('ALTER TABLE question_bank ADD COLUMN IF NOT EXISTS tags VARCHAR(500)'))
+                    elif db.engine.dialect.name == 'sqlite':
+                        conn.execute(text('ALTER TABLE question_bank ADD COLUMN tags VARCHAR(500)'))
+                # Normaliza dificuldades legadas para os três valores canônicos.
+                conn.execute(text("UPDATE question_bank SET difficulty='facil' WHERE lower(trim(difficulty)) IN ('fácil','facil','easy','easy_level')"))
+                conn.execute(text("UPDATE question_bank SET difficulty='medio' WHERE lower(trim(difficulty)) IN ('médio','medio','medium','normal') OR difficulty IS NULL OR trim(difficulty)=''"))
+                conn.execute(text("UPDATE question_bank SET difficulty='dificil' WHERE lower(trim(difficulty)) IN ('difícil','dificil','hard')"))
         from .services import ensure_admin,seed_initial_content,migrate_legacy_python_subjects
         ensure_admin(); seed_initial_content(); migrate_legacy_python_subjects()
         from .question_seed_service import seed_generated_question_bank

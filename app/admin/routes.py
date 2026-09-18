@@ -4,7 +4,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, current_app, send_from_directory, Response, make_response
 from flask_login import login_required, current_user
-from sqlalchemy import or_
+from sqlalchemy import or_, func, case
 from werkzeug.utils import secure_filename
 from ..storage import upload as storage_upload, delete as storage_delete, get_file, b2_enabled, StorageError
 from ..extensions import db
@@ -694,14 +694,29 @@ def user_delete(id):
 
 @admin_bp.route('/question-bank', methods=['GET', 'POST'])
 def question_bank():
+    """Banco de questões: cadastro, pesquisa, filtros e ordenação.
+
+    A dificuldade é normalizada em um conjunto único de valores internos
+    (facil/medio/dificil), aceitando aliases legados para corrigir de vez
+    registros antigos sem quebrar dados já existentes.
+    """
     series = Series.query.order_by(Series.id).all()
     subjects = Subject.query.order_by(Subject.name).all()
+    difficulty_aliases = {
+        'facil': 'facil', 'fácil': 'facil', 'easy': 'facil', 'easy_level': 'facil',
+        'medio': 'medio', 'médio': 'medio', 'medium': 'medio', 'normal': 'medio',
+        'dificil': 'dificil', 'difícil': 'dificil', 'hard': 'dificil',
+    }
+
     if request.method == 'POST':
         question = request.form.get('question', '').strip()
         options = [request.form.get(f'option_{letter}', '').strip() for letter in ('a','b','c','d')]
         code = request.form.get('code', '').strip()
         correct_index = request.form.get('correct', '').strip()
-        difficulty = request.form.get('difficulty', 'medio').strip().lower()
+        difficulty_raw = request.form.get('difficulty', 'medio').strip().lower()
+        difficulty = difficulty_aliases.get(difficulty_raw, 'medio')
+        category = request.form.get('category', '').strip()[:120] or None
+        tags = ', '.join(dict.fromkeys(t.strip().lower() for t in request.form.get('tags', '').split(',') if t.strip()))[:500] or None
         sid = request.form.get('series_id', '').strip(); subid = request.form.get('subject_id', '').strip()
         ser = db.session.get(Series, int(sid)) if sid.isdigit() else None
         sub = db.session.get(Subject, int(subid)) if subid.isdigit() else None
@@ -714,13 +729,57 @@ def question_bank():
         elif any(options[i] and not options[i-1] for i in range(1,4)):
             flash('Preencha as alternativas em sequência.', 'error')
         else:
-            item = QuestionBank(question=question, correct=options[int(correct_index)], code=code[:8000] or None, difficulty=difficulty if difficulty in {'facil','medio','dificil'} else 'medio', series_id=ser.id, subject_id=sub.id)
+            item = QuestionBank(question=question, correct=options[int(correct_index)], code=code[:8000] or None,
+                                difficulty=difficulty, category=category, tags=tags,
+                                series_id=ser.id, subject_id=sub.id)
             item.set_options([x for x in options if x])
             db.session.add(item); db.session.commit()
             flash('Questão adicionada ao banco.', 'success')
             return redirect(url_for('admin.question_bank'))
-    items = QuestionBank.query.order_by(QuestionBank.id.desc()).all()
-    return render_template('admin/question_bank.html', items=items, series=series, subjects=subjects)
+
+    q = request.args.get('q', '').strip()
+    series_id = request.args.get('series_id', '').strip()
+    subject_id = request.args.get('subject_id', '').strip()
+    difficulty_raw = request.args.get('difficulty', '').strip().lower()
+    difficulty = difficulty_aliases.get(difficulty_raw, '') if difficulty_raw else ''
+    category = request.args.get('category', '').strip()
+    tag = request.args.get('tag', '').strip().lower()
+    sort = request.args.get('sort', 'newest').strip().lower()
+
+    query = QuestionBank.query
+    if q:
+        needle = f'%{q}%'
+        query = query.filter(or_(QuestionBank.question.ilike(needle), QuestionBank.code.ilike(needle),
+                                 QuestionBank.category.ilike(needle), QuestionBank.tags.ilike(needle)))
+    if series_id.isdigit():
+        query = query.filter(QuestionBank.series_id == int(series_id))
+    if subject_id.isdigit():
+        query = query.filter(QuestionBank.subject_id == int(subject_id))
+    if difficulty:
+        query = query.filter(QuestionBank.difficulty == difficulty)
+    if category:
+        query = query.filter(func.lower(QuestionBank.category) == category.lower())
+    if tag:
+        query = query.filter(func.lower(QuestionBank.tags).contains(tag))
+
+    if sort == 'oldest':
+        query = query.order_by(QuestionBank.id.asc())
+    elif sort == 'difficulty':
+        query = query.order_by(case((QuestionBank.difficulty == 'facil', 1),
+                                       (QuestionBank.difficulty == 'medio', 2),
+                                       (QuestionBank.difficulty == 'dificil', 3), else_=4), QuestionBank.id.desc())
+    elif sort == 'alphabetical':
+        query = query.order_by(func.lower(QuestionBank.question).asc(), QuestionBank.id.desc())
+    else:
+        query = query.order_by(QuestionBank.id.desc())
+
+    items = query.all()
+    categories = [row[0] for row in db.session.query(QuestionBank.category).filter(QuestionBank.category.isnot(None), QuestionBank.category != '').distinct().order_by(func.lower(QuestionBank.category)).all()]
+    tags = sorted({tag.strip() for item in QuestionBank.query.with_entities(QuestionBank.tags).all()
+                   for tag in (item[0] or '').split(',') if tag.strip()})
+    return render_template('admin/question_bank.html', items=items, series=series, subjects=subjects,
+                           q=q, series_id=series_id, subject_id=subject_id, difficulty=difficulty,
+                           category=category, tag=tag, sort=sort, categories=categories, tags=tags)
 
 @admin_bp.post('/question-bank/<int:id>/delete')
 def question_bank_delete(id):
