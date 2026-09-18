@@ -6,10 +6,15 @@
     <div><span class="eyebrow">ENGAJAMENTO</span><h1>Ranking semanal</h1><p>Visualização do engajamento dos alunos na semana atual.</p></div>
     <a class="btn secondary" href="{{ url_for('admin.dashboard') }}">← Painel</a>
   </div>
+  <div class="professor-grid dashboard-insight-grid">
+    <div class="professor-panel"><div class="professor-panel-head"><div><span class="eyebrow">SEMANA ATUAL</span><h2>{{ week_start.strftime('%d/%m/%Y') }} — {{ week_end.strftime('%d/%m/%Y') }}</h2><p>1 ponto por material concluído e 1 ponto por atividade respondida. Professores não participam.</p></div></div><div class="dashboard-mini-stats"><span><strong>{{ rows|length }}</strong> aluno(s) exibido(s)</span><span><strong>{{ total_points }}</strong> ponto(s) registrados</span></div></div>
+    <div class="professor-panel"><div class="professor-panel-head"><div><span class="eyebrow">PESQUISA</span><h2>Encontrar aluno</h2><p>Filtre por nome ou e-mail.</p></div></div><form method="get" class="inline-form"><input type="search" name="q" value="{{ q }}" placeholder="Nome ou e-mail" aria-label="Pesquisar aluno"><button class="btn primary" type="submit">Pesquisar</button>{% if q %}<a class="btn secondary" href="{{ url_for('admin.ranking') }}">Limpar</a>{% endif %}</form></div>
+  </div>
+
   <div class="professor-panel">
-    <div class="professor-panel-head"><div><span class="eyebrow">SEMANA</span><h2>{{ week_start.strftime('%d/%m/%Y') }}</h2><p>1 ponto por material concluído e 1 ponto por atividade respondida. Professores não participam.</p></div></div>
+    <div class="professor-panel-head"><div><span class="eyebrow">CLASSIFICAÇÃO</span><h2>Engajamento dos alunos</h2><p>Ordenado por pontos, depois atividades e materiais. A pontuação é somente leitura.</p></div></div>
     <div class="performance-table-wrap"><table class="professor-table performance-table"><thead><tr><th>Posição</th><th>Aluno</th><th>Materiais</th><th>Atividades</th><th>Pontos</th></tr></thead><tbody>
-      {% for row in rows %}<tr><td><strong>#{{ row.position }}</strong></td><td><strong>{{ row.student.name }}</strong><small class="table-subline">{{ row.student.email }}</small></td><td>{{ row.materials }}</td><td>{{ row.activities }}</td><td class="professor-score">{{ row.points }} pts</td></tr>{% else %}<tr><td colspan="5"><div class="professor-empty">Nenhum aluno cadastrado.</div></td></tr>{% endfor %}
+      {% for row in rows %}<tr><td><strong>#{{ row.position }}</strong></td><td><strong>{{ row.student.name }}</strong><small class="table-subline">{{ row.student.email }}</small></td><td>{{ row.materials }}</td><td>{{ row.activities }}</td><td class="professor-score">{{ row.points }} pts</td></tr>{% else %}<tr><td colspan="5"><div class="professor-empty">Nenhum aluno encontrado.</div></td></tr>{% endfor %}
     </tbody></table></div>
   </div>
 </section>

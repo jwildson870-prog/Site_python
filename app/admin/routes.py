@@ -238,24 +238,35 @@ def dashboard():
 
 @admin_bp.get('/ranking')
 def ranking():
-    """Visualização administrativa do ranking semanal de alunos."""
-    start = datetime.combine((utcnow() - timedelta(days=utcnow().weekday())).date(), datetime.min.time())
-    students = User.query.filter(User.role == 'student').order_by(User.name.asc()).all()
+    """Visualização administrativa do ranking semanal de alunos.
+
+    O professor apenas consulta os mesmos pontos usados no ranking do aluno;
+    não participa, não edita pontuação e não há ranking entre turmas.
+    """
+    now = utcnow()
+    start = datetime.combine((now - timedelta(days=now.weekday())).date(), datetime.min.time())
+    end = start + timedelta(days=7)
+    q = request.args.get('q', '').strip()
+    students_query = User.query.filter(User.role == 'student')
+    if q:
+        like = f'%{q}%'; students_query = students_query.filter(or_(User.name.ilike(like), User.email.ilike(like)))
+    students = students_query.order_by(User.name.asc()).all()
     rows = []
     for student in students:
         materials = Progress.query.filter(
             Progress.user_id == student.id,
-            Progress.completed_at >= start
+            Progress.completed_at >= start, Progress.completed_at < end
         ).count()
         activities = ActivityAttempt.query.filter(
             ActivityAttempt.user_id == student.id,
-            ActivityAttempt.created_at >= start
+            ActivityAttempt.created_at >= start, ActivityAttempt.created_at < end
         ).count()
         rows.append({'student': student, 'materials': materials, 'activities': activities, 'points': materials + activities})
     rows.sort(key=lambda row: (-row['points'], -row['activities'], -row['materials'], row['student'].name.casefold()))
     for position, row in enumerate(rows, 1):
         row['position'] = position
-    return render_template('admin/ranking.html', rows=rows, week_start=start.date())
+    total_points = sum(row['points'] for row in rows)
+    return render_template('admin/ranking.html', rows=rows, week_start=start.date(), week_end=(end - timedelta(days=1)).date(), q=q, total_points=total_points)
 
 @admin_bp.route('/alertas', methods=['GET', 'POST'])
 def alerts():
