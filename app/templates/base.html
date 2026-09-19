@@ -9,6 +9,14 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <script>
     (function(){
+      try {
+        var t = localStorage.getItem('portal-python-theme');
+        if (['dark','light','pink','sea','aurora','nature'].indexOf(t) !== -1) document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    })();
+  </script>
+  <script>
+    (function(){
       var ua = navigator.userAgent || '';
       if (/Android|iPhone|iPad|iPod/i.test(ua)) document.documentElement.classList.add('mobile-device');
     })();
@@ -21,7 +29,8 @@
   <link rel="stylesheet" href="{{ url_for('static',filename='css/interactions.css', v='20260918-animacoes-1') }}">
   <link rel="stylesheet" href="{{ url_for('static',filename='css/cards.css', v='20260916-cards-1') }}">
   <link rel="stylesheet" href="{{ url_for('static',filename='css/card-accents.css', v='20260918-card-accents-1') }}">
-  <link rel="stylesheet" href="{{ url_for('static',filename='css/python-dev-hero-theme.css', v='20260919-hero-1') }}">
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/python-dev-hero-theme.css', v='20260919-theme-system-1') }}">
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/theme-switcher.css', v='20260919-theme-system-1') }}">
 </head>
 <body class="{% if current_user.is_authenticated %}app-authenticated{% else %}public-page{% endif %}{% if request.blueprint == 'admin' %} pjm-dense-screen{% endif %}">
 <canvas id="spaceParticles" class="space-particles" aria-hidden="true"></canvas>
@@ -39,6 +48,23 @@
   <div class="topbar-brand"><img src="{{ url_for('static',filename='icons/python-brand.png') }}" alt="Python"><strong>Portal <span>Python</span></strong></div>
   <div class="topbar-context"><span class="status-dot"></span><span>Portal online</span></div>
   <div class="topbar-spacer"></div>
+  <div class="theme-control" id="themeControl">
+    <button class="theme-trigger" id="themeTrigger" type="button" aria-label="Escolher tema" aria-expanded="false" title="Escolher tema">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"></path></svg>
+    </button>
+    <div class="theme-panel" id="themePanel" role="dialog" aria-label="Temas do Portal Python">
+      <h3>🎨 Aparência do portal</h3>
+      <div class="theme-options">
+        <button class="theme-option" type="button" data-theme-choice="dark"><span class="theme-swatch swatch-dark"></span><span class="theme-name">Dark Gold</span></button>
+        <button class="theme-option" type="button" data-theme-choice="light"><span class="theme-swatch swatch-light"></span><span class="theme-name">Light</span></button>
+        <button class="theme-option" type="button" data-theme-choice="pink"><span class="theme-swatch swatch-pink"></span><span class="theme-name">Pink</span></button>
+        <button class="theme-option" type="button" data-theme-choice="sea"><span class="theme-swatch swatch-sea"></span><span class="theme-name">Mar</span></button>
+        <button class="theme-option" type="button" data-theme-choice="aurora"><span class="theme-swatch swatch-aurora"></span><span class="theme-name">Aurora</span></button>
+        <button class="theme-option" type="button" data-theme-choice="nature"><span class="theme-swatch swatch-nature"></span><span class="theme-name">Nature</span></button>
+      </div>
+      <small class="theme-hint">A escolha fica salva neste aparelho e será aplicada ao portal inteiro.</small>
+    </div>
+  </div>
   <div class="topbar-bell" aria-label="Notificações"><img src="{{ url_for('static',filename='icons/ui/bell.svg') }}" alt=""><i></i></div>
   {% if current_user.is_authenticated %}
   <div class="topbar-user"><div class="topbar-avatar">{{ current_user.name[:1]|upper }}</div><div class="topbar-user-copy"><strong>{{ current_user.name }}</strong><small>{% if current_user.is_admin %}Professor{% else %}Aluno{% endif %}</small></div></div>
@@ -131,5 +157,6 @@
 <script src="{{ url_for('static',filename='js/loading.js', v='20260912-question-bank-1') }}" defer></script>
 <script src="{{ url_for('static',filename='js/sidebar-nav.js', v='20260915-sidebar-1') }}" defer></script>
 <script src="{{ url_for('static',filename='js/interactions.js', v='20260918-animacoes-1') }}" defer></script>
+<script src="{{ url_for('static',filename='js/theme.js', v='20260919-theme-system-1') }}" defer></script>
 </body>
 </html>

@@ -34,8 +34,8 @@
         </form>
 
         {% if google_enabled %}
-        <a class="google login-google" href="{{url_for('auth.google_login')}}">Continuar com Google</a>
         <div class="login-divider"><span>ou</span></div>
+        <a class="google login-google" href="{{url_for('auth.google_login')}}">Continuar com Google</a>
         {% endif %}
         <p class="login-register">Ainda não tem conta? <a href="{{url_for('auth.register')}}">Criar herói</a></p>
     </div>
