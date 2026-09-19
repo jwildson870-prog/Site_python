@@ -1,0 +1,574 @@
+/* Portal Python — camada global de identidade por tema.
+   Esta folha vem por último para que o tema controle componentes que possuem
+   cores fixas nas folhas legadas. */
+
+:root {
+  --t-bg: #070b08;
+  --t-bg-2: #0d130f;
+  --t-surface: #121914;
+  --t-surface-2: #18221a;
+  --t-surface-3: #202b21;
+  --t-text: #f7f5ed;
+  --t-text-strong: #ffffff;
+  --t-muted: #b6beb5;
+  --t-primary: #e2b84d;
+  --t-primary-strong: #ffd86a;
+  --t-primary-soft: rgba(226,184,77,.14);
+  --t-secondary: #43e08b;
+  --t-secondary-strong: #79f0ae;
+  --t-secondary-soft: rgba(67,224,139,.13);
+  --t-border: rgba(226,184,77,.28);
+  --t-border-soft: rgba(255,255,255,.10);
+  --t-input: #0c120e;
+  --t-hover: rgba(226,184,77,.10);
+  --t-shadow: rgba(0,0,0,.42);
+  --t-danger: #ff7272;
+  --t-warning: #ffd166;
+  --t-success: #55e39a;
+  --t-info: #63c9ff;
+  --t-on-primary: #171006;
+  --t-on-secondary: #06150d;
+}
+
+html[data-theme="light"] {
+  --t-bg: #f2f6f3;
+  --t-bg-2: #e7eee9;
+  --t-surface: #ffffff;
+  --t-surface-2: #f7faf8;
+  --t-surface-3: #edf3ef;
+  --t-text: #17241c;
+  --t-text-strong: #0b1710;
+  --t-muted: #56675d;
+  --t-primary: #a66f08;
+  --t-primary-strong: #7f5200;
+  --t-primary-soft: rgba(166,111,8,.12);
+  --t-secondary: #087a42;
+  --t-secondary-strong: #075e34;
+  --t-secondary-soft: rgba(8,122,66,.10);
+  --t-border: rgba(15,73,43,.20);
+  --t-border-soft: rgba(15,40,25,.11);
+  --t-input: #ffffff;
+  --t-hover: rgba(8,122,66,.08);
+  --t-shadow: rgba(16,37,25,.14);
+  --t-danger: #b42318;
+  --t-warning: #9a6700;
+  --t-success: #087a42;
+  --t-info: #0969a8;
+  --t-on-primary: #ffffff;
+  --t-on-secondary: #ffffff;
+}
+
+html[data-theme="pink"] {
+  --t-bg: #130914;
+  --t-bg-2: #1e0d1d;
+  --t-surface: #29132a;
+  --t-surface-2: #35183a;
+  --t-surface-3: #43204a;
+  --t-text: #fff2fb;
+  --t-text-strong: #ffffff;
+  --t-muted: #e1bdd6;
+  --t-primary: #ff6fc7;
+  --t-primary-strong: #ff9bdc;
+  --t-primary-soft: rgba(255,111,199,.15);
+  --t-secondary: #b88cff;
+  --t-secondary-strong: #d0b5ff;
+  --t-secondary-soft: rgba(184,140,255,.14);
+  --t-border: rgba(255,111,199,.30);
+  --t-border-soft: rgba(255,255,255,.11);
+  --t-input: #1b0e1d;
+  --t-hover: rgba(255,111,199,.12);
+  --t-shadow: rgba(0,0,0,.48);
+  --t-danger: #ff7b92;
+  --t-warning: #ffd166;
+  --t-success: #63e6b0;
+  --t-info: #7fd7ff;
+  --t-on-primary: #25051a;
+  --t-on-secondary: #170b2a;
+}
+
+html[data-theme="sea"] {
+  --t-bg: #041217;
+  --t-bg-2: #071e27;
+  --t-surface: #0b2934;
+  --t-surface-2: #103642;
+  --t-surface-3: #15434f;
+  --t-text: #ebfcff;
+  --t-text-strong: #ffffff;
+  --t-muted: #a9cbd2;
+  --t-primary: #32d7e8;
+  --t-primary-strong: #7cecf5;
+  --t-primary-soft: rgba(50,215,232,.14);
+  --t-secondary: #4fe1a1;
+  --t-secondary-strong: #8af1c5;
+  --t-secondary-soft: rgba(79,225,161,.13);
+  --t-border: rgba(50,215,232,.29);
+  --t-border-soft: rgba(255,255,255,.10);
+  --t-input: #061a21;
+  --t-hover: rgba(50,215,232,.11);
+  --t-shadow: rgba(0,0,0,.46);
+  --t-danger: #ff7d8b;
+  --t-warning: #ffd166;
+  --t-success: #5ee6aa;
+  --t-info: #69caff;
+  --t-on-primary: #031418;
+  --t-on-secondary: #03180e;
+}
+
+html[data-theme="aurora"] {
+  --t-bg: #09071a;
+  --t-bg-2: #110d2d;
+  --t-surface: #181341;
+  --t-surface-2: #211a53;
+  --t-surface-3: #2c2367;
+  --t-text: #f5f1ff;
+  --t-text-strong: #ffffff;
+  --t-muted: #c0b9dc;
+  --t-primary: #a78bfa;
+  --t-primary-strong: #c4b5fd;
+  --t-primary-soft: rgba(167,139,250,.15);
+  --t-secondary: #45dfc1;
+  --t-secondary-strong: #87f1dc;
+  --t-secondary-soft: rgba(69,223,193,.13);
+  --t-border: rgba(167,139,250,.31);
+  --t-border-soft: rgba(255,255,255,.11);
+  --t-input: #0f0b25;
+  --t-hover: rgba(167,139,250,.12);
+  --t-shadow: rgba(0,0,0,.50);
+  --t-danger: #ff7d9d;
+  --t-warning: #ffd166;
+  --t-success: #66e7b4;
+  --t-info: #82cfff;
+  --t-on-primary: #110a24;
+  --t-on-secondary: #041a15;
+}
+
+html[data-theme="nature"] {
+  --t-bg: #06110a;
+  --t-bg-2: #0a1c10;
+  --t-surface: #10291a;
+  --t-surface-2: #17371f;
+  --t-surface-3: #1f4528;
+  --t-text: #f1faec;
+  --t-text-strong: #ffffff;
+  --t-muted: #b5c9af;
+  --t-primary: #b2dc58;
+  --t-primary-strong: #d0f27d;
+  --t-primary-soft: rgba(178,220,88,.14);
+  --t-secondary: #42d58b;
+  --t-secondary-strong: #7ae9ae;
+  --t-secondary-soft: rgba(66,213,139,.13);
+  --t-border: rgba(178,220,88,.29);
+  --t-border-soft: rgba(255,255,255,.10);
+  --t-input: #0a1b0f;
+  --t-hover: rgba(178,220,88,.11);
+  --t-shadow: rgba(0,0,0,.46);
+  --t-danger: #ff7d75;
+  --t-warning: #ffd166;
+  --t-success: #63e39d;
+  --t-info: #72caff;
+  --t-on-primary: #102006;
+  --t-on-secondary: #03170d;
+}
+
+/* Base */
+html[data-theme] {
+  background: var(--t-bg) !important;
+  color: var(--t-text) !important;
+  color-scheme: dark;
+}
+html[data-theme="light"] { color-scheme: light; }
+html[data-theme] body,
+html[data-theme] .site-main,
+html[data-theme] .login-page,
+html[data-theme] .public-page {
+  background: var(--t-bg) !important;
+  color: var(--t-text) !important;
+}
+html[data-theme] body::before,
+html[data-theme] body::after,
+html[data-theme] .site-main::before,
+html[data-theme] .site-main::after {
+  background-image: none !important;
+}
+
+/* Topo e navegação */
+html[data-theme] .topbar,
+html[data-theme] .side-menu,
+html[data-theme] .bottom-nav {
+  background: var(--t-surface) !important;
+  color: var(--t-text) !important;
+  border-color: var(--t-border) !important;
+  box-shadow: 0 12px 34px var(--t-shadow) !important;
+}
+html[data-theme] .topbar-brand strong,
+html[data-theme] .topbar-user-copy strong,
+html[data-theme] .side-brand-text strong,
+html[data-theme] .side-user-text strong,
+html[data-theme] .topbar-context,
+html[data-theme] .side-section-title,
+html[data-theme] .side-nav-filter {
+  color: var(--t-text) !important;
+}
+html[data-theme] .topbar-brand strong span,
+html[data-theme] .side-area,
+html[data-theme] .side-area-dot,
+html[data-theme] .status-dot {
+  color: var(--t-secondary) !important;
+  background-color: var(--t-secondary) !important;
+}
+html[data-theme] .side-link,
+html[data-theme] .side-link b,
+html[data-theme] .side-section-title,
+html[data-theme] .side-user-text small,
+html[data-theme] .topbar-user-copy small {
+  color: var(--t-muted) !important;
+}
+html[data-theme] .side-link:hover,
+html[data-theme] .side-link.active,
+html[data-theme] .side-install:hover {
+  color: var(--t-text-strong) !important;
+  background: var(--t-hover) !important;
+  border-color: var(--t-border) !important;
+}
+html[data-theme] .side-link.active b,
+html[data-theme] .side-link.active .nav-icon,
+html[data-theme] .side-link:hover b { color: var(--t-primary-strong) !important; }
+html[data-theme] .side-nav-search input,
+html[data-theme] .side-nav-filter {
+  background: var(--t-input) !important;
+  color: var(--t-text) !important;
+  border-color: var(--t-border-soft) !important;
+}
+html[data-theme] .side-logout {
+  color: var(--t-danger) !important;
+  border-color: color-mix(in srgb, var(--t-danger) 35%, transparent) !important;
+  background: color-mix(in srgb, var(--t-danger) 8%, transparent) !important;
+}
+html[data-theme] .topbar-avatar,
+html[data-theme] .user-avatar,
+html[data-theme] .theme-avatar {
+  background: linear-gradient(135deg, var(--t-secondary), var(--t-primary)) !important;
+  color: var(--t-on-secondary) !important;
+  border-color: var(--t-border) !important;
+}
+
+/* Texto */
+html[data-theme] h1,
+html[data-theme] h2,
+html[data-theme] h3,
+html[data-theme] h4,
+html[data-theme] h5,
+html[data-theme] h6,
+html[data-theme] strong,
+html[data-theme] .page-title,
+html[data-theme] .admin-page-head h1,
+html[data-theme] .section-title {
+  color: var(--t-text-strong) !important;
+}
+html[data-theme] p,
+html[data-theme] li,
+html[data-theme] td,
+html[data-theme] .muted,
+html[data-theme] .subtitle,
+html[data-theme] .description,
+html[data-theme] .helper,
+html[data-theme] small {
+  color: var(--t-muted) !important;
+}
+html[data-theme] a { color: var(--t-secondary-strong) !important; }
+html[data-theme] a:hover { color: var(--t-primary-strong) !important; }
+html[data-theme] hr { border-color: var(--t-border) !important; }
+
+/* Superfícies / cards / painéis */
+html[data-theme] .card,
+html[data-theme] .tile,
+html[data-theme] .panel,
+html[data-theme] .section-card,
+html[data-theme] .admin-action-card,
+html[data-theme] .admin-stat,
+html[data-theme] .activity-admin-card,
+html[data-theme] .activity-settings-card,
+html[data-theme] .activity-student-summary,
+html[data-theme] .attempt-answer,
+html[data-theme] .attempt-detail-list,
+html[data-theme] .achievement-card,
+html[data-theme] .announcement-item,
+html[data-theme] .bank-import-card,
+html[data-theme] .bank-import-item,
+html[data-theme] .search-result-card,
+html[data-theme] .student-material-card,
+html[data-theme] .material-row,
+html[data-theme] .manage-card,
+html[data-theme] .pjm-card,
+html[data-theme] .stat-card,
+html[data-theme] .activity-card,
+html[data-theme] .content-card,
+html[data-theme] .subject-card,
+html[data-theme] .series-card,
+html[data-theme] .profile-card,
+html[data-theme] .notification-card,
+html[data-theme] .calendar-card,
+html[data-theme] .project-card {
+  background: linear-gradient(145deg, var(--t-surface), var(--t-surface-2)) !important;
+  color: var(--t-text) !important;
+  border-color: var(--t-border) !important;
+  box-shadow: 0 14px 38px var(--t-shadow), inset 0 1px rgba(255,255,255,.025) !important;
+}
+html[data-theme] .card:hover,
+html[data-theme] .tile:hover,
+html[data-theme] .panel:hover,
+html[data-theme] .admin-action-card:hover,
+html[data-theme] .manage-card:hover,
+html[data-theme] .pjm-card:hover,
+html[data-theme] .student-material-card:hover,
+html[data-theme] .material-row:hover,
+html[data-theme] .search-result-card:hover {
+  border-color: var(--t-primary) !important;
+  box-shadow: 0 20px 46px var(--t-shadow) !important;
+}
+
+/* Estatísticas, números e destaques */
+html[data-theme] .admin-stat strong,
+html[data-theme] .stat-value,
+html[data-theme] .metric-value,
+html[data-theme] .score,
+html[data-theme] .activity-stat-values,
+html[data-theme] .achievement-total {
+  color: var(--t-primary-strong) !important;
+}
+html[data-theme] .admin-stat .label,
+html[data-theme] .stat-label,
+html[data-theme] .activity-stat-title,
+html[data-theme] .achievement-status {
+  color: var(--t-muted) !important;
+}
+
+/* Botões */
+html[data-theme] .btn,
+html[data-theme] button.primary,
+html[data-theme] button[type="submit"],
+html[data-theme] input[type="submit"],
+html[data-theme] .login-btn,
+html[data-theme] .hero-cta,
+html[data-theme] .primary-action {
+  background: linear-gradient(180deg, var(--t-primary-strong), var(--t-primary)) !important;
+  color: var(--t-on-primary) !important;
+  border-color: var(--t-primary-strong) !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.35), 0 8px 20px var(--t-shadow) !important;
+}
+html[data-theme] .btn:hover,
+html[data-theme] button.primary:hover,
+html[data-theme] button[type="submit"]:hover,
+html[data-theme] input[type="submit"]:hover,
+html[data-theme] .login-btn:hover,
+html[data-theme] .hero-cta:hover,
+html[data-theme] .primary-action:hover {
+  filter: brightness(1.08) !important;
+  border-color: var(--t-primary-strong) !important;
+}
+html[data-theme] .btn.secondary,
+html[data-theme] .btn.outline,
+html[data-theme] .text-button,
+html[data-theme] .secondary-action {
+  background: var(--t-surface-2) !important;
+  color: var(--t-text) !important;
+  border-color: var(--t-border) !important;
+}
+html[data-theme] .btn.secondary:hover,
+html[data-theme] .btn.outline:hover,
+html[data-theme] .text-button:hover,
+html[data-theme] .secondary-action:hover {
+  background: var(--t-hover) !important;
+  color: var(--t-text-strong) !important;
+  border-color: var(--t-primary) !important;
+}
+
+/* Inputs e selects */
+html[data-theme] input,
+html[data-theme] select,
+html[data-theme] textarea,
+html[data-theme] .form-control,
+html[data-theme] .side-nav-filter,
+html[data-theme] .login-form input {
+  background: var(--t-input) !important;
+  color: var(--t-text) !important;
+  border-color: var(--t-border-soft) !important;
+  box-shadow: inset 0 3px 12px rgba(0,0,0,.18) !important;
+}
+html[data-theme] input::placeholder,
+html[data-theme] textarea::placeholder { color: color-mix(in srgb, var(--t-muted) 75%, transparent) !important; }
+html[data-theme] input:focus,
+html[data-theme] select:focus,
+html[data-theme] textarea:focus,
+html[data-theme] .form-control:focus,
+html[data-theme] .login-form input:focus {
+  outline: none !important;
+  border-color: var(--t-primary) !important;
+  box-shadow: 0 0 0 3px var(--t-primary-soft), inset 0 3px 12px rgba(0,0,0,.18) !important;
+}
+html[data-theme] label { color: var(--t-text) !important; }
+
+/* Tabelas */
+html[data-theme] table,
+html[data-theme] .table-wrap,
+html[data-theme] .table-container {
+  background: var(--t-surface) !important;
+  color: var(--t-text) !important;
+  border-color: var(--t-border) !important;
+}
+html[data-theme] th {
+  background: var(--t-surface-3) !important;
+  color: var(--t-primary-strong) !important;
+  border-color: var(--t-border) !important;
+}
+html[data-theme] td {
+  color: var(--t-text) !important;
+  border-color: var(--t-border-soft) !important;
+}
+html[data-theme] tbody tr:hover { background: var(--t-hover) !important; }
+
+/* Tabs, badges, filtros, chips */
+html[data-theme] .activity-tab,
+html[data-theme] .filter-chip,
+html[data-theme] .chip,
+html[data-theme] .tag,
+html[data-theme] .badge,
+html[data-theme] .badge-success {
+  background: var(--t-secondary-soft) !important;
+  color: var(--t-secondary-strong) !important;
+  border-color: color-mix(in srgb, var(--t-secondary) 35%, transparent) !important;
+}
+html[data-theme] .activity-tab.active,
+html[data-theme] .filter-chip.active,
+html[data-theme] .chip.active,
+html[data-theme] .tag.active {
+  background: var(--t-primary-soft) !important;
+  color: var(--t-primary-strong) !important;
+  border-color: var(--t-primary) !important;
+}
+html[data-theme] .answer-correct { background: var(--t-secondary-soft) !important; color: var(--t-success) !important; border-color: color-mix(in srgb, var(--t-success) 35%, transparent) !important; }
+html[data-theme] .answer-wrong { background: color-mix(in srgb, var(--t-danger) 10%, transparent) !important; color: var(--t-danger) !important; border-color: color-mix(in srgb, var(--t-danger) 35%, transparent) !important; }
+
+/* Alertas e mensagens */
+html[data-theme] .flash,
+html[data-theme] .alert,
+html[data-theme] .notice,
+html[data-theme] .announcement-item {
+  background: var(--t-surface-2) !important;
+  color: var(--t-text) !important;
+  border-color: var(--t-border) !important;
+}
+html[data-theme] .flash.success,
+html[data-theme] .alert-success { border-left-color: var(--t-success) !important; }
+html[data-theme] .flash.error,
+html[data-theme] .flash.danger,
+html[data-theme] .alert-danger { border-left-color: var(--t-danger) !important; }
+html[data-theme] .flash.warning,
+html[data-theme] .alert-warning { border-left-color: var(--t-warning) !important; }
+
+/* Hero / cabeçalhos de páginas */
+html[data-theme] .admin-hero,
+html[data-theme] .reference-hero,
+html[data-theme] .page-hero,
+html[data-theme] .hero {
+  background: linear-gradient(145deg, var(--t-surface-2), var(--t-surface)) !important;
+  border-color: var(--t-border) !important;
+  box-shadow: 0 18px 44px var(--t-shadow) !important;
+}
+html[data-theme] .admin-hero h1,
+html[data-theme] .reference-hero h1,
+html[data-theme] .page-hero h1,
+html[data-theme] .hero h1 { color: var(--t-primary-strong) !important; text-shadow: none !important; }
+html[data-theme] .admin-hero p,
+html[data-theme] .reference-hero p,
+html[data-theme] .page-hero p,
+html[data-theme] .hero p { color: var(--t-muted) !important; }
+
+/* Código */
+html[data-theme] pre,
+html[data-theme] code,
+html[data-theme] .code-block,
+html[data-theme] .code-editor,
+html[data-theme] .code-preview {
+  background: #050806 !important;
+  color: var(--t-secondary-strong) !important;
+  border-color: var(--t-border) !important;
+}
+html[data-theme="light"] pre,
+html[data-theme="light"] code,
+html[data-theme="light"] .code-block,
+html[data-theme="light"] .code-editor,
+html[data-theme="light"] .code-preview {
+  background: #eef3ef !important;
+  color: #075e34 !important;
+}
+
+/* Ícones e pequenos indicadores */
+html[data-theme] .nav-icon,
+html[data-theme] .action-icon,
+html[data-theme] .icon,
+html[data-theme] .back-link { color: var(--t-secondary) !important; }
+html[data-theme] .topbar-bell i,
+html[data-theme] .alert-dot { background: var(--t-danger) !important; }
+html[data-theme] .progress-bar,
+html[data-theme] .progress-fill { background: linear-gradient(90deg, var(--t-secondary), var(--t-primary)) !important; }
+
+/* Imagens SVG usadas como <img>: mantém contraste adequado no Light. */
+html[data-theme="light"] .side-menu img[src*="/icons/ui/"],
+html[data-theme="light"] .topbar-bell img { filter: brightness(0) saturate(100%) !important; }
+
+/* Login */
+html[data-theme] .python-login { background: var(--t-bg) !important; }
+html[data-theme] .python-login .login-card {
+  background: linear-gradient(145deg, var(--t-surface), var(--t-surface-2)) !important;
+  border-color: var(--t-border) !important;
+  box-shadow: 0 28px 75px var(--t-shadow) !important;
+}
+html[data-theme] .python-login .python-login-logo {
+  background: var(--t-surface-3) !important;
+  border-color: var(--t-primary) !important;
+}
+html[data-theme] .python-login .login-brand h1 { color: var(--t-primary-strong) !important; text-shadow: none !important; }
+html[data-theme] .python-login .login-brand p,
+html[data-theme] .python-login .login-form label { color: var(--t-text) !important; }
+html[data-theme] .python-login .login-form input { background: var(--t-input) !important; color: var(--t-text) !important; border-color: var(--t-border-soft) !important; }
+html[data-theme] .python-login .login-forgot a,
+html[data-theme] .python-login .login-register a { color: var(--t-primary-strong) !important; }
+html[data-theme] .python-login .login-google { background: var(--t-surface-2) !important; color: var(--t-text) !important; border-color: var(--t-border) !important; }
+html[data-theme] .python-login .login-google:hover { background: var(--t-hover) !important; border-color: var(--t-primary) !important; }
+html[data-theme] .python-login .login-divider::before,
+html[data-theme] .python-login .login-divider::after { background: var(--t-border) !important; }
+
+/* Rodapé */
+html[data-theme] .site-footer {
+  color: var(--t-muted) !important;
+  border-color: var(--t-border-soft) !important;
+  background: var(--t-bg) !important;
+}
+html[data-theme] .site-footer span { color: var(--t-primary) !important; }
+
+/* Loader */
+html[data-theme] .page-loader { background: var(--t-bg) !important; }
+html[data-theme] .page-loader-card { background: var(--t-surface) !important; color: var(--t-text) !important; border-color: var(--t-border) !important; box-shadow: 0 24px 60px var(--t-shadow) !important; }
+html[data-theme] .page-loader-card strong { color: var(--t-text-strong) !important; }
+html[data-theme] .page-loader-card strong span { color: var(--t-secondary) !important; }
+html[data-theme] .page-loader-card small { color: var(--t-muted) !important; }
+html[data-theme] .page-loader-bar i { background: linear-gradient(90deg, var(--t-secondary), var(--t-primary)) !important; }
+
+/* Remove a imagem de fundo antiga em qualquer estado/tema. */
+html[data-theme] .python-login::before,
+html[data-theme] .python-login::after,
+html[data-theme] .code-float { display: none !important; background-image: none !important; }
+
+/* Respeita acessibilidade */
+html[data-theme] :focus-visible {
+  outline: 3px solid var(--t-primary) !important;
+  outline-offset: 2px !important;
+}
+
+@media (max-width: 760px) {
+  html[data-theme] .card,
+  html[data-theme] .tile,
+  html[data-theme] .panel,
+  html[data-theme] .section-card { box-shadow: 0 10px 26px var(--t-shadow) !important; }
+}

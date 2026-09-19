@@ -29,8 +29,14 @@
   <link rel="stylesheet" href="{{ url_for('static',filename='css/interactions.css', v='20260918-animacoes-1') }}">
   <link rel="stylesheet" href="{{ url_for('static',filename='css/cards.css', v='20260916-cards-1') }}">
   <link rel="stylesheet" href="{{ url_for('static',filename='css/card-accents.css', v='20260918-card-accents-1') }}">
+<<<<<<< HEAD
   <link rel="stylesheet" href="{{ url_for('static',filename='css/python-dev-hero-theme.css', v='20260919-theme-system-1') }}">
   <link rel="stylesheet" href="{{ url_for('static',filename='css/theme-switcher.css', v='20260919-theme-system-1') }}">
+=======
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/python-dev-hero-theme.css', v='20260919-theme-system-2') }}">
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/theme-switcher.css', v='20260919-theme-system-2') }}">
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/theme-overrides.css', v='20260919-theme-system-2') }}">
+>>>>>>> 01320cd (melhora sistema de temas e contraste)
 </head>
 <body class="{% if current_user.is_authenticated %}app-authenticated{% else %}public-page{% endif %}{% if request.blueprint == 'admin' %} pjm-dense-screen{% endif %}">
 <canvas id="spaceParticles" class="space-particles" aria-hidden="true"></canvas>
@@ -157,6 +163,10 @@
 <script src="{{ url_for('static',filename='js/loading.js', v='20260912-question-bank-1') }}" defer></script>
 <script src="{{ url_for('static',filename='js/sidebar-nav.js', v='20260915-sidebar-1') }}" defer></script>
 <script src="{{ url_for('static',filename='js/interactions.js', v='20260918-animacoes-1') }}" defer></script>
+<<<<<<< HEAD
 <script src="{{ url_for('static',filename='js/theme.js', v='20260919-theme-system-1') }}" defer></script>
+=======
+<script src="{{ url_for('static',filename='js/theme.js', v='20260919-theme-system-2') }}" defer></script>
+>>>>>>> 01320cd (melhora sistema de temas e contraste)
 </body>
 </html>
