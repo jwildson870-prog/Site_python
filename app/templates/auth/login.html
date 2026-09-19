@@ -1,20 +1,26 @@
 {% extends 'base.html' %}
-{% block title %}Login · Portal Python{% endblock %}
+{% block title %}Python Dev Hero · Login{% endblock %}
 {% block content %}
 <section class="login-page python-login">
     <div class="code-float code-one">print("Olá, mundo!")</div>
-    <div class="code-float code-two">for item in lista:</div>
+    <div class="code-float code-two">for questao in jornada:</div>
     <div class="code-float code-three">if aprovado:</div>
+
     <div class="login-card">
         <div class="login-brand">
-            <div class="python-login-logo" aria-hidden="true"><img src="{{ url_for('static',filename='icons/python-brand.png') }}" alt=""></div>
+            <div class="python-login-logo" aria-hidden="true">
+                <img src="{{ url_for('static',filename='icons/python-brand.png') }}" alt="">
+            </div>
             <span class="eyebrow">PORTAL PYTHON</span>
-            <h1>Programação</h1>
-            <p>Entre para acessar seu espaço de aprendizagem.</p>
+            <h1>Python Dev Hero</h1>
+            <p>Entre na sua jornada de código</p>
         </div>
+
         <form method="post" class="login-form">
             <input type="hidden" name="csrf_token" value="{{csrf_token()}}">
-            <label>E-mail<input name="email" type="email" placeholder="seu@email.com" required autocomplete="email"></label>
+            <label>E-mail
+                <input name="email" type="email" placeholder="seu@email.com" required autocomplete="email">
+            </label>
             <label>Senha
                 <div class="password-field">
                     <input name="password" id="loginPassword" type="password" placeholder="Digite sua senha" required autocomplete="current-password">
@@ -23,14 +29,15 @@
                     </button>
                 </div>
             </label>
-            <p class="login-forgot"><a href="{{url_for('auth.forgot_password')}}">Esqueceu a senha?</a></p>
-            <button class="btn login-btn" type="submit">Entrar</button>
+            <p class="login-forgot"><a href="{{url_for('auth.forgot_password')}}">Esqueci a senha</a></p>
+            <button class="btn login-btn" type="submit">Entrar na Aventura</button>
         </form>
+
         {% if google_enabled %}
         <a class="google login-google" href="{{url_for('auth.google_login')}}">Continuar com Google</a>
         <div class="login-divider"><span>ou</span></div>
         {% endif %}
-        <p class="login-register">Ainda não tem conta? <a href="{{url_for('auth.register')}}">Criar uma conta</a></p>
+        <p class="login-register">Ainda não tem conta? <a href="{{url_for('auth.register')}}">Criar herói</a></p>
     </div>
 </section>
 <script src="{{ url_for('static',filename='js/password-toggle.js') }}" defer></script>

@@ -1,0 +1,259 @@
+/* =========================================================
+   PYTHON DEV HERO — FANTASY CODE THEME
+   Camada visual independente. Não altera rotas, dados ou lógica.
+   Inspirada na referência: pedra, ferro, bronze, ouro e verde-esmeralda.
+========================================================= */
+:root{
+  --hero-void:#070b09;
+  --hero-bg:#0c120e;
+  --hero-panel:#101812;
+  --hero-panel-2:#172019;
+  --hero-stone:#263029;
+  --hero-stone-2:#313a31;
+  --hero-border:#4a4a35;
+  --hero-gold:#d9b45a;
+  --hero-gold-bright:#f1d27a;
+  --hero-bronze:#8d6528;
+  --hero-green:#2fb86f;
+  --hero-green-bright:#65f0a0;
+  --hero-green-deep:#0c5a35;
+  --hero-text:#f3ead2;
+  --hero-soft:#c8c0a9;
+  --hero-muted:#8e927f;
+  --hero-danger:#c86d5f;
+  --hero-radius:18px;
+  --hero-shadow:0 20px 55px rgba(0,0,0,.48);
+}
+
+html{background:var(--hero-void)!important}
+body{
+  color:var(--hero-text)!important;
+  background:
+    linear-gradient(rgba(5,9,7,.84),rgba(5,9,7,.93)),
+    url('../images/python-dev-hero-bg.jpg') center/cover fixed no-repeat!important;
+  background-attachment:fixed!important;
+}
+body::before{
+  content:"";
+  position:fixed;inset:0;z-index:-3;pointer-events:none;
+  background:
+    radial-gradient(circle at 50% 10%,rgba(70,150,95,.12),transparent 34%),
+    radial-gradient(circle at 15% 85%,rgba(201,157,58,.08),transparent 28%),
+    linear-gradient(90deg,rgba(0,0,0,.38),transparent 35%,transparent 65%,rgba(0,0,0,.42));
+}
+body::after{
+  content:"";
+  position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:.15;
+  background-image:radial-gradient(rgba(255,255,255,.16) .7px,transparent .7px);
+  background-size:5px 5px;
+  mix-blend-mode:soft-light;
+}
+::selection{background:rgba(101,240,160,.25)!important;color:#fff}
+a{color:var(--hero-gold-bright)!important}
+a:hover{color:#fff3b1!important}
+
+/* Barra superior */
+.topbar{
+  background:linear-gradient(180deg,rgba(8,12,9,.96),rgba(11,17,12,.90))!important;
+  border-bottom:1px solid rgba(217,180,90,.22)!important;
+  box-shadow:0 12px 32px rgba(0,0,0,.48)!important;
+  backdrop-filter:blur(18px) saturate(.85)!important;
+}
+.topbar-brand strong{color:var(--hero-text)!important}
+.topbar-brand strong span{color:var(--hero-green-bright)!important}
+.topbar-brand img{filter:sepia(.35) saturate(.85) brightness(.9)!important}
+.topbar-context{color:var(--hero-muted)!important}
+.status-dot{background:var(--hero-green-bright)!important;box-shadow:0 0 12px rgba(101,240,160,.55)!important}
+.menu-toggle{color:var(--hero-gold)!important;background:rgba(217,180,90,.05)!important;border-color:rgba(217,180,90,.18)!important}
+.menu-toggle:hover{background:rgba(217,180,90,.12)!important;border-color:rgba(217,180,90,.35)!important;color:#fff!important}
+.topbar-bell img{filter:sepia(1) saturate(2.2) hue-rotate(75deg) brightness(1.15)!important}
+.topbar-avatar{background:linear-gradient(145deg,#1b6c40,#0d3925)!important;border:1px solid rgba(101,240,160,.35)!important;color:#e8f7dc!important;box-shadow:0 6px 18px rgba(0,0,0,.3)!important}
+.topbar-user-copy strong{color:var(--hero-text)!important}
+.topbar-user-copy small{color:var(--hero-muted)!important}
+
+/* Menu lateral */
+.side-menu{
+  background:
+    linear-gradient(180deg,rgba(12,17,13,.98),rgba(7,11,9,.99)),
+    url('../images/python-dev-hero-bg.jpg') center/cover!important;
+  border-right:1px solid rgba(217,180,90,.24)!important;
+  box-shadow:28px 0 70px rgba(0,0,0,.62)!important;
+}
+.side-brand{border-bottom-color:rgba(217,180,90,.15)!important}
+.side-logo{
+  background:linear-gradient(145deg,#2b2c21,#0f1711)!important;
+  border:1px solid rgba(217,180,90,.45)!important;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.04),0 10px 24px rgba(0,0,0,.35)!important;
+}
+.side-logo img{filter:sepia(.65) saturate(.9) hue-rotate(35deg)!important}
+.side-brand strong{color:var(--hero-text)!important}
+.side-brand small{color:var(--hero-muted)!important}
+.side-area{color:var(--hero-green-bright)!important;background:rgba(31,103,62,.13)!important;border-color:rgba(101,240,160,.18)!important}
+.side-area-dot{background:var(--hero-green)!important;box-shadow:0 0 10px rgba(47,184,111,.5)!important}
+.side-link{color:#d6d1c1!important;border-color:transparent!important;background:transparent!important}
+.side-link:hover{background:rgba(217,180,90,.07)!important;border-color:rgba(217,180,90,.12)!important;color:#fff!important;transform:translateX(2px)!important}
+.side-link .nav-icon img{filter:sepia(.65) saturate(1.4) hue-rotate(35deg) brightness(1.05)!important}
+.side-link.active{background:linear-gradient(90deg,rgba(74,74,53,.78),rgba(27,88,52,.44))!important;border-color:rgba(217,180,90,.25)!important;color:#fff!important;box-shadow:inset 3px 0 0 var(--hero-gold),0 7px 22px rgba(0,0,0,.24)!important}
+.side-link.active .nav-icon img{filter:sepia(.9) saturate(2) hue-rotate(35deg) brightness(1.3)!important}
+.side-section-title{color:#777d6d!important}
+.side-bottom{background:rgba(0,0,0,.2)!important;border-top-color:rgba(217,180,90,.13)!important}
+.side-logout{border-color:rgba(200,109,95,.22)!important;background:rgba(200,109,95,.05)!important;color:#e8a39a!important}
+.side-logout:hover{background:rgba(200,109,95,.12)!important;border-color:rgba(200,109,95,.38)!important}
+
+/* Conteúdo global */
+.app-authenticated .site-main{background:transparent!important}
+.card,.panel,.box,.content-card,.dashboard-card,
+.student-shell .card,.student-shell .tile,.admin-stat,.admin-action-card,
+.manage-card,.settings-card,.reference-section,.reference-stat{
+  background:linear-gradient(145deg,rgba(27,34,28,.96),rgba(12,18,14,.97))!important;
+  border:1px solid rgba(217,180,90,.20)!important;
+  box-shadow:0 15px 38px rgba(0,0,0,.38),inset 0 1px rgba(255,255,255,.025)!important;
+}
+.card,.student-shell .card,.student-shell .tile,.admin-action-card,.manage-card,.settings-card{border-radius:var(--hero-radius)!important}
+.card:hover,.student-shell a.tile:hover,.admin-action-card:hover,.manage-card:hover{border-color:rgba(217,180,90,.42)!important;box-shadow:0 20px 45px rgba(0,0,0,.46)!important}
+h1,h2,h3,h4{color:var(--hero-text)!important}
+p,.muted{color:var(--hero-soft)!important}
+.eyebrow{color:var(--hero-green-bright)!important}
+
+/* Hero interno */
+.admin-hero,.reference-hero{
+  background:
+    radial-gradient(circle at 85% 30%,rgba(101,240,160,.12),transparent 24%),
+    radial-gradient(circle at 8% 90%,rgba(217,180,90,.09),transparent 30%),
+    linear-gradient(145deg,rgba(42,48,39,.95),rgba(10,16,12,.98))!important;
+  border-color:rgba(217,180,90,.30)!important;
+  box-shadow:var(--hero-shadow)!important;
+}
+.admin-hero::before,.reference-hero::before{
+  content:"";position:absolute;inset:10px;border:1px solid rgba(217,180,90,.10);border-radius:14px;pointer-events:none;
+}
+.admin-hero::after,.reference-hero::after{border-color:rgba(101,240,160,.08)!important}
+.admin-hero h1,.reference-hero h1{color:#fff4d3!important;text-shadow:0 2px 20px rgba(0,0,0,.42)}
+.admin-hero p,.reference-hero p{color:#c9c6b6!important}
+
+/* Botões: bronze/dourado com relevo */
+.btn,button.primary,button[type="submit"],input[type="submit"],.login-btn,.hero-cta{
+  background:linear-gradient(180deg,#e0bd63 0%,#a9782e 48%,#79531e 100%)!important;
+  color:#1a1308!important;
+  border:1px solid #f0d687!important;
+  border-bottom-color:#5c3e12!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.55),inset 0 -3px rgba(62,39,10,.32),0 9px 0 #3b2b13,0 15px 26px rgba(0,0,0,.38)!important;
+  text-shadow:0 1px rgba(255,255,255,.18)!important;
+}
+.btn:hover,button.primary:hover,button[type="submit"]:hover,input[type="submit"]:hover,.login-btn:hover,.hero-cta:hover{
+  filter:brightness(1.08)!important;transform:translateY(-2px)!important;box-shadow:inset 0 1px rgba(255,255,255,.65),inset 0 -3px rgba(62,39,10,.25),0 10px 0 #3b2b13,0 18px 32px rgba(0,0,0,.45)!important;color:#140f06!important
+}
+.btn:active,.login-btn:active{transform:translateY(5px)!important;box-shadow:inset 0 1px rgba(255,255,255,.4),inset 0 -2px rgba(62,39,10,.25),0 4px 0 #3b2b13,0 8px 15px rgba(0,0,0,.35)!important}
+.btn.secondary{background:linear-gradient(145deg,#252c25,#121912)!important;color:var(--hero-text)!important;border-color:rgba(217,180,90,.28)!important;box-shadow:inset 0 1px rgba(255,255,255,.04),0 8px 20px rgba(0,0,0,.3)!important}
+
+/* Formulários */
+input,select,textarea,.login-form input{
+  background:linear-gradient(180deg,#0b110d,#141b15)!important;
+  color:#f5edda!important;
+  border:1px solid #4a4b39!important;
+  box-shadow:inset 0 4px 12px rgba(0,0,0,.38),0 1px rgba(255,255,255,.025)!important;
+}
+input::placeholder,textarea::placeholder{color:#777d6d!important}
+input:focus,select:focus,textarea:focus,.login-form input:focus{border-color:var(--hero-gold)!important;box-shadow:0 0 0 3px rgba(217,180,90,.10),inset 0 4px 12px rgba(0,0,0,.38)!important}
+label{color:#ded7c4!important}
+.badge{background:rgba(47,184,111,.10)!important;color:#7cf0aa!important;border-color:rgba(101,240,160,.20)!important}
+
+/* Tabelas */
+table{background:rgba(11,17,13,.94)!important;border-color:rgba(217,180,90,.20)!important}
+th{background:#252b24!important;color:#f0dfb5!important}
+th,td{border-bottom-color:rgba(217,180,90,.10)!important}
+td{color:#d2cdbc!important}
+tbody tr:hover{background:rgba(101,240,160,.045)!important}
+
+/* Login — composição inspirada diretamente na referência */
+.public-page .site-main{background:transparent!important}
+.python-login{
+  min-height:calc(100vh - 56px)!important;
+  padding:42px 18px 50px!important;
+  background:
+    linear-gradient(rgba(5,9,7,.62),rgba(5,9,7,.78)),
+    url('../images/python-dev-hero-bg.jpg') center/cover!important;
+}
+.python-login::before{display:none!important}
+.python-login::after{display:none!important}
+.python-login .login-card{
+  width:min(100%,560px)!important;
+  padding:42px 38px 30px!important;
+  border-radius:10px!important;
+  border:10px solid transparent!important;
+  border-image:linear-gradient(145deg,#78683d,#d2ae58,#554a2d,#a6843c) 1!important;
+  background:
+    linear-gradient(145deg,rgba(33,39,32,.98),rgba(10,15,11,.98)) padding-box!important;
+  box-shadow:0 28px 70px rgba(0,0,0,.62),0 0 0 1px rgba(217,180,90,.18),inset 0 0 45px rgba(0,0,0,.28)!important;
+  backdrop-filter:blur(6px)!important;
+}
+.python-login .login-card::before{
+  content:"";position:absolute;inset:8px;border:1px solid rgba(217,180,90,.30);border-radius:4px;pointer-events:none;
+}
+.python-login .login-card::after{
+  content:"◆";position:absolute;top:-28px;left:50%;transform:translateX(-50%);display:grid;place-items:center;width:54px;height:54px;border:3px solid #9f8442;border-radius:7px;background:#101711;color:var(--hero-green-bright);font-size:22px;box-shadow:0 0 0 5px rgba(16,23,17,.95),0 9px 24px rgba(0,0,0,.45);text-shadow:0 0 12px rgba(101,240,160,.65)
+}
+.python-login .login-brand{margin-bottom:28px!important}
+.python-login .python-login-logo{
+  width:84px!important;height:84px!important;margin:0 auto 10px!important;border-radius:50%!important;
+  background:radial-gradient(circle,#1b7b49 0 32%,#0d3f27 33% 55%,#0a1710 56%)!important;
+  border:2px solid var(--hero-gold)!important;box-shadow:0 0 0 5px rgba(217,180,90,.07),0 14px 30px rgba(0,0,0,.42)!important;
+}
+.python-login .python-login-logo img{width:58px!important;height:58px!important;background:transparent!important;padding:0!important;filter:grayscale(1) brightness(2) sepia(1) hue-rotate(70deg) saturate(2)!important}
+.python-login .login-brand .eyebrow{color:var(--hero-green-bright)!important;letter-spacing:.22em!important}
+.python-login .login-brand h1{font-family:Georgia,"Times New Roman",serif!important;font-size:clamp(2.15rem,7vw,3.45rem)!important;color:#f0d17b!important;text-shadow:0 3px 12px rgba(0,0,0,.55)!important}
+.python-login .login-brand h1::after{content:"";display:block;width:145px;height:2px;margin:11px auto 0;background:linear-gradient(90deg,transparent,var(--hero-gold),transparent);box-shadow:0 0 10px rgba(217,180,90,.35)}
+.python-login .login-brand p{color:#e1dac8!important;font-family:Georgia,"Times New Roman",serif!important;font-size:1.03rem!important}
+.python-login .login-form{gap:16px!important}
+.python-login .login-form label{font-family:Georgia,"Times New Roman",serif!important;color:#eadfbe!important;font-size:1rem!important}
+.python-login .login-form label>input,.python-login .password-field input{min-height:58px!important;border-radius:7px!important;padding-left:48px!important}
+.python-login .login-form label:first-child{position:relative}
+.python-login .login-form label:first-child::before{content:"▤";position:absolute;left:15px;bottom:15px;color:var(--hero-gold-bright);font-size:22px;z-index:2}
+.python-login .login-form label:nth-child(2){position:relative}
+.python-login .login-form label:nth-child(2)::before{content:"⚿";position:absolute;left:16px;bottom:14px;color:var(--hero-gold-bright);font-size:24px;z-index:2}
+.python-login .password-field input{padding-right:52px!important}
+.python-login .password-toggle{right:5px!important}
+.python-login .password-toggle img{filter:sepia(1) saturate(1.6) hue-rotate(345deg) brightness(1.35)!important}
+.python-login .login-forgot{text-align:left!important;margin:-2px 0 0!important}
+.python-login .login-forgot a,.python-login .login-register a{color:var(--hero-gold-bright)!important}
+.python-login .login-btn{font-family:Georgia,"Times New Roman",serif!important;font-size:1.13rem!important;min-height:58px!important;border-radius:8px!important;margin-top:7px!important}
+.python-login .login-register{color:#b7b39f!important;font-family:Georgia,"Times New Roman",serif!important}
+.python-login .login-google{background:#151b16!important;border-color:rgba(217,180,90,.25)!important;color:#e8dfca!important}
+.python-login .login-divider::before,.python-login .login-divider::after{background:rgba(217,180,90,.20)!important}
+.code-float{
+  border-color:rgba(101,240,160,.16)!important;background:rgba(5,13,9,.58)!important;color:#65f0a0!important;box-shadow:0 12px 28px rgba(0,0,0,.36)!important;text-shadow:0 0 8px rgba(101,240,160,.25)
+}
+.code-one{left:4%;top:14%}.code-two{right:4%;top:26%}.code-three{left:6%;bottom:15%}
+
+/* Cards e blocos com efeito de pedra */
+.admin-stat span,.action-icon,.manage-icon,.stat-icon{
+  background:linear-gradient(145deg,#30362d,#151b15)!important;
+  border-color:rgba(217,180,90,.24)!important;color:var(--hero-gold-bright)!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.05),0 8px 18px rgba(0,0,0,.28)!important;
+}
+.admin-stat strong{color:#f4e8c8!important}
+.admin-stat small,.admin-action-card p{color:#999c8d!important}
+.admin-action-card.featured{background:linear-gradient(145deg,rgba(34,72,46,.72),rgba(13,26,17,.96))!important;border-color:rgba(101,240,160,.24)!important}
+
+/* Barra de progresso / estados */
+.progress-track{background:#080e0a!important;border-color:#394134!important}
+.progress-fill{background:linear-gradient(90deg,#197343,#63e99d)!important}
+.flash{background:#151b16!important;border-color:rgba(217,180,90,.18)!important;color:#ddd6c4!important}
+.flash.success{background:rgba(31,104,62,.18)!important;border-color:rgba(101,240,160,.25)!important;color:#a9f3c2!important}
+.flash.error{background:rgba(112,43,35,.18)!important;border-color:rgba(200,109,95,.30)!important;color:#f0b1a6!important}
+
+/* Loader */
+.page-loader{background:rgba(5,9,7,.97)!important}
+.page-loader-card{background:linear-gradient(145deg,#252b24,#0c120e)!important;border-color:rgba(217,180,90,.28)!important;box-shadow:0 25px 70px rgba(0,0,0,.55)!important}
+.page-loader-logo{background:linear-gradient(145deg,#263329,#101710)!important;border-color:rgba(217,180,90,.35)!important}
+.page-loader-logo img{filter:sepia(.65) saturate(1.2) hue-rotate(35deg)!important}
+.page-loader-card strong{color:#f0dfb7!important}.page-loader-card strong span{color:var(--hero-green-bright)!important}.page-loader-card small{color:#8e927f!important}
+.page-loader-bar{background:#080d09!important}.page-loader-bar i{background:linear-gradient(90deg,#8b6428,#65f0a0)!important}
+
+@media(max-width:700px){
+  body{background-attachment:scroll!important}
+  .python-login{padding:35px 11px 40px!important}
+  .python-login .login-card{padding:36px 19px 26px!important;border-width:7px!important}
+  .python-login .login-brand h1{font-size:2.3rem!important}
+  .code-float{display:none!important}
+}

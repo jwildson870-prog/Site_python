@@ -1,6 +1,8 @@
-const CACHE_NAME = 'portal-python-static-v8';
+const CACHE_NAME = 'portal-python-static-v9-hero';
 const STATIC_ASSETS = [
   '/static/css/style.css',
+  '/static/css/python-dev-hero-theme.css',
+  '/static/images/python-dev-hero-bg.jpg',
   '/static/js/ui.js',
   '/static/js/loading.js',
   '/static/manifest.json',
