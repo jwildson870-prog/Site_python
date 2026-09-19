@@ -1,3 +1,11 @@
-Portal Python — camada visual inspirada em sistemas acadêmicos como o SUAP.
-Foi adicionado portal-jm-suap-theme.css e seu carregamento nos templates HTML.
-A camada foi feita para preservar a lógica, rotas e banco existentes.
+Portal Python — RPG Tech Academy
+Camada visual principal do Portal Python.
+
+O redesign utiliza um Design System centralizado em:
+app/static/css/design-system.css
+
+A identidade visual é única, com linguagem Dark Fantasy + tecnologia:
+azul profundo, ciano, roxo, glassmorphism, profundidade e microinterações.
+
+O redesign é visual e preserva rotas, autenticação, permissões, banco,
+PWA, service worker, APIs e regras de negócio existentes.
