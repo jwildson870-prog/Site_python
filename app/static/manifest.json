@@ -7,13 +7,8 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-<<<<<<< HEAD
-  "background_color": "#0c120e",
-  "theme_color": "#0c120e",
-=======
   "background_color": "#050914",
   "theme_color": "#071020",
->>>>>>> 3d2350b (Redesign visual completo do Portal Python)
   "icons": [
     {
       "src": "/static/icons/icon-192.png",

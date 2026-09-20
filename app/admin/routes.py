@@ -1,4 +1,4 @@
-import os, uuid, io, json
+import os, uuid, io, json, mimetypes
 from datetime import datetime, timedelta
 from pathlib import Path
 from urllib.parse import urlparse
@@ -6,10 +6,11 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from sqlalchemy import or_
 from werkzeug.utils import secure_filename
+from werkzeug.datastructures import FileStorage
 from ..storage import upload as storage_upload, delete as storage_delete, get_file, b2_enabled, StorageError
 from ..extensions import db
 from ..timeutils import utcnow
-from ..models import Series, Subject, Content, User, Activity, ActivityAttempt, Experiment, Notification, Alert, QuestionBank, Progress
+from ..models import Series, Subject, Content, ContentHistory, User, Activity, ActivityHistory, ActivityAttempt, Experiment, Notification, Alert, QuestionBank, Progress
 from ..pptx_preview import convert_pptx_to_images
 from ..activity_library import PREBUILT_ACTIVITIES, BY_SLUG
 
@@ -394,13 +395,66 @@ def subject_edit(id):
 def subject_delete(id):
     s=Subject.query.get_or_404(id); db.session.delete(s); db.session.commit(); flash('Matéria excluída.','success'); return redirect(url_for('admin.subjects_list'))
 
+def _record_content_history(content, action):
+    db.session.add(ContentHistory(content_id=content.id, action=action, actor_id=current_user.id))
+
+
+def _record_activity_history(activity, action):
+    db.session.add(ActivityHistory(activity_id=activity.id, action=action, actor_id=current_user.id))
+
+
+def _copy_storage_key(key):
+    """Copia um arquivo armazenado sem compartilhar a mesma chave entre materiais."""
+    if not key:
+        return None
+    if b2_enabled():
+        obj = get_file(key)
+        if not obj:
+            raise RuntimeError('Não foi possível ler o arquivo original para duplicação.')
+        data = obj['Body'].read()
+    else:
+        path = Path(current_app.config['UPLOAD_FOLDER']) / key
+        if not path.exists():
+            raise RuntimeError('O arquivo original não foi encontrado para duplicação.')
+        data = path.read_bytes()
+    suffix = Path(key).suffix or '.bin'
+    filename = f'copia-{uuid.uuid4().hex}{suffix}'
+    fs = FileStorage(stream=io.BytesIO(data), filename=filename, content_type=mimetypes.guess_type(filename)[0])
+    return storage_upload(fs, filename, fs.content_type)
+
+
+def _clone_content_files(content):
+    new_file = None
+    new_preview = []
+    try:
+        if content.file_name:
+            new_file = _copy_storage_key(content.file_name)
+        for key in _preview_files(content):
+            copied = _copy_storage_key(key)
+            if copied:
+                new_preview.append(copied)
+        return new_file, new_preview
+    except Exception:
+        if new_file:
+            storage_delete(new_file)
+        for key in new_preview:
+            storage_delete(key)
+        raise
+
+
 @admin_bp.get('/contents')
 def contents():
     q = request.args.get('q', '').strip()
     kind = request.args.get('kind', '').strip().lower()
     series_id = request.args.get('series_id', '').strip()
     subject_id = request.args.get('subject_id', '').strip()
+    status = request.args.get('status', 'active').strip().lower()
     query = Content.query
+    if status == 'archived':
+        query = query.filter(Content.archived_at.isnot(None))
+    elif status != 'all':
+        status = 'active'
+        query = query.filter(Content.archived_at.is_(None))
     if q:
         like = f'%{q}%'
         query = query.filter(or_(Content.title.ilike(like), Content.description.ilike(like), Content.body.ilike(like)))
@@ -410,7 +464,7 @@ def contents():
     if subject_id.isdigit(): query = query.filter_by(subject_id=int(subject_id))
     contents = query.order_by(Content.id.desc()).all()
     return render_template('admin/contents.html', contents=contents, q=q, kind=kind, series_id=series_id, subject_id=subject_id,
-                           series=Series.query.order_by(Series.id).all(), subjects=Subject.query.order_by(Subject.name).all())
+                           series=Series.query.order_by(Series.id).all(), subjects=Subject.query.order_by(Subject.name).all(), status=status)
 @admin_bp.get('/series/<int:id>')
 def series_detail(id): return render_template('admin/series_detail.html',series=Series.query.get_or_404(id))
 
@@ -549,6 +603,8 @@ def content_new():
     if request.method == 'POST' and content:
         notify_students(f'Novo material: {content.title}', url_for('student.content', id=content.id))
         db.session.commit()
+        _record_content_history(content, 'criado')
+        db.session.commit()
         flash('Material publicado com sucesso.', 'success')
         return redirect(url_for('admin.contents'))
     return render_template('admin/content_form.html', content=None, series=series, subjects=subjects)
@@ -558,15 +614,70 @@ def content_edit(id):
     content = Content.query.get_or_404(id)
     result, series, subjects = content_form(content)
     if request.method == 'POST' and result:
+        _record_content_history(content, 'editado')
+        db.session.commit()
         flash('Material atualizado.', 'success')
         return redirect(url_for('admin.contents'))
     return render_template('admin/content_form.html', content=content, series=series, subjects=subjects)
+
+@admin_bp.post('/contents/<int:id>/duplicate')
+def content_duplicate(id):
+    source = Content.query.get_or_404(id)
+    try:
+        new_file, new_preview = _clone_content_files(source)
+    except Exception as exc:
+        current_app.logger.exception('Falha ao duplicar material')
+        flash(f'Não foi possível duplicar o material: {exc}', 'error')
+        return redirect(url_for('admin.contents'))
+    duplicate = Content(
+        title=f'{source.title} (cópia)', description=source.description, kind=source.kind,
+        body=source.body, external_url=source.external_url, file_name=new_file,
+        preview_manifest=json.dumps(new_preview, ensure_ascii=False) if new_preview else None,
+        series_id=source.series_id, subject_id=source.subject_id, archived_at=None,
+    )
+    db.session.add(duplicate)
+    db.session.flush()
+    _record_content_history(duplicate, 'duplicado')
+    db.session.commit()
+    flash('Material duplicado. A cópia foi criada como conteúdo ativo.', 'success')
+    return redirect(url_for('admin.contents'))
+
+
+@admin_bp.post('/contents/<int:id>/archive')
+def content_archive(id):
+    content = Content.query.get_or_404(id)
+    if content.archived_at is None:
+        content.archived_at = utcnow()
+        _record_content_history(content, 'arquivado')
+        db.session.commit()
+    flash('Material arquivado. Ele não aparece mais para os alunos.', 'success')
+    return redirect(url_for('admin.contents'))
+
+
+@admin_bp.post('/contents/<int:id>/restore')
+def content_restore(id):
+    content = Content.query.get_or_404(id)
+    if content.archived_at is not None:
+        content.archived_at = None
+        _record_content_history(content, 'restaurado')
+        db.session.commit()
+    flash('Material restaurado e novamente disponível para os alunos.', 'success')
+    return redirect(url_for('admin.contents', status='archived'))
+
+
+@admin_bp.get('/contents/<int:id>/history')
+def content_history(id):
+    content = Content.query.get_or_404(id)
+    history = ContentHistory.query.filter_by(content_id=content.id).order_by(ContentHistory.created_at.desc(), ContentHistory.id.desc()).all()
+    return render_template('admin/content_history.html', content=content, history=history)
+
 
 @admin_bp.post('/contents/<int:id>/delete')
 def content_delete(id):
     content = Content.query.get_or_404(id)
     filename = content.file_name
     preview_files = _preview_files(content)
+    _record_content_history(content, 'excluído')
     db.session.delete(content)
     db.session.commit()
     if filename:
@@ -728,6 +839,9 @@ def activity_import_questions(id):
         current.append({'question': item.question, 'options': opts, 'correct': item.correct, **({'code': item.code} if item.code else {})})
         added += 1
     activity.set_questions(current); db.session.commit()
+    if added:
+        _record_activity_history(activity, 'questões adicionadas')
+        db.session.commit()
     flash(f'{added} questão(ões) importada(s) para a atividade.', 'success' if added else 'error')
     return redirect(url_for('admin.activity_edit', id=id))
 
@@ -738,6 +852,7 @@ def activities():
     subject_id = request.args.get('subject_id', '').strip()
     status = request.args.get('status', '').strip().lower()
     difficulty = request.args.get('difficulty', '').strip().lower()
+    archive_status = request.args.get('archive_status', 'active').strip().lower()
     if request.method == 'POST':
         title = request.form.get('title', '').strip()
         description = request.form.get('description', '').strip()
@@ -757,9 +872,16 @@ def activities():
             a.set_questions([])
             db.session.add(a)
             db.session.commit()
+            _record_activity_history(a, 'criada')
+            db.session.commit()
             flash('Atividade criada. Agora adicione as questões.', 'success')
             return redirect(url_for('admin.activity_edit', id=a.id))
     query = Activity.query
+    if archive_status == 'archived':
+        query = query.filter(Activity.archived_at.isnot(None))
+    elif archive_status != 'all':
+        archive_status = 'active'
+        query = query.filter(Activity.archived_at.is_(None))
     if q:
         like = f'%{q}%'
         query = query.filter(or_(Activity.title.ilike(like), Activity.description.ilike(like)))
@@ -770,7 +892,7 @@ def activities():
     items = query.order_by(Activity.id.desc()).all()
     if status == 'pending': items = [a for a in items if not a.due_at or a.due_at >= now]
     elif status == 'expired': items = [a for a in items if a.due_at and a.due_at < now]
-    return render_template('admin/activities.html', activities=items, series=Series.query.order_by(Series.id).all(), subjects=Subject.query.order_by(Subject.name).all(), q=q, series_id=series_id, subject_id=subject_id, status=status, difficulty=difficulty, now=now)
+    return render_template('admin/activities.html', activities=items, series=Series.query.order_by(Series.id).all(), subjects=Subject.query.order_by(Subject.name).all(), q=q, series_id=series_id, subject_id=subject_id, status=status, difficulty=difficulty, archive_status=archive_status, now=now)
 
 
 @admin_bp.route('/activities/prontas', methods=['GET', 'POST'])
@@ -832,6 +954,8 @@ def ready_activities():
             )
             activity.set_questions([dict(q) for q in item['questions']])
             db.session.add(activity); db.session.commit()
+            _record_activity_history(activity, 'criada')
+            db.session.commit()
             notify_students(f'Nova atividade: {activity.title}', url_for('student.activity', id=activity.id))
             db.session.commit()
             flash(f'Atividade pronta "{activity.title}" adicionada com {len(item["questions"])} questões.', 'success')
@@ -898,6 +1022,8 @@ def activity_edit(id):
             a.difficulty = difficulty_value if difficulty_value in {'facil','medio','dificil'} else 'medio'
             a.set_questions(questions)
             db.session.commit()
+            _record_activity_history(a, 'editada')
+            db.session.commit()
             if was_empty:
                 notify_students(f'Nova atividade: {a.title}', url_for('student.activity', id=a.id))
                 db.session.commit()
@@ -915,9 +1041,56 @@ def activity_edit(id):
     due_raw = a.due_at.strftime('%Y-%m-%dT%H:%M') if a.due_at else ''
     return render_template('admin/activity_form.html', activity=a, questions=a.get_questions(), due_raw=due_raw, bank_items=QuestionBank.query.filter_by(series_id=a.series_id, subject_id=a.subject_id).order_by(QuestionBank.id.desc()).all())
 
+@admin_bp.post('/activities/<int:id>/duplicate')
+def activity_duplicate(id):
+    source = Activity.query.get_or_404(id)
+    duplicate = Activity(
+        title=f'{source.title} (cópia)', description=source.description,
+        series_id=source.series_id, subject_id=source.subject_id,
+        questions_json=source.questions_json, due_at=None,
+        difficulty=source.difficulty, archived_at=None,
+    )
+    db.session.add(duplicate)
+    db.session.flush()
+    _record_activity_history(duplicate, 'duplicada')
+    db.session.commit()
+    flash('Atividade duplicada. A cópia foi criada sem prazo de entrega.', 'success')
+    return redirect(url_for('admin.activities'))
+
+
+@admin_bp.post('/activities/<int:id>/archive')
+def activity_archive(id):
+    activity = Activity.query.get_or_404(id)
+    if activity.archived_at is None:
+        activity.archived_at = utcnow()
+        _record_activity_history(activity, 'arquivada')
+        db.session.commit()
+    flash('Atividade arquivada. Ela não aparece mais para os alunos.', 'success')
+    return redirect(url_for('admin.activities'))
+
+
+@admin_bp.post('/activities/<int:id>/restore')
+def activity_restore(id):
+    activity = Activity.query.get_or_404(id)
+    if activity.archived_at is not None:
+        activity.archived_at = None
+        _record_activity_history(activity, 'restaurada')
+        db.session.commit()
+    flash('Atividade restaurada e novamente disponível para os alunos.', 'success')
+    return redirect(url_for('admin.activities', archive_status='archived'))
+
+
+@admin_bp.get('/activities/<int:id>/history')
+def activity_history(id):
+    activity = Activity.query.get_or_404(id)
+    history = ActivityHistory.query.filter_by(activity_id=activity.id).order_by(ActivityHistory.created_at.desc(), ActivityHistory.id.desc()).all()
+    return render_template('admin/activity_history.html', activity=activity, history=history)
+
+
 @admin_bp.post('/activities/<int:id>/delete')
 def activity_delete(id):
     a = Activity.query.get_or_404(id)
+    _record_activity_history(a, 'excluída')
     db.session.delete(a)
     db.session.commit()
     flash('Atividade excluída.', 'success')

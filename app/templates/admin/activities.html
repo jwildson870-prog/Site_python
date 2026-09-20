@@ -26,8 +26,9 @@
     <label><span>Série</span><select name="series_id"><option value="">Todas</option>{% for s in series %}<option value="{{s.id}}" {% if series_id==s.id|string %}selected{% endif %}>{{s.name}}</option>{% endfor %}</select></label>
     <label><span>Matéria</span><select name="subject_id"><option value="">Todas</option>{% for s in subjects %}<option value="{{s.id}}" {% if subject_id==s.id|string %}selected{% endif %}>{{s.name}}</option>{% endfor %}</select></label>
     <label><span>Prazo</span><select name="status"><option value="">Todas</option><option value="pending" {% if status=='pending' %}selected{% endif %}>Em aberto</option><option value="expired" {% if status=='expired' %}selected{% endif %}>Encerradas</option></select></label>
+    <label><span>Arquivamento</span><select name="archive_status"><option value="active" {% if archive_status=='active' %}selected{% endif %}>Ativas</option><option value="archived" {% if archive_status=='archived' %}selected{% endif %}>Arquivadas</option><option value="all" {% if archive_status=='all' %}selected{% endif %}>Todas</option></select></label>
     <label><span>Nível</span><select name="difficulty"><option value="">Todos</option><option value="facil" {% if difficulty=='facil' %}selected{% endif %}>Fácil</option><option value="medio" {% if difficulty=='medio' %}selected{% endif %}>Médio</option><option value="dificil" {% if difficulty=='dificil' %}selected{% endif %}>Difícil</option></select></label>
-    <button class="btn" type="submit">Filtrar</button>{% if q or series_id or subject_id or status or difficulty %}<a class="btn secondary" href="{{url_for('admin.activities')}}">Limpar</a>{% endif %}
+    <button class="btn" type="submit">Filtrar</button>{% if q or series_id or subject_id or status or difficulty or archive_status!='active' %}<a class="btn secondary" href="{{url_for('admin.activities')}}">Limpar</a>{% endif %}
   </form>
   <div class="library-toolbar"><div><strong>{{activities|length}}</strong><span>atividade(s) encontrada(s)</span></div><div class="library-hint">Organização por turma e prazo</div></div>
 
@@ -43,6 +44,9 @@
       <div class="activity-admin-actions">
         <a class="btn secondary" href="{{url_for('admin.activity_results',id=a.id)}}">Resultados</a>
         <a class="btn secondary edit" href="{{url_for('admin.activity_edit',id=a.id)}}">Editar</a>
+        <a class="btn secondary" href="{{url_for('admin.activity_history',id=a.id)}}">Histórico</a>
+        <form method="post" action="{{url_for('admin.activity_duplicate',id=a.id)}}"><input type="hidden" name="csrf_token" value="{{csrf_token()}}"><button class="btn secondary" type="submit">Duplicar</button></form>
+        {% if a.archived_at %}<form method="post" action="{{url_for('admin.activity_restore',id=a.id)}}"><input type="hidden" name="csrf_token" value="{{csrf_token()}}"><button class="btn secondary" type="submit">Restaurar</button></form>{% else %}<form method="post" action="{{url_for('admin.activity_archive',id=a.id)}}"><input type="hidden" name="csrf_token" value="{{csrf_token()}}"><button class="btn secondary" type="submit">Arquivar</button></form>{% endif %}
         <form method="post" action="{{url_for('admin.activity_delete',id=a.id)}}" data-confirm-message="Excluir a atividade &quot;{{a.title}}&quot;? Essa ação não pode ser desfeita."><input type="hidden" name="csrf_token" value="{{csrf_token()}}"><button class="btn danger" type="submit">Excluir</button></form>
       </div>
     </article>

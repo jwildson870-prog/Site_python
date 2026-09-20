@@ -59,7 +59,7 @@ def _create_engagement_reminder(user_id):
     ).first()
     if existing:
         return
-    activities = Activity.query.filter(Activity.due_at.isnot(None), Activity.due_at >= now, Activity.due_at <= now + timedelta(hours=72)).order_by(Activity.due_at.asc()).all()
+    activities = Activity.query.filter(Activity.archived_at.is_(None), Activity.due_at.isnot(None), Activity.due_at >= now, Activity.due_at <= now + timedelta(hours=72)).order_by(Activity.due_at.asc()).all()
     attempted = {a.activity_id for a in ActivityAttempt.query.filter_by(user_id=user_id).all()}
     pending = next((a for a in activities if a.id not in attempted), None)
     if pending:
@@ -85,17 +85,17 @@ def guard():
 @student_bp.route('/', methods=['GET'])
 def dashboard():
     series = Series.query.order_by(Series.id).all()
-    total_contents = Content.query.count()
+    total_contents = Content.query.filter(Content.archived_at.is_(None)).count()
     completed = Progress.query.filter_by(user_id=current_user.id).count()
     percent = round(completed / total_contents * 100) if total_contents else 0
     favorite_count = Favorite.query.filter_by(user_id=current_user.id).count()
     unread_count = Notification.query.filter_by(user_id=current_user.id, read=False).count()
-    activities = Activity.query.order_by(Activity.id.desc()).all()
+    activities = Activity.query.filter(Activity.archived_at.is_(None)).order_by(Activity.id.desc()).all()
     attempts = ActivityAttempt.query.filter_by(user_id=current_user.id).order_by(ActivityAttempt.id.desc()).all()
     attempted_ids = {a.activity_id for a in attempts}
     pending_activities = sum(1 for a in activities if a.id not in attempted_ids and not (a.due_at and utcnow() > a.due_at))
     average = round(sum(a.score for a in attempts) / len(attempts), 1) if attempts else None
-    recent_contents = Content.query.order_by(Content.id.desc()).limit(5).all()
+    recent_contents = Content.query.filter(Content.archived_at.is_(None)).order_by(Content.id.desc()).limit(5).all()
     recent_activities = activities[:5]
     recent_attempts = attempts[:5]
     recent_notifications = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.id.desc()).limit(4).all()
@@ -126,7 +126,7 @@ def materials():
     kind = request.args.get('kind', '').strip().lower()
     series_id = request.args.get('series_id', '').strip()
     subject_id = request.args.get('subject_id', '').strip()
-    query = Content.query
+    query = Content.query.filter(Content.archived_at.is_(None))
     if q:
         like = f'%{q}%'
         query = query.filter(or_(Content.title.ilike(like), Content.description.ilike(like), Content.body.ilike(like)))
@@ -151,7 +151,7 @@ def profile():
 
 @student_bp.get('/desempenho')
 def performance():
-    activities = Activity.query.order_by(Activity.id.desc()).all()
+    activities = Activity.query.filter(Activity.archived_at.is_(None)).order_by(Activity.id.desc()).all()
     attempts = ActivityAttempt.query.filter_by(user_id=current_user.id).order_by(ActivityAttempt.id.desc()).all()
     by_activity = {}
     for attempt in attempts:
@@ -171,7 +171,7 @@ def performance():
 
 @student_bp.get('/notas')
 def grades():
-    activities = Activity.query.order_by(Activity.id.desc()).all()
+    activities = Activity.query.filter(Activity.archived_at.is_(None)).order_by(Activity.id.desc()).all()
     attempts = ActivityAttempt.query.filter_by(user_id=current_user.id).order_by(ActivityAttempt.id.desc()).all()
     by_activity = {}
     for attempt in attempts:
@@ -186,19 +186,19 @@ def grades():
 @student_bp.get('/serie/<int:id>')
 def series(id): return render_template('student/series.html',series=Series.query.get_or_404(id))
 @student_bp.get('/materia/<int:id>')
-def subject(id): return render_template('student/subject.html',subject=Subject.query.get_or_404(id),activities=Activity.query.filter_by(subject_id=id).order_by(Activity.id.desc()).all(),experiments=Experiment.query.filter_by(subject_id=id).order_by(Experiment.id.desc()).all())
+def subject(id): return render_template('student/subject.html',subject=Subject.query.get_or_404(id),activities=Activity.query.filter(Activity.subject_id == id, Activity.archived_at.is_(None)).order_by(Activity.id.desc()).all(),experiments=Experiment.query.filter_by(subject_id=id).order_by(Experiment.id.desc()).all())
 @student_bp.get('/conteudo/<int:id>')
 def content(id):
-    c=Content.query.get_or_404(id); fav=Favorite.query.filter_by(user_id=current_user.id,content_id=c.id).first(); done=Progress.query.filter_by(user_id=current_user.id,content_id=c.id).first(); return render_template('student/content.html',content=c,favorite=bool(fav),completed=bool(done),pptx_preview=bool(_preview_files(c)))
+    c=Content.query.filter(Content.id == id, Content.archived_at.is_(None)).first_or_404(); fav=Favorite.query.filter_by(user_id=current_user.id,content_id=c.id).first(); done=Progress.query.filter_by(user_id=current_user.id,content_id=c.id).first(); return render_template('student/content.html',content=c,favorite=bool(fav),completed=bool(done),pptx_preview=bool(_preview_files(c)))
 @student_bp.post('/conteudo/<int:id>/favoritar')
 def toggle_favorite(id):
-    c=Content.query.get_or_404(id); f=Favorite.query.filter_by(user_id=current_user.id,content_id=c.id).first()
+    c=Content.query.filter(Content.id == id, Content.archived_at.is_(None)).first_or_404(); f=Favorite.query.filter_by(user_id=current_user.id,content_id=c.id).first()
     if f: db.session.delete(f); flash('Removido dos favoritos.','success')
     else: db.session.add(Favorite(user_id=current_user.id,content_id=c.id)); flash('Adicionado aos favoritos.','success')
     db.session.commit(); return redirect(url_for('student.content',id=id))
 @student_bp.post('/conteudo/<int:id>/concluir')
 def complete(id):
-    c=Content.query.get_or_404(id)
+    c=Content.query.filter(Content.id == id, Content.archived_at.is_(None)).first_or_404()
     if not Progress.query.filter_by(user_id=current_user.id,content_id=c.id).first(): db.session.add(Progress(user_id=current_user.id,content_id=c.id)); db.session.commit()
     flash('Conteúdo marcado como concluído.','success'); return redirect(url_for('student.content',id=id))
 @student_bp.get('/favoritos')
@@ -209,7 +209,7 @@ def activities():
     series_id = request.args.get('series_id', '').strip()
     subject_id = request.args.get('subject_id', '').strip()
     status = request.args.get('status', '').strip().lower()
-    query = Activity.query
+    query = Activity.query.filter(Activity.archived_at.is_(None))
     if q:
         like = f'%{q}%'; query = query.filter(or_(Activity.title.ilike(like), Activity.description.ilike(like)))
     if series_id.isdigit(): query = query.filter_by(series_id=int(series_id))
@@ -224,7 +224,7 @@ def activities():
 
 @student_bp.route('/atividade/<int:id>',methods=['GET','POST'])
 def activity(id):
-    a=Activity.query.get_or_404(id); questions=a.get_questions(); now=utcnow()
+    a=Activity.query.filter(Activity.id == id, Activity.archived_at.is_(None)).first_or_404(); questions=a.get_questions(); now=utcnow()
     expired = bool(a.due_at and now > a.due_at)
     if request.method=='POST':
         if expired:
@@ -239,7 +239,7 @@ def experiments(): return render_template('student/experiments.html',experiments
 def experiment(id): return render_template('student/experiment.html',experiment=Experiment.query.get_or_404(id))
 @student_bp.get('/progresso')
 def progress():
-    total=Content.query.count(); completed=Progress.query.filter_by(user_id=current_user.id).count(); percent=round(completed/total*100) if total else 0
+    total=Content.query.filter(Content.archived_at.is_(None)).count(); completed=Progress.query.filter_by(user_id=current_user.id).count(); percent=round(completed/total*100) if total else 0
     attempts=ActivityAttempt.query.filter_by(user_id=current_user.id).order_by(ActivityAttempt.id.desc()).all()
     return render_template('student/progress.html',total=total,completed=completed,percent=percent,attempts=attempts)
 @student_bp.get('/calendario')
@@ -260,7 +260,7 @@ def calendar_view():
     while len(cells) % 7: cells.append(None)
     while len(cells) < 35: cells.append(None)
     events = {}
-    for activity in Activity.query.filter(Activity.due_at.isnot(None)).all():
+    for activity in Activity.query.filter(Activity.archived_at.is_(None), Activity.due_at.isnot(None)).all():
         d = activity.due_at.date()
         if d.year == year and d.month == month:
             events.setdefault(d, []).append(activity)
@@ -288,7 +288,7 @@ def engagement():
     now = utcnow()
     pending = []
     attempted_ids = {a.activity_id for a in ActivityAttempt.query.filter_by(user_id=current_user.id).all()}
-    for activity in Activity.query.filter(Activity.due_at.isnot(None), Activity.due_at >= now).order_by(Activity.due_at.asc()).all():
+    for activity in Activity.query.filter(Activity.archived_at.is_(None), Activity.due_at.isnot(None), Activity.due_at >= now).order_by(Activity.due_at.asc()).all():
         if activity.id not in attempted_ids:
             pending.append(activity)
     upcoming = pending[:8]
@@ -330,7 +330,7 @@ def ranking():
 @student_bp.get('/conquistas')
 def achievements():
     completed = Progress.query.filter_by(user_id=current_user.id).count()
-    total = Content.query.count()
+    total = Content.query.filter(Content.archived_at.is_(None)).count()
     attempts = ActivityAttempt.query.filter_by(user_id=current_user.id).all()
     definitions = [
         ('Primeiro passo', 'Conclua seu primeiro material.', completed >= 1, '1 material concluído'),
@@ -370,12 +370,12 @@ def search():
     if q:
         like = f'%{q}%'
         if category in {'', 'content'}:
-            query = Content.query.filter(or_(Content.title.ilike(like), Content.description.ilike(like), Content.body.ilike(like)))
+            query = Content.query.filter(Content.archived_at.is_(None), or_(Content.title.ilike(like), Content.description.ilike(like), Content.body.ilike(like)))
             if series_id.isdigit(): query = query.filter_by(series_id=int(series_id))
             if subject_id.isdigit(): query = query.filter_by(subject_id=int(subject_id))
             contents = query.order_by(Content.id.desc()).all()
         if category in {'', 'activity'}:
-            query = Activity.query.filter(or_(Activity.title.ilike(like), Activity.description.ilike(like)))
+            query = Activity.query.filter(Activity.archived_at.is_(None), or_(Activity.title.ilike(like), Activity.description.ilike(like)))
             if series_id.isdigit(): query = query.filter_by(series_id=int(series_id))
             if subject_id.isdigit(): query = query.filter_by(subject_id=int(subject_id))
             activities = query.order_by(Activity.id.desc()).all()
@@ -389,7 +389,7 @@ def search():
                            contents=contents, activities=activities, experiments=experiments)
 @student_bp.get('/pptx/<int:id>')
 def pptx_view(id):
-    c = Content.query.get_or_404(id)
+    c = Content.query.filter(Content.id == id, Content.archived_at.is_(None)).first_or_404()
     slides = _preview_files(c)
     if c.kind != 'file' or not c.file_name or not slides:
         abort(404)
@@ -397,7 +397,7 @@ def pptx_view(id):
 
 @student_bp.get('/pptx/<int:id>/slide/<int:slide>')
 def pptx_slide(id, slide):
-    c = Content.query.get_or_404(id)
+    c = Content.query.filter(Content.id == id, Content.archived_at.is_(None)).first_or_404()
     slides = _preview_files(c)
     if c.kind != 'file' or slide < 0 or slide >= len(slides):
         abort(404)
@@ -415,7 +415,7 @@ def pptx_slide(id, slide):
 
 @student_bp.get('/arquivo/<int:id>')
 def arquivo(id):
-    c=Content.query.get_or_404(id)
+    c=Content.query.filter(Content.id == id, Content.archived_at.is_(None)).first_or_404()
     if c.kind not in ('file','pdf') or not c.file_name: abort(404)
     if b2_enabled():
         try:
@@ -427,7 +427,7 @@ def arquivo(id):
     return send_from_directory(current_app.config['UPLOAD_FOLDER'],c.file_name,as_attachment=False)
 @student_bp.get('/pdf/<int:id>')
 def pdf(id):
-    c=Content.query.get_or_404(id)
+    c=Content.query.filter(Content.id == id, Content.archived_at.is_(None)).first_or_404()
     if c.kind!='pdf' or not c.file_name: abort(404)
     if b2_enabled():
         try:

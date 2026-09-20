@@ -166,6 +166,18 @@ def create_app(test_config=None):
                     conn.execute(text('ALTER TABLE contents ADD COLUMN IF NOT EXISTS preview_manifest TEXT'))
                 elif db.engine.dialect.name == 'sqlite':
                     conn.execute(text('ALTER TABLE contents ADD COLUMN preview_manifest TEXT'))
+        if 'contents' in inspector.get_table_names() and 'archived_at' not in {c['name'] for c in inspector.get_columns('contents')}:
+            with db.engine.begin() as conn:
+                if db.engine.dialect.name == 'postgresql':
+                    conn.execute(text('ALTER TABLE contents ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP'))
+                elif db.engine.dialect.name == 'sqlite':
+                    conn.execute(text('ALTER TABLE contents ADD COLUMN archived_at DATETIME'))
+        if 'activities' in inspector.get_table_names() and 'archived_at' not in {c['name'] for c in inspector.get_columns('activities')}:
+            with db.engine.begin() as conn:
+                if db.engine.dialect.name == 'postgresql':
+                    conn.execute(text('ALTER TABLE activities ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP'))
+                elif db.engine.dialect.name == 'sqlite':
+                    conn.execute(text('ALTER TABLE activities ADD COLUMN archived_at DATETIME'))
         if 'activities' in inspector.get_table_names() and 'due_at' not in {c['name'] for c in inspector.get_columns('activities')}:
             with db.engine.begin() as conn:
                 if db.engine.dialect.name == 'postgresql':
