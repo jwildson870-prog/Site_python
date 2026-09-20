@@ -29,15 +29,31 @@
           <a class="btn secondary compact-btn" href="https://drive.google.com/drive/my-drive" target="_blank" rel="noopener noreferrer">↗ Abrir Google Drive</a>
         </div>
         <div class="publisher-card form-section">
-          <div class="form-section-head"><div class="step-number">3</div><div><span class="eyebrow">EXPLICAÇÃO</span><h2>Texto complementar</h2><p>Use este espaço quando o material for uma explicação.</p></div></div>
+          <div class="form-section-head"><div class="step-number">3</div><div><span class="eyebrow">PUBLICAÇÃO</span><h2>Visibilidade do material</h2><p>Escolha quando o conteúdo ficará disponível para os alunos.</p></div></div>
+          <div class="form-grid tidy-grid">
+            {% set current_status = content.status if content and content.status else 'published' %}
+            <label class="field-block full">Status<select name="status" id="content-status" required><option value="draft" {% if current_status=='draft' %}selected{% endif %}>Rascunho — não aparece para alunos</option><option value="published" {% if current_status=='published' %}selected{% endif %}>Publicado — disponível para alunos</option><option value="scheduled" {% if current_status=='scheduled' %}selected{% endif %}>Programado — publicar automaticamente</option></select></label>
+            <label class="field-block full" id="scheduled-field">Data e hora da publicação<input name="scheduled_at" type="datetime-local" value="{{ content.scheduled_at.strftime('%Y-%m-%dT%H:%M') if content and content.scheduled_at else '' }}"></label>
+          </div>
+        </div>
+        <div class="publisher-card form-section">
+          <div class="form-section-head"><div class="step-number">4</div><div><span class="eyebrow">EXPLICAÇÃO</span><h2>Texto complementar</h2><p>Use este espaço quando o material for uma explicação.</p></div></div>
           <label class="field-block">Conteúdo<textarea name="body" rows="12" placeholder="Escreva a explicação que será apresentada aos alunos.">{{content.body if content else ''}}</textarea></label>
         </div>
       </div>
       <aside class="workspace-side">
-        <div class="publish-summary"><span class="summary-icon uiverse-feature-card"><img src="{{url_for('static', filename='icons/ui/check-green.svg')}}" alt=""></span><h3>Pronto para publicar?</h3><p>Revise os dados antes de salvar. Você poderá editar o material depois.</p><button class="btn admin-primary publish-btn" type="submit">{{'Salvar alterações' if content else 'Publicar material'}}</button></div>
+        <div class="publish-summary"><span class="summary-icon uiverse-feature-card"><img src="{{url_for('static', filename='icons/ui/check-green.svg')}}" alt=""></span><h3>Pronto para salvar?</h3><p>O status escolhido define quando o material ficará visível para os alunos.</p><button class="btn admin-primary publish-btn" type="submit">{{'Salvar alterações' if content else 'Salvar material'}}</button></div>
         <div class="workspace-help"><strong><span class="uiverse-inline-card"><img src="{{url_for('static', filename='icons/ui/code-yellow.svg')}}" alt=""></span>Dica</strong><p>Use títulos curtos e uma descrição objetiva. Links do Drive, YouTube e outros serviços podem ser usados.</p></div>
       </aside>
     </div>
   </form>
 </section>
+<script>
+(function(){
+  const status = document.getElementById('content-status');
+  const field = document.getElementById('scheduled-field');
+  function sync(){ field.style.display = status.value === 'scheduled' ? '' : 'none'; }
+  status.addEventListener('change', sync); sync();
+})();
+</script>
 {% endblock %}

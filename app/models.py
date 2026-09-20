@@ -4,6 +4,12 @@ from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from .extensions import db
 
+class SchemaMigration(db.Model):
+    __tablename__ = 'schema_migrations'
+    version = db.Column(db.String(100), primary_key=True)
+    applied_at = db.Column(db.DateTime, default=utcnow, nullable=False)
+
+
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -67,6 +73,10 @@ class Content(db.Model):
     created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow, nullable=False)
     archived_at = db.Column(db.DateTime, nullable=True, index=True)
+    # Controle de publicação: legado é tratado como publicado durante a migração.
+    status = db.Column(db.String(20), nullable=False, default='published', index=True)
+    published_at = db.Column(db.DateTime, nullable=True, index=True)
+    scheduled_at = db.Column(db.DateTime, nullable=True, index=True)
     favorites = db.relationship('Favorite', backref='content', cascade='all, delete-orphan')
     progress = db.relationship('Progress', backref='content', cascade='all, delete-orphan')
 

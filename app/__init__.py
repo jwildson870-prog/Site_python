@@ -118,6 +118,9 @@ def create_app(test_config=None):
                 logout_user(); session.clear()
             elif utcnow() - row.last_seen_at > timedelta(minutes=5):
                 row.last_seen_at = utcnow(); db.session.commit()
+        if current_user.is_authenticated:
+            from .services import promote_due_scheduled_contents
+            promote_due_scheduled_contents()
     from .auth.routes import auth_bp
     from .student.routes import student_bp
     from .admin.routes import admin_bp
@@ -157,6 +160,7 @@ def create_app(test_config=None):
         print(f'Banco expandido: {added} questão(ões) nova(s).')
     with app.app_context():
         db.create_all()
+        from .services import promote_due_scheduled_contents
         from .settings import ensure_default_settings, get_int, get_bool
         ensure_default_settings()
         # O limite configurável continua respeitando o limite seguro do Flask.
@@ -176,6 +180,38 @@ def create_app(test_config=None):
                     conn.execute(text('ALTER TABLE contents ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP'))
                 elif db.engine.dialect.name == 'sqlite':
                     conn.execute(text('ALTER TABLE contents ADD COLUMN archived_at DATETIME'))
+        # Fase 5.3: migração versionada de publicação de conteúdos.
+        # A marca de versão evita repetir ALTER TABLE/UPDATE a cada inicialização,
+        # sem impedir uma instalação legada de executar a migração uma única vez.
+        PHASE_53_VERSION = '5.3-publication-v2'
+        from .models import SchemaMigration
+        migration = db.session.get(SchemaMigration, PHASE_53_VERSION)
+        if migration is None:
+            inspector = inspect(db.engine)
+            if 'contents' in inspector.get_table_names():
+                content_cols = {c['name'] for c in inspector.get_columns('contents')}
+                with db.engine.begin() as conn:
+                    if 'status' not in content_cols:
+                        if db.engine.dialect.name == 'postgresql':
+                            conn.execute(text("ALTER TABLE contents ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'published'"))
+                        else:
+                            conn.execute(text("ALTER TABLE contents ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'published'"))
+                    if 'published_at' not in content_cols:
+                        if db.engine.dialect.name == 'postgresql':
+                            conn.execute(text('ALTER TABLE contents ADD COLUMN IF NOT EXISTS published_at TIMESTAMP'))
+                        else:
+                            conn.execute(text('ALTER TABLE contents ADD COLUMN published_at DATETIME'))
+                    if 'scheduled_at' not in content_cols:
+                        if db.engine.dialect.name == 'postgresql':
+                            conn.execute(text('ALTER TABLE contents ADD COLUMN IF NOT EXISTS scheduled_at TIMESTAMP'))
+                        else:
+                            conn.execute(text('ALTER TABLE contents ADD COLUMN scheduled_at DATETIME'))
+                    conn.execute(text("UPDATE contents SET status = 'published' WHERE status IS NULL OR trim(status) = '' OR lower(status) NOT IN ('draft','published','scheduled')"))
+                    conn.execute(text("UPDATE contents SET published_at = COALESCE(published_at, created_at) WHERE status = 'published' AND published_at IS NULL"))
+            db.session.add(SchemaMigration(version=PHASE_53_VERSION))
+            db.session.commit()
+        promote_due_scheduled_contents()
+
         if 'activities' in inspector.get_table_names() and 'archived_at' not in {c['name'] for c in inspector.get_columns('activities')}:
             with db.engine.begin() as conn:
                 if db.engine.dialect.name == 'postgresql':

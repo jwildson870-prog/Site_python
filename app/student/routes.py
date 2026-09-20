@@ -1,6 +1,6 @@
 from flask import Blueprint,render_template,abort,send_from_directory,current_app,redirect,url_for,request,Response,flash
 from flask_login import login_required,current_user
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 from ..extensions import db
 from ..timeutils import utcnow
 from ..models import User,Series,Subject,Content,Activity,ActivityAttempt,Experiment,Favorite,Progress,Notification,WeeklyGoal,ProjectSubmission,ProjectAttachment,ProjectComment,LearningPath,LearningPathItem
@@ -82,6 +82,16 @@ def _preview_files(content):
     except (TypeError, ValueError):
         return []
 
+def _published_content_filter():
+    now = utcnow()
+    return or_(
+        Content.status == 'published',
+        and_(Content.status == 'scheduled', Content.scheduled_at.isnot(None), Content.scheduled_at <= now),
+    )
+
+def _visible_contents_query():
+    return Content.query.filter(Content.archived_at.is_(None), _published_content_filter())
+
 @student_bp.before_request
 def guard():
     if not current_user.is_authenticated:return redirect(url_for('auth.login',next='/aluno/'))
@@ -116,13 +126,14 @@ def learning_paths():
 def learning_path(id):
     path=LearningPath.query.filter_by(id=id,active=True).first_or_404()
     completed,unlocked,done_count,percent=_path_status(path,current_user.id)
-    return render_template('student/learning_path.html', path=path, completed=completed, unlocked=unlocked, done_count=done_count, percent=percent)
+    visible_content_ids={c.id for c in _visible_contents_query().filter(Content.id.in_([item.target_id for item in path.items if item.item_type == 'content'] or [-1])).all()}
+    return render_template('student/learning_path.html', path=path, completed=completed, unlocked=unlocked, done_count=done_count, percent=percent, visible_content_ids=visible_content_ids)
 
 @student_bp.route('/', methods=['GET'])
 def dashboard():
     series = Series.query.order_by(Series.id).all()
-    total_contents = Content.query.filter(Content.archived_at.is_(None)).count()
-    completed = Progress.query.filter_by(user_id=current_user.id).count()
+    total_contents = _visible_contents_query().count()
+    completed = Progress.query.join(Content).filter(Progress.user_id == current_user.id, Content.archived_at.is_(None), _published_content_filter()).count()
     percent = round(completed / total_contents * 100) if total_contents else 0
     favorite_count = Favorite.query.filter_by(user_id=current_user.id).count()
     unread_count = Notification.query.filter_by(user_id=current_user.id, read=False).count()
@@ -131,14 +142,14 @@ def dashboard():
     attempted_ids = {a.activity_id for a in attempts}
     pending_activities = sum(1 for a in activities if a.id not in attempted_ids and not (a.due_at and utcnow() > a.due_at))
     average = round(sum(a.score for a in attempts) / len(attempts), 1) if attempts else None
-    recent_contents = Content.query.filter(Content.archived_at.is_(None)).order_by(Content.id.desc()).limit(5).all()
+    recent_contents = _visible_contents_query().order_by(Content.id.desc()).limit(5).all()
     recent_activities = activities[:5]
     recent_attempts = attempts[:5]
     recent_notifications = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.id.desc()).limit(4).all()
     completed_ids = {p.content_id for p in Progress.query.filter_by(user_id=current_user.id).all()}
     continue_content = next((c for c in recent_contents if c.id not in completed_ids), None)
     if continue_content is None:
-        continue_content = Content.query.filter(~Content.id.in_(completed_ids)).order_by(Content.id.desc()).first() if total_contents else None
+        continue_content = _visible_contents_query().filter(~Content.id.in_(completed_ids)).order_by(Content.id.desc()).first() if total_contents else None
     upcoming = [a for a in activities if a.due_at and a.due_at >= utcnow() and a.id not in attempted_ids]
     upcoming = sorted(upcoming, key=lambda a: a.due_at)[:4]
     achievement_count = sum([
@@ -162,7 +173,7 @@ def materials():
     kind = request.args.get('kind', '').strip().lower()
     series_id = request.args.get('series_id', '').strip()
     subject_id = request.args.get('subject_id', '').strip()
-    query = Content.query.filter(Content.archived_at.is_(None))
+    query = _visible_contents_query()
     if q:
         like = f'%{q}%'
         query = query.filter(or_(Content.title.ilike(like), Content.description.ilike(like), Content.body.ilike(like)))
@@ -220,21 +231,27 @@ def grades():
     average = round(sum(graded) / len(graded), 1) if graded else None
     return render_template('student/grades.html', activities=activities, by_activity=by_activity, average=average, graded_count=len(by_activity))
 @student_bp.get('/serie/<int:id>')
-def series(id): return render_template('student/series.html',series=Series.query.get_or_404(id))
+def series(id):
+    series_obj = Series.query.get_or_404(id)
+    visible_counts = {subject.id: _visible_contents_query().filter(Content.subject_id == subject.id).count() for subject in series_obj.subjects}
+    return render_template('student/series.html', series=series_obj, visible_counts=visible_counts)
 @student_bp.get('/materia/<int:id>')
-def subject(id): return render_template('student/subject.html',subject=Subject.query.get_or_404(id),activities=Activity.query.filter(Activity.subject_id == id, Activity.archived_at.is_(None)).order_by(Activity.id.desc()).all(),experiments=Experiment.query.filter_by(subject_id=id).order_by(Experiment.id.desc()).all())
+def subject(id):
+    subject_obj = Subject.query.get_or_404(id)
+    contents = _visible_contents_query().filter(Content.subject_id == id).order_by(Content.id.desc()).all()
+    return render_template('student/subject.html', subject=subject_obj, contents=contents, activities=Activity.query.filter(Activity.subject_id == id, Activity.archived_at.is_(None)).order_by(Activity.id.desc()).all(), experiments=Experiment.query.filter_by(subject_id=id).order_by(Experiment.id.desc()).all())
 @student_bp.get('/conteudo/<int:id>')
 def content(id):
-    c=Content.query.filter(Content.id == id, Content.archived_at.is_(None)).first_or_404(); fav=Favorite.query.filter_by(user_id=current_user.id,content_id=c.id).first(); done=Progress.query.filter_by(user_id=current_user.id,content_id=c.id).first(); return render_template('student/content.html',content=c,favorite=bool(fav),completed=bool(done),pptx_preview=bool(_preview_files(c)))
+    c=_visible_contents_query().filter(Content.id == id).first_or_404(); fav=Favorite.query.filter_by(user_id=current_user.id,content_id=c.id).first(); done=Progress.query.filter_by(user_id=current_user.id,content_id=c.id).first(); return render_template('student/content.html',content=c,favorite=bool(fav),completed=bool(done),pptx_preview=bool(_preview_files(c)))
 @student_bp.post('/conteudo/<int:id>/favoritar')
 def toggle_favorite(id):
-    c=Content.query.filter(Content.id == id, Content.archived_at.is_(None)).first_or_404(); f=Favorite.query.filter_by(user_id=current_user.id,content_id=c.id).first()
+    c=_visible_contents_query().filter(Content.id == id).first_or_404(); f=Favorite.query.filter_by(user_id=current_user.id,content_id=c.id).first()
     if f: db.session.delete(f); flash('Removido dos favoritos.','success')
     else: db.session.add(Favorite(user_id=current_user.id,content_id=c.id)); flash('Adicionado aos favoritos.','success')
     db.session.commit(); return redirect(url_for('student.content',id=id))
 @student_bp.post('/conteudo/<int:id>/concluir')
 def complete(id):
-    c=Content.query.filter(Content.id == id, Content.archived_at.is_(None)).first_or_404()
+    c=_visible_contents_query().filter(Content.id == id).first_or_404()
     if not Progress.query.filter_by(user_id=current_user.id,content_id=c.id).first(): db.session.add(Progress(user_id=current_user.id,content_id=c.id)); db.session.commit()
     flash('Conteúdo marcado como concluído.','success'); return redirect(url_for('student.content',id=id))
 @student_bp.get('/favoritos')
@@ -380,7 +397,7 @@ def project_attachment(id):
     return send_from_directory(current_app.config['UPLOAD_FOLDER'], attachment.storage_key, as_attachment=True, download_name=attachment.filename, mimetype=attachment.content_type or None)
 @student_bp.get('/progresso')
 def progress():
-    total=Content.query.filter(Content.archived_at.is_(None)).count(); completed=Progress.query.filter_by(user_id=current_user.id).count(); percent=round(completed/total*100) if total else 0
+    total=_visible_contents_query().count(); completed=Progress.query.filter_by(user_id=current_user.id).count(); percent=round(completed/total*100) if total else 0
     attempts=ActivityAttempt.query.filter_by(user_id=current_user.id).order_by(ActivityAttempt.id.desc()).all()
     return render_template('student/progress.html',total=total,completed=completed,percent=percent,attempts=attempts)
 @student_bp.get('/calendario')
@@ -478,8 +495,8 @@ def ranking():
 
 @student_bp.get('/conquistas')
 def achievements():
-    completed = Progress.query.filter_by(user_id=current_user.id).count()
-    total = Content.query.filter(Content.archived_at.is_(None)).count()
+    completed = Progress.query.join(Content).filter(Progress.user_id == current_user.id, Content.archived_at.is_(None), _published_content_filter()).count()
+    total = _visible_contents_query().count()
     attempts = ActivityAttempt.query.filter_by(user_id=current_user.id).all()
     definitions = [
         ('Primeiro passo', 'Conclua seu primeiro material.', completed >= 1, '1 material concluído'),
@@ -519,7 +536,7 @@ def search():
     if q:
         like = f'%{q}%'
         if category in {'', 'content'}:
-            query = Content.query.filter(Content.archived_at.is_(None), or_(Content.title.ilike(like), Content.description.ilike(like), Content.body.ilike(like)))
+            query = Content.query.filter(Content.archived_at.is_(None), _published_content_filter(), or_(Content.title.ilike(like), Content.description.ilike(like), Content.body.ilike(like)))
             if series_id.isdigit(): query = query.filter_by(series_id=int(series_id))
             if subject_id.isdigit(): query = query.filter_by(subject_id=int(subject_id))
             contents = query.order_by(Content.id.desc()).all()
@@ -538,7 +555,7 @@ def search():
                            contents=contents, activities=activities, experiments=experiments)
 @student_bp.get('/pptx/<int:id>')
 def pptx_view(id):
-    c = Content.query.filter(Content.id == id, Content.archived_at.is_(None)).first_or_404()
+    c = _visible_contents_query().filter(Content.id == id).first_or_404()
     slides = _preview_files(c)
     if c.kind != 'file' or not c.file_name or not slides:
         abort(404)
@@ -546,7 +563,7 @@ def pptx_view(id):
 
 @student_bp.get('/pptx/<int:id>/slide/<int:slide>')
 def pptx_slide(id, slide):
-    c = Content.query.filter(Content.id == id, Content.archived_at.is_(None)).first_or_404()
+    c = _visible_contents_query().filter(Content.id == id).first_or_404()
     slides = _preview_files(c)
     if c.kind != 'file' or slide < 0 or slide >= len(slides):
         abort(404)
@@ -564,7 +581,7 @@ def pptx_slide(id, slide):
 
 @student_bp.get('/arquivo/<int:id>')
 def arquivo(id):
-    c=Content.query.filter(Content.id == id, Content.archived_at.is_(None)).first_or_404()
+    c=_visible_contents_query().filter(Content.id == id).first_or_404()
     if c.kind not in ('file','pdf') or not c.file_name: abort(404)
     if b2_enabled():
         try:
@@ -576,7 +593,7 @@ def arquivo(id):
     return send_from_directory(current_app.config['UPLOAD_FOLDER'],c.file_name,as_attachment=False)
 @student_bp.get('/pdf/<int:id>')
 def pdf(id):
-    c=Content.query.filter(Content.id == id, Content.archived_at.is_(None)).first_or_404()
+    c=_visible_contents_query().filter(Content.id == id).first_or_404()
     if c.kind!='pdf' or not c.file_name: abort(404)
     if b2_enabled():
         try:

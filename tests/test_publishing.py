@@ -72,3 +72,26 @@ def test_new_material_can_be_scheduled(client, app):
     with app.app_context():
         c = Content.query.filter_by(title='Programado').first()
         assert c.status == 'scheduled' and c.scheduled_at is not None
+
+
+def test_scheduled_content_is_promoted_to_published_after_due_time(client, app):
+    cid = seed_base(app, 'scheduled', utcnow() - timedelta(minutes=1))
+    with app.app_context():
+        c = db.session.get(Content, cid)
+        assert c.status == 'scheduled'
+    client.post('/auth/register', data={'name':'Aluno','email':'promocao@test.local','password':'Senha1234!','confirm_password':'Senha1234!'})
+    login(client, 'promocao@test.local', 'Senha1234!')
+    assert client.get('/aluno/materiais').status_code == 200
+    with app.app_context():
+        c = db.session.get(Content, cid)
+        assert c.status == 'published'
+        assert c.published_at is not None
+        assert c.scheduled_at is None
+
+
+def test_phase_53_migration_is_versioned(app):
+    from app.models import SchemaMigration
+    with app.app_context():
+        migration = db.session.get(SchemaMigration, '5.3-publication-v2')
+        assert migration is not None
+        assert migration.applied_at is not None

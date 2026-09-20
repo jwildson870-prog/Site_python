@@ -527,6 +527,23 @@ def content_form(content=None):
     desc = request.form.get('description', '').strip()
     body = request.form.get('body', '').strip()
     external_url = request.form.get('external_url', '').strip()
+    publication_status = request.form.get('status', 'published').strip().lower()
+    if publication_status not in {'draft', 'published', 'scheduled'}:
+        publication_status = 'published'
+    scheduled_at = None
+    if publication_status == 'scheduled':
+        raw_scheduled = request.form.get('scheduled_at', '').strip()
+        if not raw_scheduled:
+            flash('Informe a data e hora da publicação programada.', 'error')
+            return None, series, subjects
+        try:
+            scheduled_at = datetime.fromisoformat(raw_scheduled)
+        except ValueError:
+            flash('A data da publicação programada é inválida.', 'error')
+            return None, series, subjects
+        if scheduled_at <= utcnow():
+            flash('A publicação programada deve ocorrer no futuro.', 'error')
+            return None, series, subjects
 
     s = db.session.get(Series, int(sid)) if sid.isdigit() else None
     sub = db.session.get(Subject, int(subid)) if subid.isdigit() else None
@@ -600,6 +617,9 @@ def content_form(content=None):
     content.preview_manifest = json.dumps(new_preview, ensure_ascii=False) if new_preview else None
     content.series_id = s.id
     content.subject_id = sub.id
+    content.status = publication_status
+    content.scheduled_at = scheduled_at
+    content.published_at = utcnow() if publication_status == 'published' else None
     db.session.add(content)
     db.session.commit()
 
@@ -615,22 +635,28 @@ def content_form(content=None):
 def content_new():
     content, series, subjects = content_form()
     if request.method == 'POST' and content:
-        notify_students(f'Novo material: {content.title}', url_for('student.content', id=content.id))
-        db.session.commit()
+        if content.status == 'published':
+            notify_students(f'Novo material: {content.title}', url_for('student.content', id=content.id))
         _record_content_history(content, 'criado')
         db.session.commit()
-        flash('Material publicado com sucesso.', 'success')
+        message = 'Material publicado com sucesso.' if content.status == 'published' else ('Material programado com sucesso.' if content.status == 'scheduled' else 'Material salvo como rascunho.')
+        flash(message, 'success')
         return redirect(url_for('admin.contents'))
     return render_template('admin/content_form.html', content=None, series=series, subjects=subjects)
 
 @admin_bp.route('/contents/<int:id>/edit', methods=['GET', 'POST'])
 def content_edit(id):
     content = Content.query.get_or_404(id)
+    previous_status = content.status or 'published'
     result, series, subjects = content_form(content)
     if request.method == 'POST' and result:
-        _record_content_history(content, 'editado')
+        action = 'publicada' if content.status == 'published' and previous_status != 'published' else ('programada' if content.status == 'scheduled' else ('rascunho_salvo' if content.status == 'draft' else 'editado'))
+        _record_content_history(content, action)
+        if content.status == 'published' and previous_status != 'published':
+            notify_students(f'Novo material publicado: {content.title}', url_for('student.content', id=content.id))
         db.session.commit()
-        flash('Material atualizado.', 'success')
+        message = 'Material publicado.' if content.status == 'published' and previous_status != 'published' else ('Material programado.' if content.status == 'scheduled' else ('Rascunho salvo.' if content.status == 'draft' else 'Material atualizado.'))
+        flash(message, 'success')
         return redirect(url_for('admin.contents'))
     return render_template('admin/content_form.html', content=content, series=series, subjects=subjects)
 
@@ -648,6 +674,7 @@ def content_duplicate(id):
         body=source.body, external_url=source.external_url, file_name=new_file,
         preview_manifest=json.dumps(new_preview, ensure_ascii=False) if new_preview else None,
         series_id=source.series_id, subject_id=source.subject_id, archived_at=None,
+        status='draft', published_at=None, scheduled_at=None,
     )
     db.session.add(duplicate)
     db.session.flush()

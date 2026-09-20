@@ -21,6 +21,33 @@ TOPICS = {
     ('4º ano', 'Projetos Python'): ['APIs e requisições', 'Flask e aplicações web', 'Banco de dados', 'Deploy e boas práticas'],
 }
 
+def promote_due_scheduled_contents():
+    """Promove publicações programadas cujo horário já chegou.
+
+    A operação é idempotente e usa uma única atualização SQLAlchemy para que
+    o primeiro acesso após o horário de publicação torne o material
+    definitivamente publicado.
+    """
+    from .models import Content
+    from .timeutils import utcnow
+    now = utcnow()
+    updated = Content.query.filter(
+        Content.status == 'scheduled',
+        Content.scheduled_at.isnot(None),
+        Content.scheduled_at <= now,
+    ).update(
+        {
+            Content.status: 'published',
+            Content.published_at: now,
+            Content.scheduled_at: None,
+        },
+        synchronize_session=False,
+    )
+    if updated:
+        db.session.commit()
+    return updated
+
+
 def ensure_admin():
     email = os.getenv('ADMIN_EMAIL', '').strip().lower()
     password = os.getenv('ADMIN_PASSWORD', '')
