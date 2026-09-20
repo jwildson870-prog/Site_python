@@ -185,6 +185,14 @@ class WeeklyGoal(db.Model):
     __table_args__ = (db.UniqueConstraint('user_id', 'week_start', name='uq_weekly_goal_user_week'),)
 
 
+class PortalSetting(db.Model):
+    __tablename__ = 'portal_settings'
+    id = db.Column(db.Integer, primary_key=True)
+    key = db.Column(db.String(80), unique=True, nullable=False, index=True)
+    value = db.Column(db.String(500), nullable=False)
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow, nullable=False)
+
+
 class Notification(db.Model):
     __tablename__ = 'notifications'
     id = db.Column(db.Integer, primary_key=True)

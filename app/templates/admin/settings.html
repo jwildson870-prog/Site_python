@@ -1,1 +1,55 @@
-{% extends 'base.html' %}{% block title %}Configurações · Portal Python{% endblock %}{% block content %}<section class="admin-shell workspace-shell narrow-workspace"><div class="workspace-head"><div><span class="eyebrow">SISTEMA</span><h1>Configurações</h1><p>Orientações para manter o Portal Python seguro e pronto para produção.</p></div></div><div class="settings-grid"><div class="publisher-card settings-card"><span class="uiverse-feature-card"><img src="{{url_for('static', filename='icons/ui/settings.svg')}}" alt=""></span><h2>Segurança</h2><p>Configurações sensíveis ficam nas variáveis de ambiente. O cadastro público não pode promover um aluno a administrador.</p><p><a href="{{url_for('auth.sessions')}}">Ver sessões ativas da minha conta</a></p></div><div class="publisher-card settings-card"><span class="uiverse-feature-card"><img src="{{url_for('static', filename='icons/ui/settings.svg')}}" alt=""></span><h2>Produção</h2><p>Para produção, configure HTTPS, SECRET_KEY, PostgreSQL e armazenamento persistente para PDFs.</p></div></div></section>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Configurações · Portal Python{% endblock %}
+{% block content %}
+<section class="admin-shell workspace-shell narrow-workspace">
+  <div class="workspace-head">
+    <div><span class="eyebrow">SISTEMA</span><h1>Configurações</h1><p>Controle as opções gerais do Portal Python sem alterar as outras áreas do sistema.</p></div>
+  </div>
+  <form method="post" class="publisher">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <section class="publisher-card settings-card">
+      <span class="uiverse-feature-card"><img src="{{url_for('static', filename='icons/ui/settings.svg')}}" alt=""></span>
+      <h2>Geral</h2>
+      <div class="form-grid tidy-grid">
+        <label class="field-block full">Nome da instituição
+          <input name="institution_name" maxlength="160" value="{{ settings.institution_name }}" required>
+          <small>Nome exibido nas configurações e reservado para futuras áreas de identificação institucional.</small>
+        </label>
+        <label class="field-block">Limite de upload (MB)
+          <input type="number" name="upload_limit_mb" min="1" max="100" value="{{ settings.upload_limit_mb }}" required>
+          <small>Entre 1 e 100 MB por arquivo.</small>
+        </label>
+      </div>
+    </section>
+
+    <section class="publisher-card settings-card">
+      <h2>Acesso</h2>
+      <label class="setting-row"><span><strong>Cadastro público</strong><small>Permite que novos alunos criem suas próprias contas.</small></span><input type="checkbox" name="public_registration" {% if settings.public_registration == 'true' %}checked{% endif %}></label>
+      <label class="setting-row"><span><strong>Google OAuth</strong><small>O login com Google só fica disponível quando as credenciais também estão configuradas no servidor.</small></span><input type="checkbox" name="google_oauth_enabled" {% if settings.google_oauth_enabled == 'true' %}checked{% endif %}></label>
+      {% if not google_credentials_configured %}<p class="muted">As credenciais Google ainda não estão configuradas no ambiente. Ativar esta opção agora não habilita o login até que elas existam.</p>{% endif %}
+    </section>
+
+    <section class="publisher-card settings-card">
+      <h2>Notificações</h2>
+      <label class="setting-row"><span><strong>Notificações gerais</strong><small>Ativa ou desativa a criação de novas notificações para alunos.</small></span><input type="checkbox" name="notifications_enabled" {% if settings.notifications_enabled == 'true' %}checked{% endif %}></label>
+      <label class="setting-row"><span><strong>Novas atividades</strong><small>Avisa alunos quando uma atividade é criada.</small></span><input type="checkbox" name="notification_activities" {% if settings.notification_activities == 'true' %}checked{% endif %}></label>
+      <label class="setting-row"><span><strong>Novos materiais</strong><small>Avisa alunos quando um material ou projeto é publicado.</small></span><input type="checkbox" name="notification_materials" {% if settings.notification_materials == 'true' %}checked{% endif %}></label>
+      <label class="setting-row"><span><strong>Prazos</strong><small>Reserva a categoria para lembretes de prazo.</small></span><input type="checkbox" name="notification_deadlines" {% if settings.notification_deadlines == 'true' %}checked{% endif %}></label>
+      <label class="setting-row"><span><strong>Avisos</strong><small>Controla notificações gerais enviadas pelo professor.</small></span><input type="checkbox" name="notification_announcements" {% if settings.notification_announcements == 'true' %}checked{% endif %}></label>
+    </section>
+
+    <section class="publisher-card settings-card">
+      <h2>Alertas do professor</h2>
+      <label class="setting-row"><span><strong>Alertas inteligentes</strong><small>Ativa a geração de alertas de acompanhamento no painel.</small></span><input type="checkbox" name="alerts_enabled" {% if settings.alerts_enabled == 'true' %}checked{% endif %}></label>
+      <label class="setting-row"><span><strong>Alunos inativos</strong><small>Detecta ausência prolongada de entregas.</small></span><input type="checkbox" name="alert_inactive_students" {% if settings.alert_inactive_students == 'true' %}checked{% endif %}></label>
+      <label class="setting-row"><span><strong>Atividades pendentes</strong><small>Aponta alunos com atividades não entregues.</small></span><input type="checkbox" name="alert_pending_activities" {% if settings.alert_pending_activities == 'true' %}checked{% endif %}></label>
+      <label class="setting-row"><span><strong>Baixo desempenho</strong><small>Controla alertas de média abaixo do limite atual.</small></span><input type="checkbox" name="alert_low_performance" {% if settings.alert_low_performance == 'true' %}checked{% endif %}></label>
+      <label class="setting-row"><span><strong>Queda de desempenho</strong><small>Controla alertas de queda recente de desempenho.</small></span><input type="checkbox" name="alert_performance_drop" {% if settings.alert_performance_drop == 'true' %}checked{% endif %}></label>
+      <label class="setting-row"><span><strong>Prazos próximos</strong><small>Controla alertas de atividades próximas do vencimento.</small></span><input type="checkbox" name="alert_deadlines" {% if settings.alert_deadlines == 'true' %}checked{% endif %}></label>
+    </section>
+
+    <div class="settings-actions"><button class="btn admin-primary" type="submit">Salvar configurações</button></div>
+  </form>
+</section>
+{% endblock %}

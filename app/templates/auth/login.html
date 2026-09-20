@@ -37,7 +37,7 @@
         <div class="login-divider"><span>ou</span></div>
         <a class="google login-google" href="{{url_for('auth.google_login')}}">Continuar com Google</a>
         {% endif %}
-        <p class="login-register">Ainda não tem conta? <a href="{{url_for('auth.register')}}">Criar herói</a></p>
+        {% if registration_enabled %}<p class="login-register">Ainda não tem conta? <a href="{{url_for('auth.register')}}">Criar herói</a></p>{% endif %}
     </div>
 </section>
 <script src="{{ url_for('static',filename='js/password-toggle.js') }}" defer></script>

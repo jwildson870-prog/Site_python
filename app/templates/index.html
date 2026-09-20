@@ -11,7 +11,7 @@
     <h2>Você já possui uma conta?</h2>
     <div class="actions">
       <a class="btn" href="{{url_for('auth.login')}}">Já tenho uma conta</a>
-      <a class="btn secondary" href="{{url_for('auth.register')}}">Ainda não tenho uma conta</a>
+      {% if registration_enabled %}<a class="btn secondary" href="{{url_for('auth.register')}}">Ainda não tenho uma conta</a>{% endif %}
     </div>
   </div>
 </section>

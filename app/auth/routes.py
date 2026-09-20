@@ -8,6 +8,7 @@ from ..models import User,PasswordResetToken,EmailVerificationToken,UserSession
 from ..timeutils import utcnow
 from ..emailing import send_email,mail_configured
 from ..rate_limit import client_ip,is_rate_limited,record_failed_attempt
+from ..settings import get_bool
 
 auth_bp=Blueprint('auth',__name__,url_prefix='/auth'); oauth=OAuth()
 
@@ -48,7 +49,7 @@ def password_errors(p):
 
 
 def google_configured():
-    return bool(os.getenv('GOOGLE_CLIENT_ID') and os.getenv('GOOGLE_CLIENT_SECRET'))
+    return get_bool('google_oauth_enabled', True) and bool(os.getenv('GOOGLE_CLIENT_ID') and os.getenv('GOOGLE_CLIENT_SECRET'))
 
 
 def register_google():
@@ -108,6 +109,9 @@ def index(): return redirect(url_for('student.dashboard' if current_user.is_auth
 
 @auth_bp.route('/register',methods=['GET','POST'])
 def register():
+    if not get_bool('public_registration', True):
+        flash('O cadastro público está desativado no momento.', 'error')
+        return redirect(url_for('auth.login'))
     if current_user.is_authenticated:return redirect(url_for('auth.index'))
     if request.method=='POST':
         ip = client_ip(request)
@@ -149,7 +153,7 @@ def login():
         if current_user.is_authenticated:
             logout_user()
             session.clear()
-        return render_template('auth/login.html', google_enabled=google_configured())
+        return render_template('auth/login.html', google_enabled=google_configured(), registration_enabled=get_bool('public_registration', True))
 
     ip = client_ip(request)
     email = request.form.get('email','').strip().lower()
@@ -157,14 +161,14 @@ def login():
 
     if is_rate_limited('login', ip=ip, email=email):
         flash(RATE_LIMIT_MESSAGE,'error')
-        return render_template('auth/login.html', google_enabled=google_configured())
+        return render_template('auth/login.html', google_enabled=google_configured(), registration_enabled=get_bool('public_registration', True))
 
     u = User.query.filter_by(email=email).first()
 
     if not u or not u.check_password(password):
         record_failed_attempt('login', ip=ip, email=email)
         flash(GENERIC_LOGIN_ERROR,'error')
-        return render_template('auth/login.html', google_enabled=google_configured())
+        return render_template('auth/login.html', google_enabled=google_configured(), registration_enabled=get_bool('public_registration', True))
 
     _start_session(u)
     return redirect(url_for('admin.dashboard' if u.is_admin else 'student.dashboard'))
@@ -271,7 +275,11 @@ def google_callback():
     sub=info.get('sub');email=(info.get('email') or '').lower().strip()
     if not sub or not email:flash('O Google não retornou os dados necessários para entrar.','error');return redirect(url_for('auth.login'))
     u=User.query.filter((User.google_sub==sub)|(User.email==email)).first()
-    if not u:u=User(name=info.get('name') or email.split('@')[0],email=email,role='student',google_sub=sub,email_verified=True);db.session.add(u)
+    if not u:
+        if not get_bool('public_registration', True):
+            flash('O cadastro público está desativado no momento.', 'error')
+            return redirect(url_for('auth.login'))
+        u=User(name=info.get('name') or email.split('@')[0],email=email,role='student',google_sub=sub,email_verified=True);db.session.add(u)
     else:u.google_sub=sub;u.email_verified=True
     db.session.commit()
     _start_session(u)

@@ -3701,3 +3701,7 @@ a.card:active,a.tile:active,a.student-material-card:active,a.student-summary-car
 .dashboard-series-bar{height:7px;border-radius:999px;background:rgba(127,127,127,.16);overflow:hidden;margin-top:14px}.dashboard-series-bar span{display:block;height:100%;border-radius:inherit;background:currentColor;transition:width .45s ease}
 .dashboard-pending-link{text-decoration:none;color:inherit}.dashboard-pending-link:hover{background:var(--surface-soft,#eef2f7)}
 @media(max-width:760px){.dashboard-series-grid{grid-template-columns:1fr}.dashboard-series-metrics{grid-template-columns:repeat(2,1fr)}}
+
+
+/* Fase 5.1 — configurações */
+.settings-card + .settings-card{margin-top:15px}.setting-row{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:14px 0;border-top:1px solid rgba(120,163,204,.12);cursor:pointer}.setting-row:first-of-type{margin-top:8px}.setting-row span{display:grid;gap:4px}.setting-row strong{color:#eef7fd}.setting-row small{color:#8fa4bb;line-height:1.45}.setting-row input[type=checkbox]{width:20px;height:20px;flex:0 0 auto;accent-color:#38bdf8}.settings-actions{display:flex;justify-content:flex-end;margin-top:16px}.settings-card .field-block small{display:block;margin-top:6px;color:#7f96aa;line-height:1.4}@media(max-width:650px){.setting-row{align-items:flex-start}.settings-actions{justify-content:stretch}.settings-actions .btn{width:100%}}
