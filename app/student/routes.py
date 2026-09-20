@@ -4,6 +4,7 @@ from sqlalchemy import or_, and_
 from ..extensions import db
 from ..timeutils import utcnow
 from ..models import User,Series,Subject,Content,Activity,ActivityAttempt,Experiment,Favorite,Progress,Notification,WeeklyGoal,ProjectSubmission,ProjectAttachment,ProjectComment,LearningPath,LearningPathItem
+from ..settings import get_bool
 from ..storage import get_file, b2_enabled, StorageError
 import json
 import random
@@ -45,35 +46,57 @@ def _weekly_engagement(user_id):
         goal = WeeklyGoal(user_id=user_id, week_start=start, target=3)
         db.session.add(goal)
         db.session.flush()
-    material_count = Progress.query.filter(Progress.user_id == user_id, Progress.completed_at >= datetime.combine(start, datetime.min.time())).count()
-    attempt_count = ActivityAttempt.query.filter(ActivityAttempt.user_id == user_id, ActivityAttempt.created_at >= datetime.combine(start, datetime.min.time())).count()
-    completed = material_count + attempt_count
+    start_dt = datetime.combine(start, datetime.min.time())
+    material_count = Progress.query.filter(Progress.user_id == user_id, Progress.completed_at >= start_dt).count()
+    attempt_count = ActivityAttempt.query.filter(ActivityAttempt.user_id == user_id, ActivityAttempt.created_at >= start_dt).count()
+    project_count = ProjectSubmission.query.filter(ProjectSubmission.user_id == user_id, ProjectSubmission.submitted_at >= start_dt).count()
+    completed = material_count + attempt_count + project_count
     target = max(1, min(int(goal.target or 3), 20))
     percent = min(100, round(completed / target * 100))
     return goal, completed, target, percent
 
 def _create_engagement_reminder(user_id):
-    now = utcnow()
-    week_start = _week_start()
-    since = datetime.combine(week_start, datetime.min.time())
-    existing = Notification.query.filter(
-        Notification.user_id == user_id,
-        Notification.created_at >= since,
-        Notification.message.like('Lembrete de estudo:%')
-    ).first()
-    if existing:
+    if not get_bool('notifications_enabled', True):
         return
-    activities = Activity.query.filter(Activity.archived_at.is_(None), Activity.due_at.isnot(None), Activity.due_at >= now, Activity.due_at <= now + timedelta(hours=72)).order_by(Activity.due_at.asc()).all()
-    attempted = {a.activity_id for a in ActivityAttempt.query.filter_by(user_id=user_id).all()}
-    pending = next((a for a in activities if a.id not in attempted), None)
-    if pending:
-        msg = f'Lembrete de estudo: a atividade “{pending.title}” tem prazo próximo.'
-        db.session.add(Notification(user_id=user_id, message=msg, link=url_for('student.activity', id=pending.id)))
-    else:
-        goal, completed, target, _ = _weekly_engagement(user_id)
-        if completed < target:
-            db.session.add(Notification(user_id=user_id, message=f'Lembrete de estudo: sua meta semanal está em {completed}/{target}.', link=url_for('student.engagement')))
-    db.session.commit()
+    now = utcnow()
+    recent_cutoff = now - timedelta(hours=24)
+
+    # Lembrete de prazo é controlado separadamente pela configuração
+    # notification_deadlines; desligá-lo não deve desligar o lembrete da meta.
+    if get_bool('notification_deadlines', True):
+        activities = Activity.query.filter(
+            Activity.archived_at.is_(None), Activity.due_at.isnot(None),
+            Activity.due_at >= now, Activity.due_at <= now + timedelta(hours=72)
+        ).order_by(Activity.due_at.asc()).all()
+        attempted = {a.activity_id for a in ActivityAttempt.query.filter_by(user_id=user_id).all()}
+        pending = next((a for a in activities if a.id not in attempted), None)
+        if pending:
+            existing = Notification.query.filter(
+                Notification.user_id == user_id, Notification.created_at >= recent_cutoff,
+                Notification.message.like(f'Lembrete de prazo: atividade “{pending.title}”%')
+            ).first()
+            if not existing:
+                db.session.add(Notification(
+                    user_id=user_id,
+                    message=f'Lembrete de prazo: atividade “{pending.title}” vence em até 72 horas.',
+                    link=url_for('student.activity', id=pending.id)
+                ))
+                db.session.commit()
+                return
+
+    goal, completed, target, _ = _weekly_engagement(user_id)
+    if completed < target:
+        existing = Notification.query.filter(
+            Notification.user_id == user_id, Notification.created_at >= recent_cutoff,
+            Notification.message.like('Lembrete de estudo: sua meta semanal%')
+        ).first()
+        if not existing:
+            db.session.add(Notification(
+                user_id=user_id,
+                message=f'Lembrete de estudo: sua meta semanal está em {completed}/{target}.',
+                link=url_for('student.engagement')
+            ))
+            db.session.commit()
 
 def _preview_files(content):
     try:
@@ -208,9 +231,10 @@ def dashboard():
         continue_content = _visible_contents_query().filter(~Content.id.in_(completed_ids)).order_by(Content.id.desc()).first() if total_contents else None
     upcoming = [a for a in activities if a.due_at and a.due_at >= utcnow() and a.id not in attempted_ids]
     upcoming = sorted(upcoming, key=lambda a: a.due_at)[:4]
+    project_submissions = ProjectSubmission.query.filter_by(user_id=current_user.id).count()
     achievement_count = sum([
         completed >= 1, completed >= 5, len(attempts) >= 1, len(attempts) >= 5,
-        any(round(a.score, 1) >= 10 for a in attempts), percent >= 100
+        any(round(a.score, 1) >= 10 for a in attempts), project_submissions >= 1
     ])
     goal, weekly_completed, weekly_target, weekly_percent = _weekly_engagement(current_user.id)
     _create_engagement_reminder(current_user.id)
@@ -554,13 +578,14 @@ def achievements():
     completed = Progress.query.join(Content).filter(Progress.user_id == current_user.id, Content.archived_at.is_(None), _published_content_filter()).count()
     total = _visible_contents_query().count()
     attempts = ActivityAttempt.query.filter_by(user_id=current_user.id).all()
+    submissions = ProjectSubmission.query.filter_by(user_id=current_user.id).count()
     definitions = [
         ('Primeiro passo', 'Conclua seu primeiro material.', completed >= 1, '1 material concluído'),
         ('Ritmo de estudo', 'Conclua 5 materiais.', completed >= 5, '5 materiais concluídos'),
         ('Primeira atividade', 'Responda sua primeira atividade.', len(attempts) >= 1, '1 atividade respondida'),
         ('Constância', 'Responda 5 atividades.', len(attempts) >= 5, '5 atividades respondidas'),
         ('Nota máxima', 'Alcance 10 em uma atividade.', any(round(a.score, 1) >= 10 for a in attempts), 'Nota 10'),
-        ('Curso completo', 'Conclua todos os materiais disponíveis.', bool(total) and completed >= total, f'{total} materiais concluídos'),
+        ('Primeiro projeto', 'Envie seu primeiro projeto.', submissions >= 1, '1 projeto enviado'),
     ]
     unlocked = sum(1 for _, _, ok, _ in definitions if ok)
     return render_template('student/achievements.html', achievements=definitions, unlocked=unlocked, total=len(definitions))

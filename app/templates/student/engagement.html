@@ -2,13 +2,13 @@
 {% block title %}Metas de estudo · Portal Python{% endblock %}
 {% block content %}
 <section class="student-shell engagement-page">
-  <div class="student-page-head"><div><span class="eyebrow">ENGAJAMENTO</span><h1>Metas de estudo</h1><p>Acompanhe sua constância e consulte a pontuação semanal por acertos.</p></div><div class="achievement-total"><strong>{{ percent }}%</strong><span>da meta</span></div></div>
+  <div class="student-page-head"><div><span class="eyebrow">ENGAJAMENTO</span><h1>Metas de estudo</h1><p>Acompanhe sua constância, suas metas e os próximos prazos.</p></div><div class="achievement-total"><strong>{{ percent }}%</strong><span>da meta</span></div></div>
   <div class="student-dashboard-grid">
     <section class="student-panel student-panel-wide">
       <div class="student-panel-head"><div><span class="eyebrow">META DA SEMANA</span><h2>{{ completed }} de {{ target }} ações</h2></div></div>
       <div class="engagement-big-progress"><div class="engagement-bar"><span style="width: {{ percent }}%"></span></div><strong>{{ percent }}%</strong></div>
       <form method="post" class="engagement-goal-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label for="target">Minha meta semanal</label><input id="target" name="target" type="number" min="1" max="20" value="{{ target }}"><button class="btn primary" type="submit">Salvar meta</button></form>
-      <p class="muted">Cada material concluído ou atividade respondida conta como uma ação de estudo.</p>
+      <p class="muted">Cada material concluído, atividade respondida ou projeto enviado conta como uma ação de estudo.</p>
     </section>
     <section class="student-panel">
       <div class="student-panel-head"><div><span class="eyebrow">PENDENTES</span><h2>Atividades pendentes</h2></div></div>

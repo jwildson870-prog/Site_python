@@ -298,20 +298,18 @@ def dashboard():
         overall_completion=overall_completion, recent_activity_count=recent_activity_count, now=now, smart_alerts=smart_alerts, alert_counts=alert_counts,
         series_indicators=series_indicators, inactive_students=inactive_students, pending_activity_stats=pending_activity_stats)
 
+
 @admin_bp.get('/ranking')
 def ranking():
-    """Visualização administrativa do ranking semanal de alunos.
-
-    O professor apenas consulta os mesmos pontos usados no ranking do aluno;
-    não participa, não edita pontuação e não há ranking entre turmas.
-    """
+    """Visualização administrativa do ranking semanal de alunos."""
     now = utcnow()
     start = datetime.combine((now - timedelta(days=now.weekday())).date(), datetime.min.time())
     end = start + timedelta(days=7)
     q = request.args.get('q', '').strip()
     students_query = User.query.filter(User.role == 'student')
     if q:
-        like = f'%{q}%'; students_query = students_query.filter(or_(User.name.ilike(like), User.email.ilike(like)))
+        like = f'%{q}%'
+        students_query = students_query.filter(or_(User.name.ilike(like), User.email.ilike(like)))
     students = students_query.order_by(User.name.asc()).all()
     rows = []
     for student in students:
@@ -319,29 +317,30 @@ def ranking():
             ActivityAttempt.user_id == student.id,
             ActivityAttempt.created_at >= start, ActivityAttempt.created_at < end
         ).all()
-        correct_answers = 0
-        for attempt in attempts:
-            try:
-                answers = json.loads(attempt.answers_json or '{}')
-            except (TypeError, ValueError):
-                answers = {}
-            try:
-                questions = json.loads(attempt.presented_questions_json or '[]')
-            except (TypeError, ValueError):
-                questions = []
-            correct_answers += sum(
-                1 for index, question in enumerate(questions)
-                if question.get('kind', 'objective') != 'essay'
-                and answers.get(str(index)) == question.get('correct')
-            )
-        activities = len(attempts)
-        points = correct_answers * 10
-        rows.append({'student': student, 'correct_answers': correct_answers, 'activities': activities, 'points': points})
+        correct_answers = sum(_admin_attempt_correct_answers(attempt) for attempt in attempts)
+        rows.append({'student': student, 'correct_answers': correct_answers, 'activities': len(attempts), 'points': correct_answers * 10})
     rows.sort(key=lambda row: (-row['points'], -row['correct_answers'], row['student'].name.casefold()))
     for position, row in enumerate(rows, 1):
         row['position'] = position
     total_points = sum(row['points'] for row in rows)
     return render_template('admin/ranking.html', rows=rows, week_start=start.date(), week_end=(end - timedelta(days=1)).date(), q=q, total_points=total_points)
+
+
+def _admin_attempt_correct_answers(attempt):
+    try:
+        answers = json.loads(attempt.answers_json or '{}')
+    except (TypeError, ValueError):
+        answers = {}
+    try:
+        questions = json.loads(attempt.presented_questions_json or '[]')
+    except (TypeError, ValueError):
+        questions = []
+    return sum(
+        1 for index, question in enumerate(questions)
+        if question.get('kind', 'objective') != 'essay'
+        and answers.get(str(index)) == question.get('correct')
+    )
+
 
 @admin_bp.route('/alertas', methods=['GET', 'POST'])
 def alerts():
