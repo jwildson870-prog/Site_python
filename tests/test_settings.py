@@ -63,3 +63,59 @@ def test_public_registration_can_be_disabled(tmp_path, monkeypatch):
         assert User.query.filter_by(email='aluno@test.local').first() is None
         db.session.remove()
         db.drop_all()
+
+
+def test_settings_categories_and_alerts_are_applied(tmp_path, monkeypatch):
+    app = _app(tmp_path, monkeypatch)
+    client = app.test_client()
+    _login(client)
+    response = client.post('/admin/settings', data={
+        'institution_name': 'Instituição',
+        'upload_limit_mb': '10',
+        'public_registration': 'on',
+        'google_oauth_enabled': 'on',
+        'notifications_enabled': 'on',
+        'notification_activities': 'on',
+        'notification_materials': 'off',
+        'notification_deadlines': 'off',
+        'notification_announcements': 'off',
+        'alerts_enabled': 'on',
+        'alert_inactive_students': 'off',
+        'alert_pending_activities': 'off',
+        'alert_low_performance': 'on',
+        'alert_performance_drop': 'off',
+        'alert_deadlines': 'off',
+    })
+    assert response.status_code == 302
+    with app.app_context():
+        from app.admin.routes import notify_students
+        student = User(name='Aluno', email='student-settings@test.local', role='student')
+        student.set_password('Senha1234!')
+        db.session.add(student)
+        db.session.commit()
+        from app.models import Notification
+        assert notify_students('atividade', category='activities') == 1
+        assert notify_students('material', category='materials') == 0
+        assert notify_students('aviso', category='announcements') == 0
+        assert Notification.query.filter_by(message='atividade').count() == 1
+        assert Notification.query.filter_by(message='material').count() == 0
+        assert Notification.query.filter_by(message='aviso').count() == 0
+        assert app.config['MAX_CONTENT_LENGTH'] == 10 * 1024 * 1024
+        db.session.remove()
+        db.drop_all()
+
+
+def test_settings_reject_invalid_upload_limit(tmp_path, monkeypatch):
+    app = _app(tmp_path, monkeypatch)
+    client = app.test_client()
+    _login(client)
+    response = client.post('/admin/settings', data={
+        'institution_name': 'Portal',
+        'upload_limit_mb': '101',
+    })
+    assert response.status_code == 302
+    with app.app_context():
+        from app.settings import get_int
+        assert get_int('upload_limit_mb', 25) == 25
+        db.session.remove()
+        db.drop_all()

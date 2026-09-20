@@ -46,6 +46,11 @@ def create_app(test_config=None):
     if test_config: app.config.update(test_config)
     db.init_app(app); login=LoginManager(app); login.login_view='auth.login'; login.session_protection='strong'; CSRFProtect(app)
 
+    @app.context_processor
+    def inject_portal_settings():
+        from .settings import get_setting
+        return {'institution_name': get_setting('institution_name', 'Portal Python')}
+
     @app.template_filter('sanitize_html')
     def sanitize_html(value):
         allowed_tags = {'p','br','strong','em','b','i','u','ul','ol','li','h2','h3','h4','blockquote','code','pre','a'}

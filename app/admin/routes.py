@@ -13,6 +13,7 @@ from ..timeutils import utcnow
 from ..models import Series, Subject, Content, ContentHistory, User, Activity, ActivityHistory, ActivityAttempt, Experiment, Notification, Alert, QuestionBank, Progress, LearningPath, LearningPathItem
 from ..pptx_preview import convert_pptx_to_images
 from ..activity_library import PREBUILT_ACTIVITIES, BY_SLUG
+from ..settings import DEFAULT_SETTINGS, get_bool, get_int, set_setting
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 ALLOWED_KINDS = {'explanation','file','pdf','slide','video','link'}
@@ -117,14 +118,50 @@ def save_uploaded_file(file, required_extension=None):
         ), None
     return filename, original
 
-def notify_students(message, link=None):
-    for student in User.query.filter_by(role='student').all():
+def notify_students(message, link=None, category='announcements'):
+    """Cria notificações respeitando as configurações do administrador."""
+    if not get_bool('notifications_enabled', True):
+        return 0
+    setting_by_category = {
+        'activities': 'notification_activities',
+        'materials': 'notification_materials',
+        'deadlines': 'notification_deadlines',
+        'announcements': 'notification_announcements',
+    }
+    setting = setting_by_category.get(category)
+    if setting and not get_bool(setting, True):
+        return 0
+    students = User.query.filter_by(role='student').all()
+    for student in students:
         db.session.add(Notification(user_id=student.id, message=message, link=link))
+    return len(students)
 
 @admin_bp.before_request
 def admin_guard():
     if not current_user.is_authenticated: return redirect(url_for('auth.login', next=request.path))
     if not current_user.is_admin: abort(403)
+
+def _alert_kind_enabled(kind):
+    if not get_bool('alerts_enabled', True):
+        return False
+    setting_by_kind = {
+        'inactive': 'alert_inactive_students',
+        'pending': 'alert_pending_activities',
+        'low_performance': 'alert_low_performance',
+        'performance_drop': 'alert_performance_drop',
+        'deadline': 'alert_deadlines',
+        'deadline_soon': 'alert_deadlines',
+    }
+    setting = setting_by_kind.get(kind)
+    return get_bool(setting, True) if setting else True
+
+
+def _visible_active_alerts():
+    return [
+        alert for alert in Alert.query.filter_by(resolved=False).all()
+        if _alert_kind_enabled(alert.kind)
+    ]
+
 
 def _sync_smart_alerts(students, activities, attempts, now):
     """Cria alertas acionáveis sem duplicar alertas ativos."""
@@ -138,6 +175,8 @@ def _sync_smart_alerts(students, activities, attempts, now):
 
     def add(kind, user_id=None, activity_id=None, message='', link=None, priority='medium'):
         nonlocal created
+        if not _alert_kind_enabled(kind):
+            return
         key = (kind, user_id, activity_id)
         if key in existing:
             return
@@ -286,8 +325,13 @@ def dashboard():
     pending_activity_stats = pending_activity_stats[:8]
 
     _sync_smart_alerts(students, all_activities, all_attempts, now)
-    smart_alerts = Alert.query.filter_by(resolved=False).order_by(Alert.priority.desc(), Alert.created_at.desc()).limit(8).all()
-    alert_counts = {'high': Alert.query.filter_by(resolved=False, priority='high').count(), 'medium': Alert.query.filter_by(resolved=False, priority='medium').count()}
+    visible_alerts = _visible_active_alerts()
+    visible_alerts.sort(key=lambda alert: (0 if alert.priority == 'high' else 1, -(alert.created_at.timestamp() if alert.created_at else 0)))
+    smart_alerts = visible_alerts[:8]
+    alert_counts = {
+        'high': sum(1 for alert in visible_alerts if alert.priority == 'high'),
+        'medium': sum(1 for alert in visible_alerts if alert.priority == 'medium'),
+    }
     return render_template('admin/dashboard.html',
         series=Series.query.count(), series_list=Series.query.order_by(Series.id).all(),
         subjects=Subject.query.count(), contents=Content.query.count(), users=User.query.count(),
@@ -298,48 +342,6 @@ def dashboard():
         overall_completion=overall_completion, recent_activity_count=recent_activity_count, now=now, smart_alerts=smart_alerts, alert_counts=alert_counts,
         series_indicators=series_indicators, inactive_students=inactive_students, pending_activity_stats=pending_activity_stats)
 
-
-@admin_bp.get('/ranking')
-def ranking():
-    """Visualização administrativa do ranking semanal de alunos."""
-    now = utcnow()
-    start = datetime.combine((now - timedelta(days=now.weekday())).date(), datetime.min.time())
-    end = start + timedelta(days=7)
-    q = request.args.get('q', '').strip()
-    students_query = User.query.filter(User.role == 'student')
-    if q:
-        like = f'%{q}%'
-        students_query = students_query.filter(or_(User.name.ilike(like), User.email.ilike(like)))
-    students = students_query.order_by(User.name.asc()).all()
-    rows = []
-    for student in students:
-        attempts = ActivityAttempt.query.filter(
-            ActivityAttempt.user_id == student.id,
-            ActivityAttempt.created_at >= start, ActivityAttempt.created_at < end
-        ).all()
-        correct_answers = sum(_admin_attempt_correct_answers(attempt) for attempt in attempts)
-        rows.append({'student': student, 'correct_answers': correct_answers, 'activities': len(attempts), 'points': correct_answers * 10})
-    rows.sort(key=lambda row: (-row['points'], -row['correct_answers'], row['student'].name.casefold()))
-    for position, row in enumerate(rows, 1):
-        row['position'] = position
-    total_points = sum(row['points'] for row in rows)
-    return render_template('admin/ranking.html', rows=rows, week_start=start.date(), week_end=(end - timedelta(days=1)).date(), q=q, total_points=total_points)
-
-
-def _admin_attempt_correct_answers(attempt):
-    try:
-        answers = json.loads(attempt.answers_json or '{}')
-    except (TypeError, ValueError):
-        answers = {}
-    try:
-        questions = json.loads(attempt.presented_questions_json or '[]')
-    except (TypeError, ValueError):
-        questions = []
-    return sum(
-        1 for index, question in enumerate(questions)
-        if question.get('kind', 'objective') != 'essay'
-        and answers.get(str(index)) == question.get('correct')
-    )
 
 
 @admin_bp.route('/alertas', methods=['GET', 'POST'])
@@ -359,7 +361,8 @@ def alerts():
     attempts = ActivityAttempt.query.order_by(ActivityAttempt.created_at.desc()).all()
     now = utcnow()
     _sync_smart_alerts(students, activities, attempts, now)
-    all_alerts = Alert.query.filter_by(resolved=False).order_by(Alert.priority.desc(), Alert.created_at.desc()).all()
+    all_alerts = _visible_active_alerts()
+    all_alerts.sort(key=lambda alert: (0 if alert.priority == 'high' else 1, -(alert.created_at.timestamp() if alert.created_at else 0)))
     return render_template('admin/alerts.html', alerts=all_alerts, now=now)
 
 
@@ -635,7 +638,7 @@ def content_new():
     content, series, subjects = content_form()
     if request.method == 'POST' and content:
         if content.status == 'published':
-            notify_students(f'Novo material: {content.title}', url_for('student.content', id=content.id))
+            notify_students(f'Novo material: {content.title}', url_for('student.content', id=content.id), category='materials')
         _record_content_history(content, 'criado')
         db.session.commit()
         message = 'Material publicado com sucesso.' if content.status == 'published' else ('Material programado com sucesso.' if content.status == 'scheduled' else 'Material salvo como rascunho.')
@@ -652,7 +655,7 @@ def content_edit(id):
         action = 'publicada' if content.status == 'published' and previous_status != 'published' else ('programada' if content.status == 'scheduled' else ('rascunho_salvo' if content.status == 'draft' else 'editado'))
         _record_content_history(content, action)
         if content.status == 'published' and previous_status != 'published':
-            notify_students(f'Novo material publicado: {content.title}', url_for('student.content', id=content.id))
+            notify_students(f'Novo material publicado: {content.title}', url_for('student.content', id=content.id), category='materials')
         db.session.commit()
         message = 'Material publicado.' if content.status == 'published' and previous_status != 'published' else ('Material programado.' if content.status == 'scheduled' else ('Rascunho salvo.' if content.status == 'draft' else 'Material atualizado.'))
         flash(message, 'success')
@@ -1068,7 +1071,7 @@ def ready_activities():
             db.session.add(activity); db.session.commit()
             _record_activity_history(activity, 'criada')
             db.session.commit()
-            notify_students(f'Nova atividade: {activity.title}', url_for('student.activity', id=activity.id))
+            notify_students(f'Nova atividade: {activity.title}', url_for('student.activity', id=activity.id), category='activities')
             db.session.commit()
             flash(f'Atividade pronta "{activity.title}" adicionada com {len(item["questions"])} questões.', 'success')
             return redirect(url_for('admin.activity_edit', id=activity.id))
@@ -1158,7 +1161,7 @@ def activity_edit(id):
             _record_activity_history(a, 'editada')
             db.session.commit()
             if was_empty:
-                notify_students(f'Nova atividade: {a.title}', url_for('student.activity', id=a.id))
+                notify_students(f'Nova atividade: {a.title}', url_for('student.activity', id=a.id), category='activities')
                 db.session.commit()
             flash('Atividade salva.', 'success')
             return redirect(url_for('admin.activities'))
@@ -1377,7 +1380,7 @@ def experiments():
             e = Experiment(title=title, description=request.form.get('description', '').strip(), objective=request.form.get('objective', '').strip(), materials=request.form.get('materials', '').strip(), steps=request.form.get('steps', '').strip(), safety=request.form.get('safety', '').strip(), conclusion=request.form.get('conclusion', '').strip(), series_id=s.id, subject_id=sub.id)
             db.session.add(e)
             db.session.commit()
-            notify_students(f'Novo experimento: {e.title}', url_for('student.experiment', id=e.id))
+            notify_students(f'Novo experimento: {e.title}', url_for('student.experiment', id=e.id), category='materials')
             db.session.commit()
             flash('Experimento publicado.', 'success')
             return redirect(url_for('admin.experiments'))
@@ -1522,7 +1525,7 @@ def announcements():
         elif link and not valid_url(link):
             flash('O link do aviso precisa ser uma URL http(s) válida.', 'error')
         else:
-            notify_students(message, link or None)
+            notify_students(message, link or None, category='announcements')
             db.session.commit()
             flash(f'Aviso enviado para {len(students)} aluno(s).', 'success')
             return redirect(url_for('admin.announcements'))
@@ -1659,8 +1662,51 @@ def reports_xlsx():
     resp.headers['Content-Disposition'] = 'attachment; filename=portal-python-relatorio.xlsx'
     return resp
 
-@admin_bp.get('/settings')
-def settings(): return render_template('admin/settings.html')
+@admin_bp.route('/settings', methods=['GET', 'POST'])
+def settings():
+    """Exibe e persiste exclusivamente as configurações da fase 5.1."""
+    if request.method == 'POST':
+        institution_name = request.form.get('institution_name', '').strip()
+        upload_limit_raw = request.form.get('upload_limit_mb', '').strip()
+        if not institution_name or len(institution_name) > 160:
+            flash('Informe um nome de instituição válido (1 a 160 caracteres).', 'error')
+            return redirect(url_for('admin.settings'))
+        try:
+            upload_limit = int(upload_limit_raw)
+        except (TypeError, ValueError):
+            upload_limit = 0
+        if not 1 <= upload_limit <= 100:
+            flash('O limite de upload deve estar entre 1 e 100 MB.', 'error')
+            return redirect(url_for('admin.settings'))
+
+        checkbox_keys = (
+            'public_registration', 'google_oauth_enabled',
+            'notifications_enabled', 'notification_activities',
+            'notification_materials', 'notification_deadlines',
+            'notification_announcements', 'alerts_enabled',
+            'alert_inactive_students', 'alert_pending_activities',
+            'alert_low_performance', 'alert_performance_drop',
+            'alert_deadlines',
+        )
+        set_setting('institution_name', institution_name)
+        set_setting('upload_limit_mb', upload_limit)
+        for key in checkbox_keys:
+            set_setting(key, 'true' if request.form.get(key) == 'on' else 'false')
+        db.session.commit()
+        current_app.config['MAX_CONTENT_LENGTH'] = upload_limit * 1024 * 1024
+        flash('Configurações salvas com sucesso.', 'success')
+        return redirect(url_for('admin.settings'))
+
+    from ..settings import get_setting
+    values = {key: get_setting(key, default) for key, default in DEFAULT_SETTINGS.items()}
+    return render_template(
+        'admin/settings.html',
+        settings=values,
+        google_credentials_configured=bool(
+            os.getenv('GOOGLE_CLIENT_ID', '').strip()
+            and os.getenv('GOOGLE_CLIENT_SECRET', '').strip()
+        ),
+    )
 
 # ---------------------------------------------------------------------------
 # FASE 5.11 — Importação e exportação de alunos/progresso

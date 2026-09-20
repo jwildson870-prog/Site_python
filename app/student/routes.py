@@ -532,46 +532,6 @@ def engagement():
     upcoming = pending[:8]
     return render_template('student/engagement.html', goal=goal, completed=completed, target=target, percent=percent, pending=pending, upcoming=upcoming, now=now)
 
-def _attempt_correct_answers(attempt):
-    """Conta apenas respostas objetivas corretas registradas na tentativa."""
-    answers = attempt.get_answers()
-    questions = attempt.get_presented_questions()
-    return sum(
-        1 for index, question in enumerate(questions)
-        if question.get('kind', 'objective') != 'essay'
-        and answers.get(str(index)) == question.get('correct')
-    )
-
-@student_bp.get('/ranking')
-def ranking():
-    """Ranking semanal por acertos nas questões das atividades.
-
-    Cada questão objetiva acertada vale 10 pontos. Questões discursivas
-    não entram automaticamente na pontuação.
-    """
-    start = datetime.combine(_week_start(), datetime.min.time())
-    students = User.query.filter(User.role == 'student').order_by(User.name.asc()).all()
-    rows = []
-    for student in students:
-        attempts = ActivityAttempt.query.filter(
-            ActivityAttempt.user_id == student.id,
-            ActivityAttempt.created_at >= start
-        ).all()
-        correct_answers = sum(_attempt_correct_answers(attempt) for attempt in attempts)
-        activities = len(attempts)
-        points = correct_answers * 10
-        rows.append({
-            'student': student,
-            'points': points,
-            'correct_answers': correct_answers,
-            'activities': activities,
-        })
-    rows.sort(key=lambda row: (-row['points'], -row['correct_answers'], row['student'].name.casefold()))
-    for position, row in enumerate(rows, start=1):
-        row['position'] = position
-    current = next((row for row in rows if row['student'].id == current_user.id), None)
-    return render_template('student/ranking.html', rows=rows, current=current, week_start=start.date())
-
 
 @student_bp.get('/conquistas')
 def achievements():

@@ -24,7 +24,7 @@
   <link rel="manifest" href="{{ url_for('static',filename='manifest.json') }}">
   <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static',filename='icons/icon-192.png') }}">
   <link rel="apple-touch-icon" href="{{ url_for('static',filename='icons/icon-192.png') }}">
-  <title>{% block title %}Portal Python{% endblock %}</title>
+  <title>{% block title %}{{ institution_name }}{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static',filename='css/style.css', v='20260915-sidebar-desktop-1') }}">
   <link rel="stylesheet" href="{{ url_for('static',filename='css/interactions.css', v='20260918-animacoes-1') }}">
   <link rel="stylesheet" href="{{ url_for('static',filename='css/cards.css', v='20260916-cards-1') }}">
@@ -37,7 +37,7 @@
 <div class="page-loader" id="pageLoader" aria-hidden="false" role="status" aria-live="polite">
   <div class="page-loader-card">
     <div class="page-loader-logo"><img src="{{ url_for('static',filename='icons/python-brand.png') }}" alt="Python"></div>
-    <strong>Portal <span>Python</span></strong>
+    <strong>{{ institution_name }}</strong>
     <small>Carregando...</small>
     <div class="page-loader-bar" aria-hidden="true"><i></i></div>
   </div>
@@ -45,7 +45,7 @@
 <input class="menu-check" id="menuCheck" type="checkbox" aria-hidden="true">
 <header class="topbar">
   {% if current_user.is_authenticated %}<label class="menu-toggle" for="menuCheck" aria-label="Abrir menu" title="Abrir menu"><span></span><span></span><span></span></label>{% endif %}
-  <div class="topbar-brand"><img src="{{ url_for('static',filename='icons/python-brand.png') }}" alt="Python"><strong>Portal <span>Python</span></strong></div>
+  <div class="topbar-brand"><img src="{{ url_for('static',filename='icons/python-brand.png') }}" alt="Python"><strong>{{ institution_name }}</strong></div>
   <div class="topbar-context"><span class="status-dot"></span><span>Portal online</span></div>
   <div class="topbar-spacer"></div>
   <div class="theme-control" id="themeControl">
@@ -81,7 +81,6 @@
   </div>
   <nav class="side-nav" id="sideNav">
   {% if current_user.is_authenticated and current_user.is_admin %}
-        <a class="side-link {% if request.endpoint == 'student.ranking' %}active{% endif %}" href="{{url_for('student.ranking')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/chart.svg') }}" alt=""></span><b>Ranking</b></a>
         <a class="side-link {% if request.endpoint == 'student.achievements' %}active{% endif %}" href="{{url_for('student.achievements')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/bolt.svg') }}" alt=""></span><b>Conquistas</b></a>
         <a class="side-link {% if request.endpoint == 'student.grades' %}active{% endif %}" href="{{url_for('student.grades')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/check.svg') }}" alt=""></span><b>Notas</b></a>
       </div>
