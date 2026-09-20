@@ -511,7 +511,7 @@ def content_form(content=None):
             flash('O conteúdo do arquivo não corresponde ao tipo informado. Escolha um arquivo válido.', 'error')
             return None, series, subjects
         if uploaded == 'too_large':
-            flash('Arquivo muito grande. Limite: 25 MB.', 'error')
+            flash(f'Arquivo muito grande. Limite: {get_int('upload_limit_mb', DEFAULT_MAX_UPLOAD_MB)} MB.', 'error')
             return None, series, subjects
         if isinstance(uploaded, StorageError):
             flash(uploaded.message, 'error')
@@ -595,6 +595,29 @@ def content_delete(id):
             storage_delete(key)
     flash('Conteúdo excluído.', 'success')
     return redirect(url_for('admin.contents'))
+
+@admin_bp.get('/contents/<int:id>/preview')
+def content_preview(id):
+    content = Content.query.get_or_404(id)
+    return render_template('admin/content_preview.html', content=content, slides=_preview_files(content))
+
+@admin_bp.get('/contents/<int:id>/preview/slide/<int:slide>')
+def content_preview_slide(id, slide):
+    content = Content.query.get_or_404(id)
+    slides = _preview_files(content)
+    if content.kind != 'file' or not content.file_name or slide < 0 or slide >= len(slides):
+        abort(404)
+    key = slides[slide]
+    if not isinstance(key, str) or not key:
+        abort(404)
+    if b2_enabled():
+        try:
+            obj = get_file(key)
+        except StorageError as exc:
+            current_app.logger.warning('Falha ao abrir preview do slide %s do material %s: %s | %s', slide, content.id, exc.message, exc.technical)
+            abort(404)
+        return safe_file_response(obj, key, 'image/png')
+    return send_from_directory(current_app.config['UPLOAD_FOLDER'], key, mimetype='image/png')
 
 @admin_bp.get('/file/<path:filename>')
 def file(filename):
