@@ -10,6 +10,7 @@ from ..storage import upload as storage_upload, delete as storage_delete, get_fi
 from ..extensions import db
 from ..timeutils import utcnow
 from ..models import Series, Subject, Content, User, Activity, ActivityAttempt, Experiment, Notification, Alert, QuestionBank, Progress
+from ..settings import DEFAULT_SETTINGS, get_bool, get_int, get_setting, set_setting
 from ..pptx_preview import convert_pptx_to_images
 from ..activity_library import PREBUILT_ACTIVITIES, BY_SLUG
 
@@ -24,7 +25,11 @@ def normalize_difficulty(value):
     return value if value in DIFFICULTIES else DEFAULT_DIFFICULTY
 
 ALLOWED_EXTENSIONS = {'pdf','png','jpg','jpeg','webp','gif','ppt','pptx','doc','docx','txt'}
-MAX_UPLOAD = 25 * 1024 * 1024
+DEFAULT_MAX_UPLOAD_MB = 25
+MAX_UPLOAD = DEFAULT_MAX_UPLOAD_MB * 1024 * 1024
+
+def current_upload_limit():
+    return max(1, min(get_int('upload_limit_mb', DEFAULT_MAX_UPLOAD_MB), 100)) * 1024 * 1024
 SAFE_INLINE_TYPES = {'pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp'}
 SAFE_TYPES = {
     'pdf': 'application/pdf', 'png': 'image/png', 'jpg': 'image/jpeg',
@@ -95,7 +100,7 @@ def save_uploaded_file(file, required_extension=None):
     original = secure_filename(file.filename); extension = Path(original).suffix.lower().lstrip('.')
     if not extension or extension not in ALLOWED_EXTENSIONS or (required_extension and extension != required_extension): return False, None
     if len(original) > 180 or any(ord(ch) < 32 for ch in original): return False, None
-    if request.content_length and request.content_length > MAX_UPLOAD: return 'too_large', None
+    if request.content_length and request.content_length > current_upload_limit(): return 'too_large', None
     if not file_signature_ok(file, extension): return 'invalid_signature', None
     if not mime_ok(extension, file.mimetype): return 'invalid_mime', None
     try:
@@ -115,7 +120,9 @@ def save_uploaded_file(file, required_extension=None):
         ), None
     return filename, original
 
-def notify_students(message, link=None):
+def notify_students(message, link=None, category='announcements'):
+    if not get_bool('notifications_enabled', True) or not get_bool(f'notification_{category}', True):
+        return
     for student in User.query.filter_by(role='student').all():
         db.session.add(Notification(user_id=student.id, message=message, link=link))
 
@@ -136,6 +143,18 @@ def _sync_smart_alerts(students, activities, attempts, now):
 
     def add(kind, user_id=None, activity_id=None, message='', link=None, priority='medium'):
         nonlocal created
+        if not get_bool('alerts_enabled', True):
+            return
+        category = {
+            'inactive': 'alert_inactive_students',
+            'pending': 'alert_pending_activities',
+            'low_performance': 'alert_low_performance',
+            'performance_drop': 'alert_performance_drop',
+            'deadline': 'alert_deadlines',
+            'deadline_soon': 'alert_deadlines',
+        }.get(kind)
+        if category and not get_bool(category, True):
+            return
         key = (kind, user_id, activity_id)
         if key in existing:
             return
@@ -547,7 +566,7 @@ def content_form(content=None):
 def content_new():
     content, series, subjects = content_form()
     if request.method == 'POST' and content:
-        notify_students(f'Novo material: {content.title}', url_for('student.content', id=content.id))
+        notify_students(f'Novo material: {content.title}', url_for('student.content', id=content.id), 'materials')
         db.session.commit()
         flash('Material publicado com sucesso.', 'success')
         return redirect(url_for('admin.contents'))
@@ -832,7 +851,7 @@ def ready_activities():
             )
             activity.set_questions([dict(q) for q in item['questions']])
             db.session.add(activity); db.session.commit()
-            notify_students(f'Nova atividade: {activity.title}', url_for('student.activity', id=activity.id))
+            notify_students(f'Nova atividade: {activity.title}', url_for('student.activity', id=activity.id), 'activities')
             db.session.commit()
             flash(f'Atividade pronta "{activity.title}" adicionada com {len(item["questions"])} questões.', 'success')
             return redirect(url_for('admin.activity_edit', id=activity.id))
@@ -899,7 +918,7 @@ def activity_edit(id):
             a.set_questions(questions)
             db.session.commit()
             if was_empty:
-                notify_students(f'Nova atividade: {a.title}', url_for('student.activity', id=a.id))
+                notify_students(f'Nova atividade: {a.title}', url_for('student.activity', id=a.id), 'activities')
                 db.session.commit()
             flash('Atividade salva.', 'success')
             return redirect(url_for('admin.activities'))
@@ -937,7 +956,7 @@ def experiments():
             e = Experiment(title=title, description=request.form.get('description', '').strip(), objective=request.form.get('objective', '').strip(), materials=request.form.get('materials', '').strip(), steps=request.form.get('steps', '').strip(), safety=request.form.get('safety', '').strip(), conclusion=request.form.get('conclusion', '').strip(), series_id=s.id, subject_id=sub.id)
             db.session.add(e)
             db.session.commit()
-            notify_students(f'Novo experimento: {e.title}', url_for('student.experiment', id=e.id))
+            notify_students(f'Novo experimento: {e.title}', url_for('student.experiment', id=e.id), 'materials')
             db.session.commit()
             flash('Experimento publicado.', 'success')
             return redirect(url_for('admin.experiments'))
@@ -1144,8 +1163,33 @@ def reports_xlsx():
     resp.headers['Content-Disposition'] = 'attachment; filename=portal-python-relatorio.xlsx'
     return resp
 
-@admin_bp.get('/settings')
-def settings(): return render_template('admin/settings.html')
+@admin_bp.route('/settings', methods=['GET', 'POST'])
+def settings():
+    if request.method == 'POST':
+        upload_raw = request.form.get('upload_limit_mb', '25').strip()
+        try:
+            upload_limit = int(upload_raw)
+        except ValueError:
+            upload_limit = 25
+        upload_limit = max(1, min(upload_limit, 100))
+        institution = request.form.get('institution_name', '').strip()[:160] or 'Portal Python'
+        bool_keys = [
+            'public_registration', 'google_oauth_enabled', 'notifications_enabled',
+            'notification_activities', 'notification_materials', 'notification_deadlines',
+            'notification_announcements', 'alerts_enabled', 'alert_inactive_students',
+            'alert_pending_activities', 'alert_low_performance', 'alert_performance_drop',
+            'alert_deadlines'
+        ]
+        set_setting('upload_limit_mb', upload_limit)
+        set_setting('institution_name', institution)
+        for key in bool_keys:
+            set_setting(key, 'true' if request.form.get(key) == 'on' else 'false')
+        db.session.commit()
+        current_app.config['MAX_CONTENT_LENGTH'] = upload_limit * 1024 * 1024
+        flash('Configurações salvas com sucesso.', 'success')
+        return redirect(url_for('admin.settings'))
+    settings_data = {key: get_setting(key, default) for key, default in DEFAULT_SETTINGS.items()}
+    return render_template('admin/settings.html', settings=settings_data, google_credentials_configured=bool(os.getenv('GOOGLE_CLIENT_ID') and os.getenv('GOOGLE_CLIENT_SECRET')))
 
 # ---------------------------------------------------------------------------
 # FASE 5.11 — Importação e exportação de alunos/progresso

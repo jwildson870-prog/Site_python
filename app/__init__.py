@@ -126,13 +126,13 @@ def create_app(test_config=None):
     def home():
         if current_user.is_authenticated:
             return redirect(url_for('admin.dashboard' if current_user.is_admin else 'student.dashboard'))
-        return render_template('index.html')
+        return render_template('index.html', registration_enabled=get_bool('public_registration', True))
     @app.errorhandler(403)
     def forbidden(e): return render_template('error.html',message='Acesso negado.'),403
     @app.errorhandler(404)
     def not_found(e): return render_template('error.html',message='Página não encontrada.'),404
     @app.errorhandler(413)
-    def too_large(e): return render_template('error.html',message='Arquivo muito grande. Limite: 25 MB.'),413
+    def too_large(e): return render_template('error.html',message=f"Arquivo muito grande. Limite: {app.config.get('MAX_CONTENT_LENGTH', 25*1024*1024)//(1024*1024)} MB."),413
 
     @app.errorhandler(400)
     def bad_request(e): return render_template('error.html', message='Solicitação inválida.'), 400
@@ -157,6 +157,10 @@ def create_app(test_config=None):
         print(f'Banco expandido: {added} questão(ões) nova(s).')
     with app.app_context():
         db.create_all()
+        from .settings import ensure_default_settings, get_int, get_bool
+        ensure_default_settings()
+        # O limite configurável continua respeitando o limite seguro do Flask.
+        app.config['MAX_CONTENT_LENGTH'] = max(1, min(get_int('upload_limit_mb', 25), 100)) * 1024 * 1024
         # Migração leve e retrocompatível para instalações existentes: adiciona
         # o prazo das atividades sem apagar nem recriar tabelas do Neon.
         inspector = inspect(db.engine)
