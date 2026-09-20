@@ -379,3 +379,25 @@
 @media(prefers-reduced-motion:reduce){
   .login-professional *{animation-duration:.01ms!important;transition-duration:.01ms!important}
 }
+
+/* Ajustes finais da tela de login */
+.login-professional .login-form input[type="password"]{
+  padding-left:64px !important;
+}
+.login-professional .login-form input[type="email"]{
+  padding-left:50px !important;
+}
+.login-professional .login-field-icon{
+  left:18px !important;
+}
+/* O botão do Google usa somente o símbolo oficial em SVG. */
+.login-professional .login-google::before{
+  content:none !important;
+  display:none !important;
+}
+.login-professional .login-google .google-mark{
+  display:block !important;
+  width:22px;
+  height:22px;
+  flex:0 0 22px;
+}
