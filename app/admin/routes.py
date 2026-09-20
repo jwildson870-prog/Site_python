@@ -1209,6 +1209,81 @@ def experiment_edit(id):
 def experiment_delete(id):
     e=Experiment.query.get_or_404(id); db.session.delete(e); db.session.commit(); flash('Experimento excluído.','success'); return redirect(url_for('admin.experiments'))
 
+@admin_bp.get('/experiments/<int:id>/entregas')
+def project_submissions(id):
+    experiment = Experiment.query.get_or_404(id)
+    rubric = ProjectRubric.query.filter_by(experiment_id=experiment.id).first()
+    submissions = ProjectSubmission.query.filter_by(experiment_id=experiment.id).order_by(ProjectSubmission.submitted_at.desc()).all()
+    return render_template('admin/project_submissions.html', experiment=experiment, rubric=rubric, submissions=submissions)
+
+@admin_bp.post('/experiments/<int:id>/entregas')
+def project_submissions_save(id):
+    experiment = Experiment.query.get_or_404(id)
+    action = request.form.get('action', '').strip()
+    if action == 'rubric':
+        rubric = ProjectRubric.query.filter_by(experiment_id=experiment.id).first()
+        if not rubric:
+            rubric = ProjectRubric(experiment_id=experiment.id)
+            db.session.add(rubric)
+            db.session.flush()
+        rubric.title = request.form.get('rubric_title', '').strip() or 'Rubrica do projeto'
+        names = request.form.getlist('criterion_name')
+        points = request.form.getlist('criterion_points')
+        descriptions = request.form.getlist('criterion_description')
+        # Rebuild the small rubric atomically so removed criteria disappear too.
+        for criterion in list(rubric.criteria):
+            db.session.delete(criterion)
+        for pos, name in enumerate(names):
+            name = name.strip()
+            if not name:
+                continue
+            try:
+                maximum = float(points[pos]) if pos < len(points) else 10
+            except (TypeError, ValueError):
+                maximum = 10
+            maximum = max(0.5, min(maximum, 100))
+            db.session.add(ProjectRubricCriterion(rubric=rubric, name=name, description=(descriptions[pos].strip() if pos < len(descriptions) else ''), max_points=maximum, position=pos))
+        db.session.commit()
+        flash('Rubrica salva.', 'success')
+    elif action == 'feedback':
+        sid = request.form.get('submission_id', '').strip()
+        submission = ProjectSubmission.query.filter_by(id=int(sid) if sid.isdigit() else -1, experiment_id=experiment.id).first_or_404()
+        submission.teacher_feedback = request.form.get('teacher_feedback', '').strip()
+        raw_score = request.form.get('score', '').strip()
+        try:
+            submission.score = max(0, min(float(raw_score), 100)) if raw_score else None
+        except ValueError:
+            submission.score = None
+        submission.status = 'reviewed'
+        db.session.commit()
+        flash('Feedback salvo.', 'success')
+    elif action == 'rubric_score':
+        sid = request.form.get('submission_id', '').strip()
+        submission = ProjectSubmission.query.filter_by(id=int(sid) if sid.isdigit() else -1, experiment_id=experiment.id).first_or_404()
+        rubric = ProjectRubric.query.filter_by(experiment_id=experiment.id).first()
+        if rubric:
+            existing = {row.criterion_id: row for row in submission.rubric_scores}
+            for criterion in rubric.criteria:
+                raw = request.form.get(f'criterion_{criterion.id}', '').strip()
+                try: points = max(0, min(float(raw), criterion.max_points)) if raw else 0
+                except ValueError: points = 0
+                row = existing.get(criterion.id) or ProjectRubricScore(submission_id=submission.id, criterion_id=criterion.id)
+                row.points = points
+                row.feedback = request.form.get(f'criterion_feedback_{criterion.id}', '').strip()
+                db.session.add(row)
+            db.session.commit()
+            flash('Avaliação por rubrica salva.', 'success')
+    elif action == 'moderate_comment':
+        cid = request.form.get('comment_id', '').strip()
+        comment = ProjectComment.query.get_or_404(int(cid) if cid.isdigit() else -1)
+        if comment.submission.experiment_id != experiment.id:
+            abort(404)
+        comment.status = 'hidden' if request.form.get('status') == 'hidden' else 'visible'
+        db.session.commit()
+        flash('Comentário moderado.', 'success')
+    return redirect(url_for('admin.project_submissions', id=experiment.id))
+
+
 @admin_bp.get('/activities/<int:id>/resultados')
 def activity_results(id):
     activity = Activity.query.get_or_404(id)

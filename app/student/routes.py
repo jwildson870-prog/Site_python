@@ -3,12 +3,14 @@ from flask_login import login_required,current_user
 from sqlalchemy import or_
 from ..extensions import db
 from ..timeutils import utcnow
-from ..models import User,Series,Subject,Content,Activity,ActivityAttempt,Experiment,Favorite,Progress,Notification,WeeklyGoal
+from ..models import User,Series,Subject,Content,Activity,ActivityAttempt,Experiment,Favorite,Progress,Notification,WeeklyGoal,ProjectSubmission,ProjectAttachment,ProjectComment
 from ..storage import get_file, b2_enabled, StorageError
 import json
 import random
 from copy import deepcopy
 from datetime import date, datetime, timedelta
+from pathlib import Path
+from werkzeug.utils import secure_filename
 import calendar as pycalendar
 student_bp=Blueprint('student',__name__,url_prefix='/aluno')
 
@@ -280,8 +282,70 @@ def activity(id):
     return render_template('student/activity.html',activity=a,questions=questions,expired=expired,now=now,attempt_count=attempt_count,attempts_remaining=attempts_remaining,attempts_blocked=False)
 @student_bp.get('/experimentos')
 def experiments(): return render_template('student/experiments.html',experiments=Experiment.query.order_by(Experiment.id.desc()).all())
-@student_bp.get('/experimento/<int:id>')
-def experiment(id): return render_template('student/experiment.html',experiment=Experiment.query.get_or_404(id))
+@student_bp.route('/experimento/<int:id>', methods=['GET', 'POST'])
+def experiment(id):
+    experiment = Experiment.query.get_or_404(id)
+    submission = ProjectSubmission.query.filter_by(experiment_id=experiment.id, user_id=current_user.id).first()
+    if request.method == 'POST':
+        action = request.form.get('action', 'submit')
+        if action == 'submit':
+            content = request.form.get('content', '').strip()
+            if not content and not request.files.get('attachment'):
+                flash('Escreva sua resposta ou envie um arquivo.', 'error')
+                return redirect(url_for('student.experiment', id=id))
+            if submission is None:
+                submission = ProjectSubmission(experiment_id=experiment.id, user_id=current_user.id, content=content)
+                db.session.add(submission); db.session.flush()
+            else:
+                submission.content = content
+                submission.status = 'submitted'
+                submission.teacher_feedback = None
+                submission.score = None
+            attachment = request.files.get('attachment')
+            if attachment and attachment.filename:
+                original = secure_filename(attachment.filename)
+                ext = Path(original).suffix.lower().lstrip('.')
+                allowed = {'pdf','png','jpg','jpeg','webp','gif','doc','docx','ppt','pptx','txt','zip'}
+                if not original or ext not in allowed or len(original) > 180:
+                    flash('Tipo de arquivo não permitido.', 'error')
+                    db.session.rollback()
+                    return redirect(url_for('student.experiment', id=id))
+                try:
+                    key = storage_upload(attachment, original, attachment.mimetype)
+                except StorageError as exc:
+                    db.session.rollback()
+                    return render_template('error.html', message=exc.message, error_title='Não foi possível enviar o anexo', back_url=url_for('student.experiment', id=id)), 502
+                db.session.add(ProjectAttachment(submission_id=submission.id, filename=original, storage_key=key, content_type=attachment.mimetype))
+            db.session.commit()
+            flash('Entrega enviada ao professor.', 'success')
+            return redirect(url_for('student.experiment', id=id))
+        if action == 'comment':
+            body = request.form.get('body', '').strip()
+            if body:
+                if submission is None:
+                    submission = ProjectSubmission(experiment_id=experiment.id, user_id=current_user.id, content='')
+                    db.session.add(submission); db.session.flush()
+                db.session.add(ProjectComment(submission_id=submission.id, user_id=current_user.id, body=body, status='visible'))
+                db.session.commit()
+                flash('Comentário enviado.', 'success')
+            return redirect(url_for('student.experiment', id=id))
+    comments = ProjectComment.query.filter_by(submission_id=submission.id, status='visible').order_by(ProjectComment.created_at.asc()).all() if submission else []
+    return render_template('student/experiment.html', experiment=experiment, submission=submission, comments=comments, rubric=experiment.rubric)
+
+@student_bp.get('/projeto/anexo/<int:id>')
+def project_attachment(id):
+    attachment = ProjectAttachment.query.get_or_404(id)
+    submission = attachment.submission
+    if submission.user_id != current_user.id and not current_user.is_admin:
+        abort(403)
+    if b2_enabled():
+        try:
+            obj = get_file(attachment.storage_key)
+        except StorageError as exc:
+            current_app.logger.warning('Falha ao abrir anexo do projeto %s: %s | %s', attachment.id, exc.message, exc.technical)
+            return render_template('error.html', message=exc.message, error_title='Não foi possível abrir o anexo', back_url=url_for('student.experiment', id=submission.experiment_id)), 502
+        return safe_file_response(obj, attachment.filename, attachment.content_type or 'application/octet-stream')
+    return send_from_directory(current_app.config['UPLOAD_FOLDER'], attachment.storage_key, as_attachment=True, download_name=attachment.filename, mimetype=attachment.content_type or None)
 @student_bp.get('/progresso')
 def progress():
     total=Content.query.filter(Content.archived_at.is_(None)).count(); completed=Progress.query.filter_by(user_id=current_user.id).count(); percent=round(completed/total*100) if total else 0
