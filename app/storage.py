@@ -99,38 +99,41 @@ def _bucket():
 def _native_error(response, action='acessar o Backblaze B2'):
     try:
         data = response.json()
-    except ValueError:
+    except (ValueError, TypeError):
         data = {}
     code = str(data.get('code') or response.status_code).strip()
-    message = str(data.get('message') or response.text or '').strip()
+    # Não exponha XML/HTML bruto do provedor na interface do Portal.
+    # O corpo completo continua disponível apenas no campo técnico para logs.
+    message = str(data.get('message') or '').strip()
+    technical_body = str(getattr(response, 'text', '') or '').strip()
     if response.status_code == 401 or code in {'unauthorized', 'bad_auth_token', 'expired_auth_token'}:
         return StorageError(
             'A chave do Backblaze não foi autorizada. Crie/edite uma Application Key com permissão de escrita no bucket.',
             code='storage_credentials',
-            technical=f'{code}: {message}',
+            technical=f'{code}: {technical_body or message}',
         )
     if response.status_code == 403 or code == 'storage_cap_exceeded':
         return StorageError(
             'O Backblaze recusou o acesso por permissão ou limite da conta. Verifique a permissão writeFiles da Application Key.',
             code='storage_unauthorized',
-            technical=f'{code}: {message}',
+            technical=f'{code}: {technical_body or message}',
         )
     if code in {'bad_bucket_id', 'no_such_bucket', 'bucket_not_found'}:
         return StorageError(
             'O bucket configurado não foi encontrado ou a Application Key não tem acesso a ele. Confira B2_BUCKET_NAME.',
             code='storage_bucket_not_found',
-            technical=f'{code}: {message}',
+            technical=f'{code}: {technical_body or message}',
         )
     if response.status_code >= 500:
         return StorageError(
             f'O Backblaze não conseguiu {action} agora. Tente novamente em alguns segundos.',
             code='storage_unavailable',
-            technical=f'{code}: {message}',
+            technical=f'{code}: {technical_body or message}',
         )
     return StorageError(
         f'Não foi possível {action}. O Backblaze retornou {code}: {message or "erro desconhecido"}.',
         code='storage_error',
-        technical=f'{code}: {message}',
+        technical=f'{code}: {technical_body or message}',
     )
 
 

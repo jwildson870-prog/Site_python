@@ -25,7 +25,7 @@ def normalize_difficulty(value):
     return value if value in DIFFICULTIES else DEFAULT_DIFFICULTY
 
 ALLOWED_EXTENSIONS = {'pdf','png','jpg','jpeg','webp','gif','ppt','pptx','doc','docx','txt'}
-MAX_UPLOAD = 25 * 1024 * 1024
+DEFAULT_MAX_UPLOAD = 25 * 1024 * 1024
 SAFE_INLINE_TYPES = {'pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp'}
 SAFE_TYPES = {
     'pdf': 'application/pdf', 'png': 'image/png', 'jpg': 'image/jpeg',
@@ -96,7 +96,8 @@ def save_uploaded_file(file, required_extension=None):
     original = secure_filename(file.filename); extension = Path(original).suffix.lower().lstrip('.')
     if not extension or extension not in ALLOWED_EXTENSIONS or (required_extension and extension != required_extension): return False, None
     if len(original) > 180 or any(ord(ch) < 32 for ch in original): return False, None
-    if request.content_length and request.content_length > MAX_UPLOAD: return 'too_large', None
+    max_upload = int(current_app.config.get('MAX_CONTENT_LENGTH', DEFAULT_MAX_UPLOAD) or DEFAULT_MAX_UPLOAD)
+    if request.content_length and request.content_length > max_upload: return 'too_large', None
     if not file_signature_ok(file, extension): return 'invalid_signature', None
     if not mime_ok(extension, file.mimetype): return 'invalid_mime', None
     try:
@@ -676,6 +677,33 @@ def content_restore(id):
         db.session.commit()
     flash('Material restaurado e novamente disponível para os alunos.', 'success')
     return redirect(url_for('admin.contents', status='archived'))
+
+
+@admin_bp.get('/contents/<int:id>/preview')
+def content_preview(id):
+    content = Content.query.get_or_404(id)
+    slides = _preview_files(content) if content.kind == 'file' else []
+    return render_template('admin/content_preview.html', content=content, slides=slides)
+
+
+@admin_bp.get('/contents/<int:id>/preview/slide/<int:slide>')
+def content_preview_slide(id, slide):
+    content = Content.query.get_or_404(id)
+    slides = _preview_files(content)
+    if content.kind != 'file' or slide < 0 or slide >= len(slides):
+        abort(404)
+    key = slides[slide]
+    if not isinstance(key, str) or not key:
+        abort(404)
+    try:
+        data = _load_stored_bytes(key)
+    except Exception as exc:
+        current_app.logger.warning('Falha ao abrir slide de pré-visualização: %s | %s', key, exc)
+        return render_template('error.html', message='Não foi possível abrir a pré-visualização deste slide.', error_title='Pré-visualização indisponível', back_url=url_for('admin.content_preview', id=content.id)), 502
+    return Response(data, mimetype='image/png', headers={
+        'Cache-Control': 'private, max-age=3600',
+        'X-Content-Type-Options': 'nosniff',
+    })
 
 
 @admin_bp.get('/contents/<int:id>/history')
