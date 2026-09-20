@@ -167,6 +167,33 @@ class Experiment(db.Model):
     created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow, nullable=False)
 
+class LearningPath(db.Model):
+    __tablename__ = 'learning_paths'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    series_id = db.Column(db.Integer, db.ForeignKey('series.id'), nullable=False, index=True)
+    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=True, index=True)
+    active = db.Column(db.Boolean, nullable=False, default=True, index=True)
+    created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow, nullable=False)
+    series = db.relationship('Series', backref=db.backref('learning_paths', cascade='all, delete-orphan'))
+    subject = db.relationship('Subject', backref=db.backref('learning_paths', cascade='all, delete-orphan'))
+    items = db.relationship('LearningPathItem', back_populates='path', cascade='all, delete-orphan', order_by='LearningPathItem.position')
+
+class LearningPathItem(db.Model):
+    __tablename__ = 'learning_path_items'
+    id = db.Column(db.Integer, primary_key=True)
+    path_id = db.Column(db.Integer, db.ForeignKey('learning_paths.id', ondelete='CASCADE'), nullable=False, index=True)
+    title = db.Column(db.String(200), nullable=False)
+    item_type = db.Column(db.String(20), nullable=False, default='content')
+    target_id = db.Column(db.Integer, nullable=False, index=True)
+    position = db.Column(db.Integer, nullable=False, default=0, index=True)
+    prerequisite_id = db.Column(db.Integer, db.ForeignKey('learning_path_items.id', ondelete='SET NULL'), nullable=True)
+    completion_rule = db.Column(db.String(30), nullable=False, default='access')
+    path = db.relationship('LearningPath', back_populates='items')
+    prerequisite = db.relationship('LearningPathItem', remote_side=[id], uselist=False)
+
 class ProjectSubmission(db.Model):
     __tablename__ = 'project_submissions'
     id = db.Column(db.Integer, primary_key=True)

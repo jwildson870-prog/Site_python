@@ -10,7 +10,7 @@ from werkzeug.datastructures import FileStorage
 from ..storage import upload as storage_upload, delete as storage_delete, get_file, b2_enabled, StorageError
 from ..extensions import db
 from ..timeutils import utcnow
-from ..models import Series, Subject, Content, ContentHistory, User, Activity, ActivityHistory, ActivityAttempt, Experiment, Notification, Alert, QuestionBank, Progress
+from ..models import Series, Subject, Content, ContentHistory, User, Activity, ActivityHistory, ActivityAttempt, Experiment, Notification, Alert, QuestionBank, Progress, LearningPath, LearningPathItem
 from ..pptx_preview import convert_pptx_to_images
 from ..activity_library import PREBUILT_ACTIVITIES, BY_SLUG
 
@@ -1164,6 +1164,66 @@ def activity_delete(id):
     db.session.commit()
     flash('Atividade excluída.', 'success')
     return redirect(url_for('admin.activities'))
+
+@admin_bp.route('/trilhas', methods=['GET', 'POST'])
+def learning_paths():
+    if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        sid = request.form.get('series_id', '').strip()
+        subject_id = request.form.get('subject_id', '').strip()
+        series = db.session.get(Series, int(sid)) if sid.isdigit() else None
+        subject = db.session.get(Subject, int(subject_id)) if subject_id.isdigit() else None
+        if not title or not series or (subject and subject.series_id != series.id):
+            flash('Informe um título e uma série válidos. A matéria deve pertencer à série.', 'error')
+        else:
+            path = LearningPath(title=title, description=request.form.get('description', '').strip(), series_id=series.id, subject_id=subject.id if subject else None, active=request.form.get('active') == '1')
+            db.session.add(path); db.session.commit()
+            flash('Trilha criada.', 'success')
+            return redirect(url_for('admin.learning_path_edit', id=path.id))
+    return render_template('admin/learning_paths.html', paths=LearningPath.query.order_by(LearningPath.id.desc()).all(), series=Series.query.order_by(Series.id).all())
+
+@admin_bp.route('/trilhas/<int:id>/editar', methods=['GET', 'POST'])
+def learning_path_edit(id):
+    path = LearningPath.query.get_or_404(id)
+    if request.method == 'POST':
+        action = request.form.get('action', 'save')
+        if action == 'save':
+            title = request.form.get('title', '').strip()
+            sid = request.form.get('series_id', '').strip()
+            subject_id = request.form.get('subject_id', '').strip()
+            series = db.session.get(Series, int(sid)) if sid.isdigit() else None
+            subject = db.session.get(Subject, int(subject_id)) if subject_id.isdigit() else None
+            if not title or not series or (subject and subject.series_id != series.id):
+                flash('Dados inválidos.', 'error')
+            else:
+                path.title=title; path.description=request.form.get('description','').strip(); path.series_id=series.id; path.subject_id=subject.id if subject else None; path.active=request.form.get('active') == '1'
+                db.session.commit(); flash('Trilha atualizada.', 'success')
+        elif action == 'item':
+            item_type=request.form.get('item_type','content').strip().lower()
+            target=request.form.get('target_id','').strip()
+            title=request.form.get('item_title','').strip()
+            rule=request.form.get('completion_rule','access').strip().lower()
+            prerequisite=request.form.get('prerequisite_id','').strip()
+            if item_type not in {'content','activity','experiment'} or not target.isdigit() or not title:
+                flash('Informe item, título e tipo válidos.', 'error')
+            else:
+                target_id=int(target)
+                valid = (Content.query.filter_by(id=target_id, series_id=path.series_id).first() if item_type=='content' else Activity.query.filter_by(id=target_id, series_id=path.series_id).first() if item_type=='activity' else Experiment.query.filter_by(id=target_id, series_id=path.series_id).first())
+                if not valid:
+                    flash('O item escolhido não pertence à série da trilha.', 'error')
+                else:
+                    pre=LearningPathItem.query.filter_by(id=int(prerequisite)).first() if prerequisite.isdigit() else None
+                    position=(db.session.query(db.func.max(LearningPathItem.position)).filter_by(path_id=path.id).scalar() or -1)+1
+                    db.session.add(LearningPathItem(path_id=path.id,title=title,item_type=item_type,target_id=target_id,position=position,prerequisite_id=pre.id if pre and pre.path_id==path.id and pre.id != position else None,completion_rule=rule if rule in {'access','complete'} else 'access'))
+                    db.session.commit(); flash('Item adicionado à trilha.', 'success')
+        elif action == 'delete_item':
+            item=LearningPathItem.query.filter_by(id=int(request.form.get('item_id','0') or 0),path_id=path.id).first_or_404(); db.session.delete(item); db.session.commit(); flash('Item removido.', 'success')
+        return redirect(url_for('admin.learning_path_edit', id=path.id))
+    return render_template('admin/learning_path_form.html', path=path, series=Series.query.order_by(Series.id).all(), contents=Content.query.filter_by(series_id=path.series_id).order_by(Content.title).all(), activities=Activity.query.filter_by(series_id=path.series_id).order_by(Activity.title).all(), experiments=Experiment.query.filter_by(series_id=path.series_id).order_by(Experiment.title).all())
+
+@admin_bp.post('/trilhas/<int:id>/excluir')
+def learning_path_delete(id):
+    path=LearningPath.query.get_or_404(id); db.session.delete(path); db.session.commit(); flash('Trilha excluída.', 'success'); return redirect(url_for('admin.learning_paths'))
 
 @admin_bp.route('/experiments', methods=['GET', 'POST'])
 def experiments():

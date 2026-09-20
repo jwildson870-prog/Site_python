@@ -3,7 +3,7 @@ from flask_login import login_required,current_user
 from sqlalchemy import or_
 from ..extensions import db
 from ..timeutils import utcnow
-from ..models import User,Series,Subject,Content,Activity,ActivityAttempt,Experiment,Favorite,Progress,Notification,WeeklyGoal,ProjectSubmission,ProjectAttachment,ProjectComment
+from ..models import User,Series,Subject,Content,Activity,ActivityAttempt,Experiment,Favorite,Progress,Notification,WeeklyGoal,ProjectSubmission,ProjectAttachment,ProjectComment,LearningPath,LearningPathItem
 from ..storage import get_file, b2_enabled, StorageError
 import json
 import random
@@ -86,6 +86,38 @@ def _preview_files(content):
 def guard():
     if not current_user.is_authenticated:return redirect(url_for('auth.login',next='/aluno/'))
     if current_user.is_admin:abort(403)
+def _path_item_completed(item, user_id):
+    if item.item_type == 'content':
+        return Progress.query.filter_by(user_id=user_id, content_id=item.target_id).first() is not None
+    if item.item_type == 'activity':
+        return ActivityAttempt.query.filter_by(user_id=user_id, activity_id=item.target_id).first() is not None
+    submission = ProjectSubmission.query.filter_by(user_id=user_id, experiment_id=item.target_id).first()
+    return submission is not None
+
+def _path_status(path, user_id):
+    completed=[]
+    unlocked=[]
+    for item in path.items:
+        done=_path_item_completed(item,user_id); completed.append(done)
+        unlocked.append(item.prerequisite_id is None or any(x.id==item.prerequisite_id and completed[i] for i,x in enumerate(path.items) if i < len(completed)-1))
+    # Recompute prerequisite checks without relying on list position.
+    by_id={item.id:done for item,done in zip(path.items,completed)}
+    unlocked=[item.prerequisite_id is None or by_id.get(item.prerequisite_id,False) for item in path.items]
+    total=len(path.items); done_count=sum(completed)
+    return completed, unlocked, done_count, (round(done_count/total*100) if total else 0)
+
+@student_bp.get('/trilhas')
+def learning_paths():
+    paths=LearningPath.query.filter_by(active=True).order_by(LearningPath.id.desc()).all()
+    data=[(path,*_path_status(path,current_user.id)) for path in paths]
+    return render_template('student/learning_paths.html', paths=data)
+
+@student_bp.get('/trilha/<int:id>')
+def learning_path(id):
+    path=LearningPath.query.filter_by(id=id,active=True).first_or_404()
+    completed,unlocked,done_count,percent=_path_status(path,current_user.id)
+    return render_template('student/learning_path.html', path=path, completed=completed, unlocked=unlocked, done_count=done_count, percent=percent)
+
 @student_bp.route('/', methods=['GET'])
 def dashboard():
     series = Series.query.order_by(Series.id).all()
