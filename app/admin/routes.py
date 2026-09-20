@@ -4,7 +4,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, current_app, send_from_directory, Response, make_response
 from flask_login import login_required, current_user
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 from werkzeug.utils import secure_filename
 from ..storage import upload as storage_upload, delete as storage_delete, get_file, b2_enabled, StorageError
 from ..extensions import db
@@ -419,6 +419,7 @@ def contents():
     kind = request.args.get('kind', '').strip().lower()
     series_id = request.args.get('series_id', '').strip()
     subject_id = request.args.get('subject_id', '').strip()
+    status = request.args.get('status', '').strip().lower()
     query = Content.query
     if q:
         like = f'%{q}%'
@@ -427,8 +428,9 @@ def contents():
         query = query.filter_by(kind=kind)
     if series_id.isdigit(): query = query.filter_by(series_id=int(series_id))
     if subject_id.isdigit(): query = query.filter_by(subject_id=int(subject_id))
+    if status in {'draft', 'published', 'scheduled'}: query = query.filter_by(status=status)
     contents = query.order_by(Content.id.desc()).all()
-    return render_template('admin/contents.html', contents=contents, q=q, kind=kind, series_id=series_id, subject_id=subject_id,
+    return render_template('admin/contents.html', contents=contents, q=q, kind=kind, series_id=series_id, subject_id=subject_id, status=status,
                            series=Series.query.order_by(Series.id).all(), subjects=Subject.query.order_by(Subject.name).all())
 @admin_bp.get('/series/<int:id>')
 def series_detail(id): return render_template('admin/series_detail.html',series=Series.query.get_or_404(id))
@@ -478,6 +480,22 @@ def content_form(content=None):
     desc = request.form.get('description', '').strip()
     body = request.form.get('body', '').strip()
     external_url = request.form.get('external_url', '').strip()
+    requested_status = request.form.get('status', 'draft').strip().lower()
+    if requested_status not in {'draft', 'published', 'scheduled'}:
+        requested_status = 'draft'
+    scheduled_raw = request.form.get('scheduled_at', '').strip()
+    scheduled_at = None
+    if requested_status == 'scheduled':
+        try:
+            scheduled_at = datetime.fromisoformat(scheduled_raw) if scheduled_raw else None
+        except ValueError:
+            scheduled_at = None
+        if scheduled_at is None:
+            flash('Informe uma data e hora válidas para a publicação programada.', 'error')
+            return None, series, subjects
+        if scheduled_at <= utcnow():
+            flash('A publicação programada precisa estar no futuro.', 'error')
+            return None, series, subjects
 
     s = db.session.get(Series, int(sid)) if sid.isdigit() else None
     sub = db.session.get(Subject, int(subid)) if subid.isdigit() else None
@@ -550,7 +568,14 @@ def content_form(content=None):
     content.file_name = new_file
     content.preview_manifest = json.dumps(new_preview, ensure_ascii=False) if new_preview else None
     content.series_id = s.id
+    previous_status = content.status if content.id else None
     content.subject_id = sub.id
+    content.status = requested_status
+    content.scheduled_at = scheduled_at if requested_status == 'scheduled' else None
+    if requested_status == 'published' and previous_status != 'published':
+        content.published_at = utcnow()
+    elif requested_status != 'published':
+        content.published_at = None
     db.session.add(content)
     db.session.commit()
 
@@ -566,9 +591,14 @@ def content_form(content=None):
 def content_new():
     content, series, subjects = content_form()
     if request.method == 'POST' and content:
-        notify_students(f'Novo material: {content.title}', url_for('student.content', id=content.id), 'materials')
-        db.session.commit()
-        flash('Material publicado com sucesso.', 'success')
+        if content.status == 'published':
+            notify_students(f'Novo material: {content.title}', url_for('student.content', id=content.id), 'materials')
+            db.session.commit()
+            flash('Material publicado com sucesso.', 'success')
+        elif content.status == 'scheduled':
+            flash('Material salvo e programado para publicação.', 'success')
+        else:
+            flash('Material salvo como rascunho.', 'success')
         return redirect(url_for('admin.contents'))
     return render_template('admin/content_form.html', content=None, series=series, subjects=subjects)
 
@@ -577,7 +607,12 @@ def content_edit(id):
     content = Content.query.get_or_404(id)
     result, series, subjects = content_form(content)
     if request.method == 'POST' and result:
-        flash('Material atualizado.', 'success')
+        if result.status == 'published':
+            flash('Material atualizado e publicado.', 'success')
+        elif result.status == 'scheduled':
+            flash('Material atualizado e programado.', 'success')
+        else:
+            flash('Material salvo como rascunho.', 'success')
         return redirect(url_for('admin.contents'))
     return render_template('admin/content_form.html', content=content, series=series, subjects=subjects)
 

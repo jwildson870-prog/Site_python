@@ -62,6 +62,11 @@ class Content(db.Model):
     external_url = db.Column(db.String(1000))
     file_name = db.Column(db.String(255))
     preview_manifest = db.Column(db.Text)  # JSON com imagens geradas para PPTX
+    # Ciclo editorial: rascunho, publicado ou programado. Materiais legados
+    # recebem 'published' pela migração para preservar o comportamento atual.
+    status = db.Column(db.String(20), nullable=False, default='published', index=True)
+    scheduled_at = db.Column(db.DateTime, nullable=True, index=True)
+    published_at = db.Column(db.DateTime, nullable=True)
     series_id = db.Column(db.Integer, db.ForeignKey('series.id'), nullable=False)
     subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=utcnow, nullable=False)

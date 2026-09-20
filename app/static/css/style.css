@@ -3705,3 +3705,8 @@ a.card:active,a.tile:active,a.student-material-card:active,a.student-summary-car
 
 /* Fase 5.1 — configurações */
 .settings-card + .settings-card{margin-top:15px}.setting-row{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:14px 0;border-top:1px solid rgba(120,163,204,.12);cursor:pointer}.setting-row:first-of-type{margin-top:8px}.setting-row span{display:grid;gap:4px}.setting-row strong{color:#eef7fd}.setting-row small{color:#8fa4bb;line-height:1.45}.setting-row input[type=checkbox]{width:20px;height:20px;flex:0 0 auto;accent-color:#38bdf8}.settings-actions{display:flex;justify-content:flex-end;margin-top:16px}.settings-card .field-block small{display:block;margin-top:6px;color:#7f96aa;line-height:1.4}@media(max-width:650px){.setting-row{align-items:flex-start}.settings-actions{justify-content:stretch}.settings-actions .btn{width:100%}}
+
+/* Fase 5.3 — estados editoriais */
+.status-badge.status-draft{border-color:#806d27;color:#ffd43b;background:rgba(255,212,59,.08)}
+.status-badge.status-published{border-color:#1f7a5a;color:#57e0ad;background:rgba(55,214,160,.08)}
+.status-badge.status-scheduled{border-color:#4d65a8;color:#9db6ff;background:rgba(99,102,241,.10)}

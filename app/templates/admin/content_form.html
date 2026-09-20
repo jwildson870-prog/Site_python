@@ -18,6 +18,8 @@
             <label class="field-block">Matéria<select name="subject_id" required>{% for s in subjects %}<option value="{{s.id}}" {% if content and content.subject_id==s.id %}selected{% endif %}>{{s.series.name}} · {{s.name}}</option>{% endfor %}</select></label>
             <label class="field-block full">Tipo de material<select name="kind" required>{% for value,label in [('file','Arquivo'),('pdf','PDF'),('slide','Slides'),('video','Vídeo'),('link','Link externo'),('explanation','Explicação')] %}<option value="{{value}}" {% if content and content.kind==value %}selected{% endif %}>{{label}}</option>{% endfor %}</select></label>
             <label class="field-block full">Descrição<textarea name="description" placeholder="Explique rapidamente o que o aluno encontrará neste material.">{{content.description if content else ''}}</textarea></label>
+            <label class="field-block">Status de publicação<select name="status" id="content-status" required><option value="draft" {% if not content or content.status=='draft' %}selected{% endif %}>Rascunho</option><option value="published" {% if content and content.status=='published' %}selected{% endif %}>Publicado</option><option value="scheduled" {% if content and content.status=='scheduled' %}selected{% endif %}>Programar publicação</option></select></label>
+            <label class="field-block" id="scheduled-at-field">Publicar em<input type="datetime-local" name="scheduled_at" value="{{content.scheduled_at.strftime('%Y-%m-%dT%H:%M') if content and content.scheduled_at else ''}}"><small class="field-help">A data precisa estar no futuro.</small></label>
           </div>
         </div>
         <div class="publisher-card form-section">
@@ -34,10 +36,11 @@
         </div>
       </div>
       <aside class="workspace-side">
-        <div class="publish-summary"><span class="summary-icon uiverse-feature-card"><img src="{{url_for('static', filename='icons/ui/check-green.svg')}}" alt=""></span><h3>Pronto para publicar?</h3><p>Revise os dados antes de salvar. Você poderá editar o material depois.</p><button class="btn admin-primary publish-btn" type="submit">{{'Salvar alterações' if content else 'Publicar material'}}</button></div>
+        <div class="publish-summary"><span class="summary-icon uiverse-feature-card"><img src="{{url_for('static', filename='icons/ui/check-green.svg')}}" alt=""></span><h3>Controle de publicação</h3><p>Escolha entre rascunho, publicação imediata ou publicação programada. Conteúdo não publicado não aparece para os alunos.</p><button class="btn admin-primary publish-btn" type="submit">{{'Salvar alterações' if content else 'Salvar material'}}</button></div>
         <div class="workspace-help"><strong><span class="uiverse-inline-card"><img src="{{url_for('static', filename='icons/ui/code-yellow.svg')}}" alt=""></span>Dica</strong><p>Use títulos curtos e uma descrição objetiva. Links do Drive, YouTube e outros serviços podem ser usados.</p></div>
       </aside>
     </div>
   </form>
 </section>
+
 {% endblock %}
