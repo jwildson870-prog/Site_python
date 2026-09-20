@@ -39,7 +39,8 @@ def test_uploads_use_allowlist_and_content_signature():
     assert 'file_signature_ok' in source
     assert 'mime_ok' in source
     assert 'secure_filename' in source
-    assert 'MAX_UPLOAD = 25 * 1024 * 1024' in source
+    assert 'DEFAULT_MAX_UPLOAD = 25 * 1024 * 1024' in source
+    assert "current_app.config.get('MAX_CONTENT_LENGTH'" in source
 
 
 def test_explanation_html_is_sanitized_before_rendering():
