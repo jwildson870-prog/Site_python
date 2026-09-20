@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#050914">
+  <meta name="theme-color" content="#03162b">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -31,7 +31,11 @@
   <link rel="stylesheet" href="{{ url_for('static',filename='css/card-accents.css', v='20260918-card-accents-1') }}">
   <link rel="stylesheet" href="{{ url_for('static',filename='css/theme-switcher.css', v='20260919-blue-redesign-1') }}">
   <link rel="stylesheet" href="{{ url_for('static',filename='css/design-system.css', v='20260919-blue-redesign-1') }}">
+<<<<<<< HEAD
   <link rel="stylesheet" href="{{ url_for('static',filename='css/login-professional.css', v='20260920-login-1') }}">
+=======
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/login-professional.css', v='20260920-login-3') }}">
+>>>>>>> b266df7 (feat: atualiza tela de login com novo visual)
 </head>
 <body class="portal-rpg-tech {% if current_user.is_authenticated %}app-authenticated{% else %}public-page{% endif %}{% if request.blueprint == 'admin' %} pjm-dense-screen{% endif %}">
 <canvas id="spaceParticles" class="space-particles" aria-hidden="true"></canvas>
@@ -84,6 +88,7 @@
   {% if current_user.is_admin %}
     <a class="side-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}" href="{{url_for('admin.dashboard')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/home.svg') }}" alt=""></span><b>Visão geral</b></a>
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -142,6 +147,19 @@
     </details>
 
 >>>>>>> 36a0171 (feat: adapta tela de login ao visual do Portal Python)
+=======
+    <details class="side-section" open data-section="conteudo">
+      <summary class="side-section-title"><span>Conteúdo</span></summary>
+      <div class="side-section-links">
+        <a class="side-link {% if request.endpoint in ['admin.contents','admin.content_new','admin.content_edit','admin.content_preview','admin.content_history'] %}active{% endif %}" href="{{url_for('admin.contents')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/file.svg') }}" alt=""></span><b>Materiais</b></a>
+        <a class="side-link {% if request.endpoint in ['admin.activities','admin.activity_edit','admin.ready_activities','admin.activity_history','admin.activity_results','admin.activity_attempt_detail'] %}active{% endif %}" href="{{url_for('admin.activities')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/check.svg') }}" alt=""></span><b>Atividades</b></a>
+        <a class="side-link {% if request.endpoint == 'admin.ready_activities' %}active{% endif %}" href="{{url_for('admin.ready_activities')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/bolt.svg') }}" alt=""></span><b>Atividades prontas</b></a>
+        <a class="side-link {% if request.endpoint in ['admin.question_bank'] %}active{% endif %}" href="{{url_for('admin.question_bank')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/layers.svg') }}" alt=""></span><b>Banco de questões</b></a>
+        <a class="side-link {% if request.endpoint in ['admin.learning_paths','admin.learning_path_edit'] %}active{% endif %}" href="{{url_for('admin.learning_paths')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/layers.svg') }}" alt=""></span><b>Trilhas</b></a>
+      </div>
+    </details>
+
+>>>>>>> b266df7 (feat: atualiza tela de login com novo visual)
     <details class="side-section" open data-section="turmas">
       <summary class="side-section-title"><span>Turmas e alunos</span></summary>
       <div class="side-section-links">
@@ -156,17 +174,21 @@
       <div class="side-section-links">
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> 2dd96ec (fix: corrige visualização dos indicadores por série nos temas)
 =======
 >>>>>>> 47d9a85 (feat: cria tela inicial de acesso do Portal Python)
 =======
 >>>>>>> 36a0171 (feat: adapta tela de login ao visual do Portal Python)
+=======
+>>>>>>> b266df7 (feat: atualiza tela de login com novo visual)
         <a class="side-link {% if request.endpoint in ['admin.performance','admin.user_performance'] %}active{% endif %}" href="{{url_for('admin.performance')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/chart.svg') }}" alt=""></span><b>Desempenho</b></a>
         <a class="side-link {% if request.endpoint == 'admin.alerts' %}active{% endif %}" href="{{url_for('admin.alerts')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/bell.svg') }}" alt=""></span><b>Alertas</b></a>
         <a class="side-link {% if request.endpoint in ['admin.reports','admin.reports_csv','admin.reports_xlsx'] %}active{% endif %}" href="{{url_for('admin.reports')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/file.svg') }}" alt=""></span><b>Relatórios</b></a>
       </div>
     </details>
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -179,6 +201,8 @@
 >>>>>>> 47d9a85 (feat: cria tela inicial de acesso do Portal Python)
 =======
 >>>>>>> 36a0171 (feat: adapta tela de login ao visual do Portal Python)
+=======
+>>>>>>> b266df7 (feat: atualiza tela de login com novo visual)
     <details class="side-section" open data-section="projetos">
       <summary class="side-section-title"><span>Projetos</span></summary>
       <div class="side-section-links">
@@ -191,15 +215,19 @@
       <div class="side-section-links">
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> 2dd96ec (fix: corrige visualização dos indicadores por série nos temas)
 =======
 >>>>>>> 47d9a85 (feat: cria tela inicial de acesso do Portal Python)
 =======
 >>>>>>> 36a0171 (feat: adapta tela de login ao visual do Portal Python)
+=======
+>>>>>>> b266df7 (feat: atualiza tela de login com novo visual)
         <a class="side-link {% if request.endpoint == 'admin.announcements' %}active{% endif %}" href="{{url_for('admin.announcements')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/bell.svg') }}" alt=""></span><b>Avisos</b></a>
       </div>
     </details>
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -217,6 +245,10 @@
     <details class="side-section" open data-section="sistema">
       <summary class="side-section-title"><span>Sistema</span></summary>
 >>>>>>> 36a0171 (feat: adapta tela de login ao visual do Portal Python)
+=======
+    <details class="side-section" open data-section="sistema">
+      <summary class="side-section-title"><span>Sistema</span></summary>
+>>>>>>> b266df7 (feat: atualiza tela de login com novo visual)
       <div class="side-section-links">
         <a class="side-link {% if request.endpoint == 'admin.settings' %}active{% endif %}" href="{{url_for('admin.settings')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/settings.svg') }}" alt=""></span><b>Configurações</b></a>
         <a class="side-link {% if request.endpoint == 'admin.import_export' %}active{% endif %}" href="{{url_for('admin.import_export')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/file.svg') }}" alt=""></span><b>Importar / exportar</b></a>

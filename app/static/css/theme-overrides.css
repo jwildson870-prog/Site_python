@@ -518,26 +518,26 @@ html[data-theme="light"] .side-menu img[src*="/icons/ui/"],
 html[data-theme="light"] .topbar-bell img { filter: brightness(0) saturate(100%) !important; }
 
 /* Login */
-html[data-theme] .python-login { background: var(--t-bg) !important; }
-html[data-theme] .python-login .login-card {
+html[data-theme] .python-login:not(.login-professional) { background: var(--t-bg) !important; }
+html[data-theme] .python-login:not(.login-professional) .login-card {
   background: linear-gradient(145deg, var(--t-surface), var(--t-surface-2)) !important;
   border-color: var(--t-border) !important;
   box-shadow: 0 28px 75px var(--t-shadow) !important;
 }
-html[data-theme] .python-login .python-login-logo {
+html[data-theme] .python-login:not(.login-professional) .python-login-logo {
   background: var(--t-surface-3) !important;
   border-color: var(--t-primary) !important;
 }
-html[data-theme] .python-login .login-brand h1 { color: var(--t-primary-strong) !important; text-shadow: none !important; }
-html[data-theme] .python-login .login-brand p,
-html[data-theme] .python-login .login-form label { color: var(--t-text) !important; }
-html[data-theme] .python-login .login-form input { background: var(--t-input) !important; color: var(--t-text) !important; border-color: var(--t-border-soft) !important; }
-html[data-theme] .python-login .login-forgot a,
-html[data-theme] .python-login .login-register a { color: var(--t-primary-strong) !important; }
-html[data-theme] .python-login .login-google { background: var(--t-surface-2) !important; color: var(--t-text) !important; border-color: var(--t-border) !important; }
-html[data-theme] .python-login .login-google:hover { background: var(--t-hover) !important; border-color: var(--t-primary) !important; }
-html[data-theme] .python-login .login-divider::before,
-html[data-theme] .python-login .login-divider::after { background: var(--t-border) !important; }
+html[data-theme] .python-login:not(.login-professional) .login-brand h1 { color: var(--t-primary-strong) !important; text-shadow: none !important; }
+html[data-theme] .python-login:not(.login-professional) .login-brand p,
+html[data-theme] .python-login:not(.login-professional) .login-form label { color: var(--t-text) !important; }
+html[data-theme] .python-login:not(.login-professional) .login-form input { background: var(--t-input) !important; color: var(--t-text) !important; border-color: var(--t-border-soft) !important; }
+html[data-theme] .python-login:not(.login-professional) .login-forgot a,
+html[data-theme] .python-login:not(.login-professional) .login-register a { color: var(--t-primary-strong) !important; }
+html[data-theme] .python-login:not(.login-professional) .login-google { background: var(--t-surface-2) !important; color: var(--t-text) !important; border-color: var(--t-border) !important; }
+html[data-theme] .python-login:not(.login-professional) .login-google:hover { background: var(--t-hover) !important; border-color: var(--t-primary) !important; }
+html[data-theme] .python-login:not(.login-professional) .login-divider::before,
+html[data-theme] .python-login:not(.login-professional) .login-divider::after { background: var(--t-border) !important; }
 
 /* Rodapé */
 html[data-theme] .site-footer {
@@ -556,8 +556,8 @@ html[data-theme] .page-loader-card small { color: var(--t-muted) !important; }
 html[data-theme] .page-loader-bar i { background: linear-gradient(90deg, var(--t-secondary), var(--t-primary)) !important; }
 
 /* Remove a imagem de fundo antiga em qualquer estado/tema. */
-html[data-theme] .python-login::before,
-html[data-theme] .python-login::after,
+html[data-theme] .python-login:not(.login-professional)::before,
+html[data-theme] .python-login:not(.login-professional)::after,
 html[data-theme] .code-float { display: none !important; background-image: none !important; }
 
 /* Respeita acessibilidade */
