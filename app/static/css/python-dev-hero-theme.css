@@ -228,8 +228,9 @@ tbody tr:hover{background:rgba(103,240,161,.035)!important}
 .python-login .login-form label{font-family:Georgia,"Times New Roman",serif!important;color:#e8dfc8!important;font-size:1rem!important}
 .python-login .login-form label>input,.python-login .password-field input{min-height:58px!important;border-radius:8px!important;padding-left:48px!important}
 .python-login .login-form label:first-child,.python-login .login-form label:nth-child(2){position:relative}
-.python-login .login-form label:first-child::before{content:"✉";position:absolute;left:16px;bottom:17px;color:var(--hero-gold-bright);font-size:18px;z-index:2}
-.python-login .login-form label:nth-child(2)::before{content:"▣";position:absolute;left:17px;bottom:17px;color:var(--hero-gold-bright);font-size:17px;z-index:2}
+/* Os ícones dos campos já são renderizados no HTML pelos SVGs. */
+.python-login .login-form label:first-child::before,
+.python-login .login-form label:nth-child(2)::before{content:none!important;display:none!important}
 .python-login .password-field input{padding-right:52px!important}
 .python-login .password-toggle{right:5px!important}
 .python-login .password-toggle img{filter:sepia(1) saturate(1.5) hue-rotate(350deg) brightness(1.3)!important}

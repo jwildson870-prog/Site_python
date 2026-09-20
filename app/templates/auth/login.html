@@ -19,18 +19,23 @@
         <h2>Entrar no portal</h2>
         <p>Use seu e-mail e sua senha para continuar.</p>
       </div>
+{% with messages=get_flashed_messages(with_categories=true) %}
+          {% if messages %}
           <div class="login-alerts" role="status" aria-live="polite">
-              <div class="login-alert {{ 'success' if category == 'success' else 'error' }}">
-                <span class="login-alert-icon" aria-hidden="true">{{ '✓' if category == 'success' else '!' }}</span>
-                <span>{{ msg }}</span>
-              </div>
+            {% for category, msg in messages %}
+            <div class="login-alert {{ 'success' if category == 'success' else 'error' }}">
+              <span class="login-alert-icon" aria-hidden="true">{{ '✓' if category == 'success' else '!' }}</span>
+              <span>{{ msg }}</span>
+            </div>
+            {% endfor %}
           </div>
+          {% endif %}
+        {% endwith %}
       <form method="post" class="login-form" id="loginForm" novalidate>
         <input type="hidden" name="csrf_token" value="{{csrf_token()}}">
 
         <label for="loginEmail">E-mail
           <span class="login-input-wrap">
-            <span class="login-field-icon" aria-hidden="true">@</span>
             <svg class="login-field-icon login-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 5.5h17v13h-17z"/><path d="m4 7 8 6 8-6"/></svg>
 
             <input id="loginEmail" name="email" type="email" placeholder="seu@email.com" required autocomplete="email" inputmode="email" autofocus>
@@ -39,7 +44,6 @@
 
         <label for="loginPassword">Senha
           <span class="login-input-wrap">
-            <span class="login-field-icon login-lock-icon" aria-hidden="true">●</span>
             <svg class="login-field-icon login-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
             <input name="password" id="loginPassword" type="password" placeholder="Digite sua senha" required autocomplete="current-password">
             <button type="button" class="password-toggle" data-target="loginPassword" data-icon-off="{{ url_for('static',filename='icons/ui/eye-off.svg') }}" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha">
@@ -59,14 +63,12 @@
 
         <button class="btn login-btn" id="loginSubmit" type="submit">
           <span class="login-btn-label">Entrar</span>
-          <span class="login-btn-loading" aria-hidden="true"><span class="login-spinner"></span>Entrando...</span>
         </button>
       </form>
 
      
       <div class="login-divider"><span>ou</span></div>
       <a class="google login-google" href="{{url_for('auth.google_login')}}">
-        <span class="google-mark" aria-hidden="true">G</span>
         <svg class="google-mark" viewBox="0 0 24 24" aria-hidden="true">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
           <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
