@@ -6,13 +6,13 @@
     <div>
       <span class="eyebrow">ENGAJAMENTO</span>
       <h1>Ranking semanal</h1>
-      <p>Compare apenas o número de ações de estudo realizadas nesta semana.</p>
+      <p>Veja a pontuação dos alunos com base nos acertos das questões desta semana.</p>
     </div>
     <a class="btn secondary" href="{{ url_for('student.engagement') }}">Metas de estudo</a>
   </div>
 
   <section class="student-panel ranking-info">
-    <div><span class="eyebrow">COMO FUNCIONA</span><h2>1 ação de estudo = 1 ponto</h2><p>Conteúdos concluídos e atividades respondidas contam uma vez cada. O ranking reinicia a cada semana.</p></div>
+    <div><span class="eyebrow">COMO FUNCIONA</span><h2>1 questão acertada = 10 pontos</h2><p>A pontuação considera os acertos nas questões objetivas das atividades. Questões discursivas não recebem pontos automaticamente. O ranking reinicia a cada semana.</p></div>
     {% if current %}<div class="ranking-you"><span>Sua posição</span><strong>#{{ current.position }}</strong><small>{{ current.points }} ponto(s)</small></div>{% endif %}
   </section>
 
@@ -24,7 +24,7 @@
         <div class="ranking-position">#{{ row.position }}</div>
         <div class="ranking-avatar">{{ row.student.name[:1]|upper }}</div>
         <div class="ranking-student"><strong>{{ row.student.name }}</strong>{% if row.student.id == current_user.id %}<small>Você</small>{% endif %}</div>
-        <div class="ranking-breakdown"><span>{{ row.materials }} material(is)</span><span>{{ row.activities }} atividade(s)</span></div>
+        <div class="ranking-breakdown"><span>{{ row.correct_answers }} acerto(s)</span><span>{{ row.activities }} atividade(s)</span></div>
         <strong class="ranking-points">{{ row.points }} pts</strong>
       </div>
       {% else %}<div class="student-empty">Nenhum aluno disponível.</div>{% endfor %}

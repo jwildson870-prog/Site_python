@@ -314,16 +314,29 @@ def ranking():
     students = students_query.order_by(User.name.asc()).all()
     rows = []
     for student in students:
-        materials = Progress.query.filter(
-            Progress.user_id == student.id,
-            Progress.completed_at >= start, Progress.completed_at < end
-        ).count()
-        activities = ActivityAttempt.query.filter(
+        attempts = ActivityAttempt.query.filter(
             ActivityAttempt.user_id == student.id,
             ActivityAttempt.created_at >= start, ActivityAttempt.created_at < end
-        ).count()
-        rows.append({'student': student, 'materials': materials, 'activities': activities, 'points': materials + activities})
-    rows.sort(key=lambda row: (-row['points'], -row['activities'], -row['materials'], row['student'].name.casefold()))
+        ).all()
+        correct_answers = 0
+        for attempt in attempts:
+            try:
+                answers = json.loads(attempt.answers_json or '{}')
+            except (TypeError, ValueError):
+                answers = {}
+            try:
+                questions = json.loads(attempt.presented_questions_json or '[]')
+            except (TypeError, ValueError):
+                questions = []
+            correct_answers += sum(
+                1 for index, question in enumerate(questions)
+                if question.get('kind', 'objective') != 'essay'
+                and answers.get(str(index)) == question.get('correct')
+            )
+        activities = len(attempts)
+        points = correct_answers * 10
+        rows.append({'student': student, 'correct_answers': correct_answers, 'activities': activities, 'points': points})
+    rows.sort(key=lambda row: (-row['points'], -row['correct_answers'], row['student'].name.casefold()))
     for position, row in enumerate(rows, 1):
         row['position'] = position
     total_points = sum(row['points'] for row in rows)
