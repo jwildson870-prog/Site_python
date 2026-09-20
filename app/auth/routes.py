@@ -76,7 +76,7 @@ def _start_session(user):
     db.session.add(UserSession(user_id=user.id, token_hash=token_hash, user_agent=ua, ip=client_ip(request)))
     db.session.commit()
     session['st'] = raw_token
-    login_user(user, remember=False, fresh=True)
+    login_user(user, remember=bool(request.form.get('remember')), fresh=True)
 
 
 def _revoke_all_sessions(user, keep_token_hash=None):

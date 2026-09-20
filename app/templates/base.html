@@ -31,6 +31,7 @@
   <link rel="stylesheet" href="{{ url_for('static',filename='css/card-accents.css', v='20260918-card-accents-1') }}">
   <link rel="stylesheet" href="{{ url_for('static',filename='css/theme-switcher.css', v='20260919-blue-redesign-1') }}">
   <link rel="stylesheet" href="{{ url_for('static',filename='css/design-system.css', v='20260919-blue-redesign-1') }}">
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/login-professional.css', v='20260920-login-1') }}">
 </head>
 <body class="portal-rpg-tech {% if current_user.is_authenticated %}app-authenticated{% else %}public-page{% endif %}{% if request.blueprint == 'admin' %} pjm-dense-screen{% endif %}">
 <canvas id="spaceParticles" class="space-particles" aria-hidden="true"></canvas>
@@ -84,6 +85,7 @@
     <a class="side-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}" href="{{url_for('admin.dashboard')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/home.svg') }}" alt=""></span><b>Visão geral</b></a>
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     <details class="side-section" open data-section="prof-aprendizado">
       <summary class="side-section-title"><span>Aprendizado</span></summary>
       <div class="side-section-links">
@@ -113,6 +115,19 @@
       </div>
     </details>
 
+=======
+    <details class="side-section" open data-section="conteudo">
+      <summary class="side-section-title"><span>Conteúdo</span></summary>
+      <div class="side-section-links">
+        <a class="side-link {% if request.endpoint in ['admin.contents','admin.content_new','admin.content_edit','admin.content_preview','admin.content_history'] %}active{% endif %}" href="{{url_for('admin.contents')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/file.svg') }}" alt=""></span><b>Materiais</b></a>
+        <a class="side-link {% if request.endpoint in ['admin.activities','admin.activity_edit','admin.ready_activities','admin.activity_history','admin.activity_results','admin.activity_attempt_detail'] %}active{% endif %}" href="{{url_for('admin.activities')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/check.svg') }}" alt=""></span><b>Atividades</b></a>
+        <a class="side-link {% if request.endpoint == 'admin.ready_activities' %}active{% endif %}" href="{{url_for('admin.ready_activities')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/bolt.svg') }}" alt=""></span><b>Atividades prontas</b></a>
+        <a class="side-link {% if request.endpoint in ['admin.question_bank'] %}active{% endif %}" href="{{url_for('admin.question_bank')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/layers.svg') }}" alt=""></span><b>Banco de questões</b></a>
+        <a class="side-link {% if request.endpoint in ['admin.learning_paths','admin.learning_path_edit'] %}active{% endif %}" href="{{url_for('admin.learning_paths')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/layers.svg') }}" alt=""></span><b>Trilhas</b></a>
+      </div>
+    </details>
+
+>>>>>>> 47d9a85 (feat: cria tela inicial de acesso do Portal Python)
     <details class="side-section" open data-section="turmas">
       <summary class="side-section-title"><span>Turmas e alunos</span></summary>
       <div class="side-section-links">
@@ -125,7 +140,10 @@
     <details class="side-section" open data-section="acompanhamento">
       <summary class="side-section-title"><span>Acompanhamento</span></summary>
       <div class="side-section-links">
+<<<<<<< HEAD
 >>>>>>> 2dd96ec (fix: corrige visualização dos indicadores por série nos temas)
+=======
+>>>>>>> 47d9a85 (feat: cria tela inicial de acesso do Portal Python)
         <a class="side-link {% if request.endpoint in ['admin.performance','admin.user_performance'] %}active{% endif %}" href="{{url_for('admin.performance')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/chart.svg') }}" alt=""></span><b>Desempenho</b></a>
         <a class="side-link {% if request.endpoint == 'admin.alerts' %}active{% endif %}" href="{{url_for('admin.alerts')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/bell.svg') }}" alt=""></span><b>Alertas</b></a>
         <a class="side-link {% if request.endpoint in ['admin.reports','admin.reports_csv','admin.reports_xlsx'] %}active{% endif %}" href="{{url_for('admin.reports')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/file.svg') }}" alt=""></span><b>Relatórios</b></a>
@@ -133,11 +151,14 @@
     </details>
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     <details class="side-section" open data-section="prof-projetos">
       <summary class="side-section-title"><span>Projetos</span></summary>
       <div class="side-section-links">
         <a class="side-link {% if request.endpoint in ['admin.experiments','admin.experiment_edit','admin.project_submissions'] %}active{% endif %}" href="{{url_for('admin.experiments')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/bolt.svg') }}" alt=""></span><b>Projetos e experimentos</b></a>
 =======
+=======
+>>>>>>> 47d9a85 (feat: cria tela inicial de acesso do Portal Python)
     <details class="side-section" open data-section="projetos">
       <summary class="side-section-title"><span>Projetos</span></summary>
       <div class="side-section-links">
@@ -148,11 +169,15 @@
     <details class="side-section" open data-section="comunicacao">
       <summary class="side-section-title"><span>Comunicação</span></summary>
       <div class="side-section-links">
+<<<<<<< HEAD
 >>>>>>> 2dd96ec (fix: corrige visualização dos indicadores por série nos temas)
+=======
+>>>>>>> 47d9a85 (feat: cria tela inicial de acesso do Portal Python)
         <a class="side-link {% if request.endpoint == 'admin.announcements' %}active{% endif %}" href="{{url_for('admin.announcements')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/bell.svg') }}" alt=""></span><b>Avisos</b></a>
       </div>
     </details>
 
+<<<<<<< HEAD
 <<<<<<< HEAD
     <details class="side-section" open data-section="prof-conta">
       <summary class="side-section-title"><span>Conta</span></summary>
@@ -160,6 +185,10 @@
     <details class="side-section" open data-section="sistema">
       <summary class="side-section-title"><span>Sistema</span></summary>
 >>>>>>> 2dd96ec (fix: corrige visualização dos indicadores por série nos temas)
+=======
+    <details class="side-section" open data-section="sistema">
+      <summary class="side-section-title"><span>Sistema</span></summary>
+>>>>>>> 47d9a85 (feat: cria tela inicial de acesso do Portal Python)
       <div class="side-section-links">
         <a class="side-link {% if request.endpoint == 'admin.settings' %}active{% endif %}" href="{{url_for('admin.settings')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/settings.svg') }}" alt=""></span><b>Configurações</b></a>
         <a class="side-link {% if request.endpoint == 'admin.import_export' %}active{% endif %}" href="{{url_for('admin.import_export')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/file.svg') }}" alt=""></span><b>Importar / exportar</b></a>

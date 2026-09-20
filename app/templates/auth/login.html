@@ -1,44 +1,86 @@
 {% extends 'base.html' %}
-{% block title %}Python Dev Hero · Login{% endblock %}
+{% block title %}Entrar · Portal Python{% endblock %}
 {% block content %}
-<section class="login-page python-login">
-    <div class="code-float code-one">print("Olá, mundo!")</div>
-    <div class="code-float code-two">for questao in jornada:</div>
-    <div class="code-float code-three">if aprovado:</div>
+<section class="login-page python-login login-professional" aria-labelledby="loginTitle">
+  <div class="login-shell">
+    <div class="login-brand">
+      <div class="python-login-logo" aria-hidden="true">
+        <img src="{{ url_for('static',filename='icons/python-brand.png') }}" alt="">
+      </div>
+      <span class="eyebrow">PORTAL PYTHON</span>
+      <h1 id="loginTitle">Bem-vindo de volta</h1>
+      <p>Entre para acessar seu espaço de aprendizagem.</p>
+    </div>
 
     <div class="login-card">
-        <div class="login-brand">
-            <div class="python-login-logo" aria-hidden="true">
-                <img src="{{ url_for('static',filename='icons/python-brand.png') }}" alt="">
-            </div>
-            <span class="eyebrow">PORTAL PYTHON</span>
-            <h1>Python Dev Hero</h1>
-            <p>Entre na sua jornada de código</p>
+      <div class="login-card-head">
+        <span class="login-kicker">ACESSO À CONTA</span>
+        <h2>Entrar no portal</h2>
+        <p>Use seu e-mail e sua senha para continuar.</p>
+      </div>
+
+      <form method="post" class="login-form" id="loginForm" novalidate>
+        <input type="hidden" name="csrf_token" value="{{csrf_token()}}">
+
+        <label for="loginEmail">E-mail
+          <span class="login-input-wrap">
+            <span class="login-field-icon" aria-hidden="true">@</span>
+            <input id="loginEmail" name="email" type="email" placeholder="seu@email.com" required autocomplete="email" inputmode="email" autofocus>
+          </span>
+        </label>
+
+        <label for="loginPassword">Senha
+          <span class="login-input-wrap">
+            <span class="login-field-icon login-lock-icon" aria-hidden="true">●</span>
+            <input name="password" id="loginPassword" type="password" placeholder="Digite sua senha" required autocomplete="current-password">
+            <button type="button" class="password-toggle" data-target="loginPassword" data-icon-off="{{ url_for('static',filename='icons/ui/eye-off.svg') }}" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha">
+              <img src="{{ url_for('static',filename='icons/ui/eye.svg') }}" alt="">
+            </button>
+          </span>
+        </label>
+
+        <div class="login-options">
+          <label class="remember-option">
+            <input type="checkbox" name="remember" value="1">
+            <span class="remember-box" aria-hidden="true"></span>
+            <span>Lembrar de mim</span>
+          </label>
+          <a href="{{url_for('auth.forgot_password')}}">Esqueci a senha</a>
         </div>
 
-        <form method="post" class="login-form">
-            <input type="hidden" name="csrf_token" value="{{csrf_token()}}">
-            <label>E-mail
-                <input name="email" type="email" placeholder="seu@email.com" required autocomplete="email">
-            </label>
-            <label>Senha
-                <div class="password-field">
-                    <input name="password" id="loginPassword" type="password" placeholder="Digite sua senha" required autocomplete="current-password">
-                    <button type="button" class="password-toggle" data-target="loginPassword" data-icon-off="{{ url_for('static',filename='icons/ui/eye-off.svg') }}" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha">
-                        <img src="{{ url_for('static',filename='icons/ui/eye.svg') }}" alt="">
-                    </button>
-                </div>
-            </label>
-            <p class="login-forgot"><a href="{{url_for('auth.forgot_password')}}">Esqueci a senha</a></p>
-            <button class="btn login-btn" type="submit">Entrar na Aventura</button>
-        </form>
+        <button class="btn login-btn" id="loginSubmit" type="submit">
+          <span class="login-btn-label">Entrar</span>
+          <span class="login-btn-loading" aria-hidden="true"><span class="login-spinner"></span>Entrando...</span>
+        </button>
+      </form>
 
-        {% if google_enabled %}
-        <div class="login-divider"><span>ou</span></div>
-        <a class="google login-google" href="{{url_for('auth.google_login')}}">Continuar com Google</a>
-        {% endif %}
-        {% if registration_enabled %}<p class="login-register">Ainda não tem conta? <a href="{{url_for('auth.register')}}">Criar herói</a></p>{% endif %}
+      {% if google_enabled %}
+      <div class="login-divider"><span>ou</span></div>
+      <a class="google login-google" href="{{url_for('auth.google_login')}}">
+        <span class="google-mark" aria-hidden="true">G</span>
+        <span>Continuar com Google</span>
+      </a>
+      {% endif %}
+
+      {% if registration_enabled %}
+      <p class="login-register">Ainda não possui uma conta? <a href="{{url_for('auth.register')}}">Criar conta</a></p>
+      {% endif %}
     </div>
+
+    <p class="login-security"><span aria-hidden="true">●</span> Seus dados são protegidos e sua senha não é exibida.</p>
+  </div>
 </section>
 <script src="{{ url_for('static',filename='js/password-toggle.js') }}" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var form = document.getElementById('loginForm');
+    var submit = document.getElementById('loginSubmit');
+    if (!form || !submit) return;
+    form.addEventListener('submit', function () {
+      if (!form.checkValidity()) return;
+      submit.classList.add('is-loading');
+      submit.disabled = true;
+    });
+  });
+</script>
 {% endblock %}
