@@ -3,11 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-<<<<<<< HEAD
-  <meta name="theme-color" content="#0c120e">
-=======
   <meta name="theme-color" content="#050914">
->>>>>>> 3d2350b (Redesign visual completo do Portal Python)
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -33,18 +29,8 @@
   <link rel="stylesheet" href="{{ url_for('static',filename='css/interactions.css', v='20260918-animacoes-1') }}">
   <link rel="stylesheet" href="{{ url_for('static',filename='css/cards.css', v='20260916-cards-1') }}">
   <link rel="stylesheet" href="{{ url_for('static',filename='css/card-accents.css', v='20260918-card-accents-1') }}">
-<<<<<<< HEAD
-<<<<<<< HEAD
-  <link rel="stylesheet" href="{{ url_for('static',filename='css/python-dev-hero-theme.css', v='20260919-theme-system-1') }}">
-  <link rel="stylesheet" href="{{ url_for('static',filename='css/theme-switcher.css', v='20260919-theme-system-1') }}">
-=======
-  <link rel="stylesheet" href="{{ url_for('static',filename='css/python-dev-hero-theme.css', v='20260919-theme-system-2') }}">
-  <link rel="stylesheet" href="{{ url_for('static',filename='css/theme-switcher.css', v='20260919-theme-system-2') }}">
-  <link rel="stylesheet" href="{{ url_for('static',filename='css/theme-overrides.css', v='20260919-theme-system-2') }}">
->>>>>>> 01320cd (melhora sistema de temas e contraste)
-=======
-  <link rel="stylesheet" href="{{ url_for('static',filename='css/design-system.css', v='20260919-rpg-tech-1') }}">
->>>>>>> 3d2350b (Redesign visual completo do Portal Python)
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/theme-switcher.css', v='20260919-blue-redesign-1') }}">
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/design-system.css', v='20260919-blue-redesign-1') }}">
 </head>
 <body class="portal-rpg-tech {% if current_user.is_authenticated %}app-authenticated{% else %}public-page{% endif %}{% if request.blueprint == 'admin' %} pjm-dense-screen{% endif %}">
 <canvas id="spaceParticles" class="space-particles" aria-hidden="true"></canvas>
@@ -69,7 +55,7 @@
     <div class="theme-panel" id="themePanel" role="dialog" aria-label="Temas do Portal Python">
       <h3>🎨 Aparência do portal</h3>
       <div class="theme-options">
-        <button class="theme-option" type="button" data-theme-choice="dark"><span class="theme-swatch swatch-dark"></span><span class="theme-name">Dark Gold</span></button>
+        <button class="theme-option" type="button" data-theme-choice="dark"><span class="theme-swatch swatch-dark"></span><span class="theme-name">Escuro</span></button>
         <button class="theme-option" type="button" data-theme-choice="light"><span class="theme-swatch swatch-light"></span><span class="theme-name">Light</span></button>
         <button class="theme-option" type="button" data-theme-choice="pink"><span class="theme-swatch swatch-pink"></span><span class="theme-name">Pink</span></button>
         <button class="theme-option" type="button" data-theme-choice="sea"><span class="theme-swatch swatch-sea"></span><span class="theme-name">Mar</span></button>
@@ -171,10 +157,6 @@
 <script src="{{ url_for('static',filename='js/loading.js', v='20260912-question-bank-1') }}" defer></script>
 <script src="{{ url_for('static',filename='js/sidebar-nav.js', v='20260915-sidebar-1') }}" defer></script>
 <script src="{{ url_for('static',filename='js/interactions.js', v='20260918-animacoes-1') }}" defer></script>
-<<<<<<< HEAD
-<script src="{{ url_for('static',filename='js/theme.js', v='20260919-theme-system-1') }}" defer></script>
-=======
-<script src="{{ url_for('static',filename='js/theme.js', v='20260919-theme-system-2') }}" defer></script>
->>>>>>> 01320cd (melhora sistema de temas e contraste)
+<script src="{{ url_for('static',filename='js/theme.js', v='20260919-blue-redesign-1') }}" defer></script>
 </body>
 </html>

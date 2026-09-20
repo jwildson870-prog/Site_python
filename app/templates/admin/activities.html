@@ -42,7 +42,7 @@
       </div>
       <div class="activity-admin-actions">
         <a class="btn secondary" href="{{url_for('admin.activity_results',id=a.id)}}">Resultados</a>
-        <a class="btn secondary" href="{{url_for('admin.activity_edit',id=a.id)}}">Editar</a>
+        <a class="btn secondary edit" href="{{url_for('admin.activity_edit',id=a.id)}}">Editar</a>
         <form method="post" action="{{url_for('admin.activity_delete',id=a.id)}}" data-confirm-message="Excluir a atividade &quot;{{a.title}}&quot;? Essa ação não pode ser desfeita."><input type="hidden" name="csrf_token" value="{{csrf_token()}}"><button class="btn danger" type="submit">Excluir</button></form>
       </div>
     </article>

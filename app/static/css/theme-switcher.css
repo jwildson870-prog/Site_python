@@ -6,8 +6,8 @@
   --theme-surface-2: #17221a;
   --theme-text: #f4f2e8;
   --theme-muted: #a9b0a8;
-  --theme-primary: #d9ae48;
-  --theme-secondary: #42d98b;
+  --theme-primary: #4ee7ff;
+  --theme-secondary: #49a9ff;
   --theme-border: rgba(217,174,72,.22);
   --theme-shadow: rgba(0,0,0,.35);
 }
@@ -65,8 +65,8 @@ html[data-theme="nature"] {
 .theme-option:hover,.theme-option.active { border-color:var(--theme-primary); transform:translateY(-1px); }
 .theme-swatch { width:25px; height:25px; flex:0 0 25px; border-radius:50%; border:2px solid rgba(255,255,255,.22); }
 .theme-name { font-size:.82rem; font-weight:750; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.swatch-dark { background:linear-gradient(135deg,#0a0f0c 50%,#d9ae48 50%); }
-.swatch-light { background:linear-gradient(135deg,#fff 50%,#16864b 50%); }
+.swatch-dark { background:linear-gradient(135deg,#050914 50%,#4ee7ff 50%); }
+.swatch-light { background:linear-gradient(135deg,#fff 50%,#1f6fe0 50%); }
 .swatch-pink { background:linear-gradient(135deg,#291329 50%,#ff77c8 50%); }
 .swatch-sea { background:linear-gradient(135deg,#09232b 50%,#35d5e6 50%); }
 .swatch-aurora { background:linear-gradient(135deg,#171443 50%,#a78bfa 50%); }
