@@ -11,6 +11,7 @@ from ..storage import upload as storage_upload, delete as storage_delete, get_fi
 from ..extensions import db
 from ..timeutils import utcnow
 from ..models import Series, Subject, Content, ContentHistory, User, Activity, ActivityHistory, ActivityAttempt, Experiment, Notification, Alert, QuestionBank, Progress
+from ..settings import DEFAULT_SETTINGS, get_setting, set_setting
 from ..pptx_preview import convert_pptx_to_images
 from ..activity_library import PREBUILT_ACTIVITIES, BY_SLUG
 
@@ -1317,8 +1318,43 @@ def reports_xlsx():
     resp.headers['Content-Disposition'] = 'attachment; filename=portal-python-relatorio.xlsx'
     return resp
 
-@admin_bp.get('/settings')
-def settings(): return render_template('admin/settings.html')
+@admin_bp.route('/settings', methods=['GET', 'POST'])
+def settings():
+    if request.method == 'POST':
+        upload_raw = request.form.get('upload_limit_mb', '25').strip()
+        try:
+            upload_limit = int(upload_raw)
+        except (TypeError, ValueError):
+            upload_limit = 25
+        upload_limit = max(1, min(upload_limit, 100))
+
+        institution = request.form.get('institution_name', '').strip()[:160] or 'Portal Python'
+        bool_keys = [
+            'public_registration', 'google_oauth_enabled', 'notifications_enabled',
+            'notification_activities', 'notification_materials', 'notification_deadlines',
+            'notification_announcements', 'alerts_enabled', 'alert_inactive_students',
+            'alert_pending_activities', 'alert_low_performance', 'alert_performance_drop',
+            'alert_deadlines'
+        ]
+
+        set_setting('upload_limit_mb', upload_limit)
+        set_setting('institution_name', institution)
+        for key in bool_keys:
+            set_setting(key, 'true' if request.form.get(key) == 'on' else 'false')
+
+        db.session.commit()
+        current_app.config['MAX_CONTENT_LENGTH'] = upload_limit * 1024 * 1024
+        flash('Configurações salvas com sucesso.', 'success')
+        return redirect(url_for('admin.settings'))
+
+    settings_data = {key: get_setting(key, default) for key, default in DEFAULT_SETTINGS.items()}
+    return render_template(
+        'admin/settings.html',
+        settings=settings_data,
+        google_credentials_configured=bool(
+            os.getenv('GOOGLE_CLIENT_ID') and os.getenv('GOOGLE_CLIENT_SECRET')
+        ),
+    )
 
 # ---------------------------------------------------------------------------
 # FASE 5.11 — Importação e exportação de alunos/progresso
