@@ -11,7 +11,6 @@ from ..storage import upload as storage_upload, delete as storage_delete, get_fi
 from ..extensions import db
 from ..timeutils import utcnow
 from ..models import Series, Subject, Content, ContentHistory, User, Activity, ActivityHistory, ActivityAttempt, Experiment, Notification, Alert, QuestionBank, Progress
-from ..settings import DEFAULT_SETTINGS, get_setting, set_setting
 from ..pptx_preview import convert_pptx_to_images
 from ..activity_library import PREBUILT_ACTIVITIES, BY_SLUG
 
@@ -793,12 +792,17 @@ def user_delete(id):
 def question_bank():
     series = Series.query.order_by(Series.id).all()
     subjects = Subject.query.order_by(Subject.name).all()
+    categories = [row[0] for row in db.session.query(QuestionBank.category).filter(QuestionBank.category.isnot(None), QuestionBank.category != '').distinct().order_by(QuestionBank.category.asc()).all()]
+
     if request.method == 'POST':
         question = request.form.get('question', '').strip()
         options = [request.form.get(f'option_{letter}', '').strip() for letter in ('a','b','c','d')]
         code = request.form.get('code', '').strip()
         correct_index = request.form.get('correct', '').strip()
         difficulty = normalize_difficulty(request.form.get('difficulty'))
+        category = ' '.join(request.form.get('category', '').strip().split())[:100] or 'Geral'
+        tags_raw = request.form.get('tags', '').strip()
+        tags = ', '.join(dict.fromkeys(tag.strip().lower() for tag in tags_raw.split(',') if tag.strip()))[:1000]
         sid = request.form.get('series_id', '').strip(); subid = request.form.get('subject_id', '').strip()
         ser = db.session.get(Series, int(sid)) if sid.isdigit() else None
         sub = db.session.get(Subject, int(subid)) if subid.isdigit() else None
@@ -811,13 +815,53 @@ def question_bank():
         elif any(options[i] and not options[i-1] for i in range(1,4)):
             flash('Preencha as alternativas em sequência.', 'error')
         else:
-            item = QuestionBank(question=question, correct=options[int(correct_index)], code=code[:8000] or None, difficulty=difficulty, series_id=ser.id, subject_id=sub.id)
+            item = QuestionBank(question=question, correct=options[int(correct_index)], code=code[:8000] or None,
+                                difficulty=difficulty, category=category, tags=tags or None,
+                                series_id=ser.id, subject_id=sub.id)
             item.set_options([x for x in options if x])
             db.session.add(item); db.session.commit()
             flash('Questão adicionada ao banco.', 'success')
             return redirect(url_for('admin.question_bank'))
-    items = QuestionBank.query.order_by(QuestionBank.id.desc()).all()
-    return render_template('admin/question_bank.html', items=items, series=series, subjects=subjects)
+
+    q = request.args.get('q', '').strip()
+    series_id = request.args.get('series_id', '').strip()
+    subject_id = request.args.get('subject_id', '').strip()
+    difficulty = request.args.get('difficulty', '').strip().lower()
+    category = request.args.get('category', '').strip()
+    tag = request.args.get('tag', '').strip().lower()
+    sort = request.args.get('sort', 'recent').strip().lower()
+
+    query = QuestionBank.query
+    if q:
+        like = f'%{q}%'
+        query = query.filter(or_(QuestionBank.question.ilike(like), QuestionBank.category.ilike(like), QuestionBank.tags.ilike(like), QuestionBank.code.ilike(like)))
+    if series_id.isdigit():
+        query = query.filter(QuestionBank.series_id == int(series_id))
+    if subject_id.isdigit():
+        query = query.filter(QuestionBank.subject_id == int(subject_id))
+    if difficulty in DIFFICULTIES:
+        query = query.filter(QuestionBank.difficulty == difficulty)
+    if category:
+        query = query.filter(QuestionBank.category == category)
+    if tag:
+        query = query.filter(QuestionBank.tags.ilike(f'%{tag}%'))
+
+    if sort == 'oldest':
+        query = query.order_by(QuestionBank.id.asc())
+    elif sort == 'question':
+        query = query.order_by(QuestionBank.question.asc(), QuestionBank.id.desc())
+    elif sort == 'difficulty':
+        query = query.order_by(QuestionBank.difficulty.asc(), QuestionBank.id.desc())
+    elif sort == 'category':
+        query = query.order_by(QuestionBank.category.asc(), QuestionBank.id.desc())
+    else:
+        sort = 'recent'
+        query = query.order_by(QuestionBank.id.desc())
+
+    items = query.all()
+    return render_template('admin/question_bank.html', items=items, series=series, subjects=subjects,
+                           categories=categories, q=q, series_id=series_id, subject_id=subject_id,
+                           difficulty=difficulty, category=category, tag=tag, sort=sort)
 
 @admin_bp.post('/question-bank/<int:id>/delete')
 def question_bank_delete(id):
@@ -1318,43 +1362,8 @@ def reports_xlsx():
     resp.headers['Content-Disposition'] = 'attachment; filename=portal-python-relatorio.xlsx'
     return resp
 
-@admin_bp.route('/settings', methods=['GET', 'POST'])
-def settings():
-    if request.method == 'POST':
-        upload_raw = request.form.get('upload_limit_mb', '25').strip()
-        try:
-            upload_limit = int(upload_raw)
-        except (TypeError, ValueError):
-            upload_limit = 25
-        upload_limit = max(1, min(upload_limit, 100))
-
-        institution = request.form.get('institution_name', '').strip()[:160] or 'Portal Python'
-        bool_keys = [
-            'public_registration', 'google_oauth_enabled', 'notifications_enabled',
-            'notification_activities', 'notification_materials', 'notification_deadlines',
-            'notification_announcements', 'alerts_enabled', 'alert_inactive_students',
-            'alert_pending_activities', 'alert_low_performance', 'alert_performance_drop',
-            'alert_deadlines'
-        ]
-
-        set_setting('upload_limit_mb', upload_limit)
-        set_setting('institution_name', institution)
-        for key in bool_keys:
-            set_setting(key, 'true' if request.form.get(key) == 'on' else 'false')
-
-        db.session.commit()
-        current_app.config['MAX_CONTENT_LENGTH'] = upload_limit * 1024 * 1024
-        flash('Configurações salvas com sucesso.', 'success')
-        return redirect(url_for('admin.settings'))
-
-    settings_data = {key: get_setting(key, default) for key, default in DEFAULT_SETTINGS.items()}
-    return render_template(
-        'admin/settings.html',
-        settings=settings_data,
-        google_credentials_configured=bool(
-            os.getenv('GOOGLE_CLIENT_ID') and os.getenv('GOOGLE_CLIENT_SECRET')
-        ),
-    )
+@admin_bp.get('/settings')
+def settings(): return render_template('admin/settings.html')
 
 # ---------------------------------------------------------------------------
 # FASE 5.11 — Importação e exportação de alunos/progresso

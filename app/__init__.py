@@ -223,6 +223,25 @@ def create_app(test_config=None):
                     conn.execute(text('ALTER TABLE question_bank ADD COLUMN IF NOT EXISTS code TEXT'))
                 elif db.engine.dialect.name == 'sqlite':
                     conn.execute(text('ALTER TABLE question_bank ADD COLUMN code TEXT'))
+        inspector = inspect(db.engine)
+        if 'question_bank' in inspector.get_table_names():
+            qb_cols = {c['name'] for c in inspector.get_columns('question_bank')}
+            with db.engine.begin() as conn:
+                if 'category' not in qb_cols:
+                    if db.engine.dialect.name == 'postgresql':
+                        conn.execute(text("ALTER TABLE question_bank ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT 'Geral'"))
+                    elif db.engine.dialect.name == 'sqlite':
+                        conn.execute(text("ALTER TABLE question_bank ADD COLUMN category VARCHAR(100) DEFAULT 'Geral'"))
+                if 'tags' not in qb_cols:
+                    if db.engine.dialect.name == 'postgresql':
+                        conn.execute(text('ALTER TABLE question_bank ADD COLUMN IF NOT EXISTS tags TEXT'))
+                    elif db.engine.dialect.name == 'sqlite':
+                        conn.execute(text('ALTER TABLE question_bank ADD COLUMN tags TEXT'))
+                # Corrige valores antigos/legados para que a dificuldade tenha
+                # sempre um dos três valores oficiais do Portal.
+                conn.execute(text("UPDATE question_bank SET difficulty = 'medio' WHERE difficulty IS NULL OR lower(trim(difficulty)) NOT IN ('facil','medio','dificil')"))
+                conn.execute(text("UPDATE question_bank SET difficulty = lower(trim(difficulty)) WHERE difficulty IS NOT NULL"))
+                conn.execute(text("UPDATE question_bank SET category = 'Geral' WHERE category IS NULL OR trim(category) = ''"))
         from .services import ensure_admin,seed_initial_content,migrate_legacy_python_subjects
         ensure_admin(); seed_initial_content(); migrate_legacy_python_subjects()
         from .question_seed_service import seed_generated_question_bank
