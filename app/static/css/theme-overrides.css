@@ -572,3 +572,27 @@ html[data-theme] :focus-visible {
   html[data-theme] .panel,
   html[data-theme] .section-card { box-shadow: 0 10px 26px var(--t-shadow) !important; }
 }
+
+/* Indicadores por série — superfície única e compatível com todos os temas.
+   Evita o fundo branco herdado do CSS base e impede sobreposição de tons. */
+html[data-theme] .dashboard-series-card,
+html[data-theme] .dashboard-series-metrics div {
+  background: var(--t-surface) !important;
+  color: var(--t-text) !important;
+  border-color: var(--t-border) !important;
+  box-shadow: none !important;
+}
+html[data-theme] .dashboard-series-head strong,
+html[data-theme] .dashboard-series-metrics strong {
+  color: var(--t-text-strong) !important;
+}
+html[data-theme] .dashboard-series-head span,
+html[data-theme] .dashboard-series-metrics small {
+  color: var(--t-muted) !important;
+}
+html[data-theme] .dashboard-series-bar {
+  background: var(--t-border-soft) !important;
+}
+html[data-theme] .dashboard-series-bar span {
+  background: var(--t-primary) !important;
+}
