@@ -195,6 +195,30 @@ def create_app(test_config=None):
                     conn.execute(text("ALTER TABLE activities ADD COLUMN IF NOT EXISTS difficulty VARCHAR(20) DEFAULT 'medio'"))
                 elif db.engine.dialect.name == 'sqlite':
                     conn.execute(text("ALTER TABLE activities ADD COLUMN difficulty VARCHAR(20) DEFAULT 'medio'"))
+        inspector = inspect(db.engine)
+        if 'activities' in inspector.get_table_names():
+            activity_cols = {c['name'] for c in inspector.get_columns('activities')}
+            additions = {
+                'max_attempts': "INTEGER DEFAULT 0",
+                'allow_review': "BOOLEAN DEFAULT TRUE",
+                'shuffle_questions': "BOOLEAN DEFAULT FALSE",
+                'shuffle_options': "BOOLEAN DEFAULT FALSE",
+            }
+            with db.engine.begin() as conn:
+                for col, definition in additions.items():
+                    if col not in activity_cols:
+                        definition_sql = definition
+                        if db.engine.dialect.name == 'postgresql':
+                            conn.execute(text(f'ALTER TABLE activities ADD COLUMN IF NOT EXISTS {col} {definition_sql}'))
+                        else:
+                            conn.execute(text(f'ALTER TABLE activities ADD COLUMN {col} {definition_sql}'))
+        inspector = inspect(db.engine)
+        if 'activity_attempts' in inspector.get_table_names() and 'presented_questions_json' not in {c['name'] for c in inspector.get_columns('activity_attempts')}:
+            with db.engine.begin() as conn:
+                if db.engine.dialect.name == 'postgresql':
+                    conn.execute(text("ALTER TABLE activity_attempts ADD COLUMN IF NOT EXISTS presented_questions_json TEXT DEFAULT '[]'"))
+                else:
+                    conn.execute(text("ALTER TABLE activity_attempts ADD COLUMN presented_questions_json TEXT DEFAULT '[]'"))
         # Migração leve para instalações existentes: adiciona as colunas de
         # autenticação (item 3 do ITEM 3) sem apagar ou recriar tabelas.
         inspector = inspect(db.engine)

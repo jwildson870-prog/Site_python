@@ -881,7 +881,7 @@ def activity_import_questions(id):
         item = db.session.get(QuestionBank, qid)
         if not item or item.series_id != activity.series_id or item.subject_id != activity.subject_id: continue
         opts = item.get_options()
-        current.append({'question': item.question, 'options': opts, 'correct': item.correct, **({'code': item.code} if item.code else {})})
+        current.append({'question': item.question, 'options': opts, 'correct': item.correct, 'kind': 'objective', **({'code': item.code} if item.code else {})})
         added += 1
     activity.set_questions(current); db.session.commit()
     if added:
@@ -1023,13 +1023,22 @@ def parse_due_at(value):
 def read_activity_questions_from_form():
     questions = []
     for i in range(20):
+        kind = request.form.get(f'kind_{i}', 'objective').strip().lower()
+        kind = 'essay' if kind == 'essay' else 'objective'
         question = request.form.get(f'question_{i}', '').strip()
         options = [request.form.get(f'option_{i}_{letter}', '').strip() for letter in ('a', 'b', 'c', 'd')]
         correct_index = request.form.get(f'correct_{i}', '').strip()
         if not question and not any(options) and not correct_index:
             continue
+        if len(question) > 1000:
+            return None, 'Cada questão pode ter no máximo 1000 caracteres.'
+        if kind == 'essay':
+            if not question:
+                return None, 'Cada questão discursiva precisa de enunciado.'
+            questions.append({'question': question, 'options': [], 'correct': '', 'kind': 'essay'})
+            continue
         if not question or len(question) > 1000 or sum(bool(option) for option in options) < 2 or correct_index not in {'0', '1', '2', '3'}:
-            return None, 'Cada questão preenchida precisa de enunciado, pelo menos duas alternativas e uma resposta correta.'
+            return None, 'Cada questão objetiva preenchida precisa de enunciado, pelo menos duas alternativas e uma resposta correta.'
         if any(len(option) > 500 for option in options):
             return None, 'Cada alternativa pode ter no máximo 500 caracteres.'
         filled = [bool(option) for option in options]
@@ -1038,7 +1047,7 @@ def read_activity_questions_from_form():
         index = int(correct_index)
         if not options[index]:
             return None, 'A resposta correta precisa apontar para uma alternativa preenchida.'
-        questions.append({'question': question, 'options': options, 'correct': options[index]})
+        questions.append({'question': question, 'options': options, 'correct': options[index], 'kind': 'objective'})
     if not questions:
         return None, 'Informe pelo menos uma questão.'
     return questions, None
@@ -1051,6 +1060,14 @@ def activity_edit(id):
         desc = request.form.get('description', '').strip()
         due_raw = request.form.get('due_at', '').strip()
         difficulty_value = request.form.get('difficulty', a.difficulty or 'medio').strip().lower()
+        max_attempts_raw = request.form.get('max_attempts', '0').strip()
+        try:
+            max_attempts = max(0, min(int(max_attempts_raw or 0), 20))
+        except ValueError:
+            max_attempts = 0
+        allow_review = request.form.get('allow_review') == 'on'
+        shuffle_questions = request.form.get('shuffle_questions') == 'on'
+        shuffle_options = request.form.get('shuffle_options') == 'on'
         due_at, due_error = parse_due_at(due_raw)
         questions, error = read_activity_questions_from_form()
         if not title or len(title) > 200:
@@ -1065,6 +1082,10 @@ def activity_edit(id):
             a.description = desc[:5000]
             a.due_at = due_at
             a.difficulty = difficulty_value if difficulty_value in {'facil','medio','dificil'} else 'medio'
+            a.max_attempts = max_attempts
+            a.allow_review = allow_review
+            a.shuffle_questions = shuffle_questions
+            a.shuffle_options = shuffle_options
             a.set_questions(questions)
             db.session.commit()
             _record_activity_history(a, 'editada')
@@ -1079,7 +1100,8 @@ def activity_edit(id):
             q = request.form.get(f'question_{i}', '').strip()
             opts = [request.form.get(f'option_{i}_{letter}', '').strip() for letter in ('a', 'b', 'c', 'd')]
             correct = request.form.get(f'correct_{i}', '').strip()
-            questions.append({'question': q, 'options': opts, 'correct': opts[int(correct)] if correct.isdigit() and int(correct) < len(opts) else ''})
+            kind = 'essay' if request.form.get(f'kind_{i}', 'objective').strip().lower() == 'essay' else 'objective'
+            questions.append({'question': q, 'options': [] if kind == 'essay' else opts, 'correct': '' if kind == 'essay' else (opts[int(correct)] if correct.isdigit() and int(correct) < len(opts) else ''), 'kind': kind})
         while questions and not questions[-1].get('question') and not any(questions[-1].get('options', [])):
             questions.pop()
         return render_template('admin/activity_form.html', activity=a, questions=questions, due_raw=due_raw, bank_items=QuestionBank.query.filter_by(series_id=a.series_id, subject_id=a.subject_id).order_by(QuestionBank.id.desc()).all())
@@ -1093,7 +1115,9 @@ def activity_duplicate(id):
         title=f'{source.title} (cópia)', description=source.description,
         series_id=source.series_id, subject_id=source.subject_id,
         questions_json=source.questions_json, due_at=None,
-        difficulty=source.difficulty, archived_at=None,
+        difficulty=source.difficulty, max_attempts=source.max_attempts,
+        allow_review=source.allow_review, shuffle_questions=source.shuffle_questions,
+        shuffle_options=source.shuffle_options, archived_at=None,
     )
     db.session.add(duplicate)
     db.session.flush()

@@ -6,6 +6,8 @@ from ..timeutils import utcnow
 from ..models import User,Series,Subject,Content,Activity,ActivityAttempt,Experiment,Favorite,Progress,Notification,WeeklyGoal
 from ..storage import get_file, b2_enabled, StorageError
 import json
+import random
+from copy import deepcopy
 from datetime import date, datetime, timedelta
 import calendar as pycalendar
 student_bp=Blueprint('student',__name__,url_prefix='/aluno')
@@ -222,17 +224,60 @@ def activities():
     elif status == 'expired': items = [a for a in items if a.due_at and now > a.due_at]
     return render_template('student/activities.html', activities=items, attempted_ids=attempted_ids, now=now, q=q, series_id=series_id, subject_id=subject_id, status=status, series=Series.query.order_by(Series.id).all(), subjects=Subject.query.order_by(Subject.name).all())
 
+def _prepare_activity_questions(activity, attempt_number):
+    questions = deepcopy(activity.get_questions())
+    if activity.shuffle_questions:
+        random.Random(f"questions:{activity.id}:{current_user.id}:{attempt_number}").shuffle(questions)
+    if activity.shuffle_options:
+        for index, question in enumerate(questions):
+            if question.get('kind', 'objective') == 'essay':
+                continue
+            options = list(question.get('options') or [])
+            random.Random(f"options:{activity.id}:{current_user.id}:{attempt_number}:{index}").shuffle(options)
+            question['options'] = options
+    return questions
+
 @student_bp.route('/atividade/<int:id>',methods=['GET','POST'])
 def activity(id):
-    a=Activity.query.filter(Activity.id == id, Activity.archived_at.is_(None)).first_or_404(); questions=a.get_questions(); now=utcnow()
+    a=Activity.query.filter(Activity.id == id, Activity.archived_at.is_(None)).first_or_404()
+    now=utcnow()
     expired = bool(a.due_at and now > a.due_at)
+    attempt_count = ActivityAttempt.query.filter_by(user_id=current_user.id, activity_id=a.id).count()
     if request.method=='POST':
         if expired:
             flash('O prazo desta atividade já terminou.', 'error')
             return redirect(url_for('student.activity', id=a.id))
-        answers={str(i):request.form.get(f'q{i}','') for i in range(len(questions))}; valid_answers={str(i): set(q.get('options') or []) for i,q in enumerate(questions)}; answers={k:v for k,v in answers.items() if v in valid_answers.get(k,set())}; correct=sum(1 for i,q in enumerate(questions) if answers.get(str(i))==q.get('correct')); total=len(questions); score=(correct/total*10) if total else 0
-        attempt=ActivityAttempt(user_id=current_user.id,activity_id=a.id,answers_json=json.dumps(answers,ensure_ascii=False),score=score,total=total); db.session.add(attempt); db.session.commit(); return render_template('student/activity_result.html',activity=a,score=score,correct=correct,total=total)
-    return render_template('student/activity.html',activity=a,questions=questions,expired=expired,now=now)
+        if a.max_attempts and attempt_count >= a.max_attempts:
+            flash('Você atingiu o limite de tentativas desta atividade.', 'error')
+            return redirect(url_for('student.activity', id=a.id))
+        questions = _prepare_activity_questions(a, attempt_count + 1)
+        answers = {}
+        correct = 0
+        objective_total = 0
+        essay_total = 0
+        for i, q in enumerate(questions):
+            kind = q.get('kind', 'objective')
+            value = request.form.get(f'q{i}', '').strip()
+            if kind == 'essay':
+                answers[str(i)] = value[:5000]
+                essay_total += 1
+            else:
+                valid = set(q.get('options') or [])
+                if value in valid:
+                    answers[str(i)] = value
+                objective_total += 1
+                if answers.get(str(i)) == q.get('correct'):
+                    correct += 1
+        total = len(questions)
+        score = (correct/objective_total*10) if objective_total else 0
+        attempt=ActivityAttempt(user_id=current_user.id,activity_id=a.id,answers_json=json.dumps(answers,ensure_ascii=False),score=score,total=total,presented_questions_json=json.dumps(questions,ensure_ascii=False))
+        db.session.add(attempt); db.session.commit()
+        return render_template('student/activity_result.html',activity=a,score=score,correct=correct,total=total,objective_total=objective_total,essay_total=essay_total,review_allowed=a.allow_review,answers=answers,questions=questions,attempt_number=attempt_count+1)
+    if a.max_attempts and attempt_count >= a.max_attempts:
+        return render_template('student/activity.html',activity=a,questions=[],expired=expired,now=now,attempt_count=attempt_count,attempts_remaining=0,attempts_blocked=True)
+    questions = _prepare_activity_questions(a, attempt_count + 1)
+    attempts_remaining = (a.max_attempts - attempt_count) if a.max_attempts else None
+    return render_template('student/activity.html',activity=a,questions=questions,expired=expired,now=now,attempt_count=attempt_count,attempts_remaining=attempts_remaining,attempts_blocked=False)
 @student_bp.get('/experimentos')
 def experiments(): return render_template('student/experiments.html',experiments=Experiment.query.order_by(Experiment.id.desc()).all())
 @student_bp.get('/experimento/<int:id>')

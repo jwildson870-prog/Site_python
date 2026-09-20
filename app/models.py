@@ -83,6 +83,10 @@ class Activity(db.Model):
     archived_at = db.Column(db.DateTime, nullable=True, index=True)
     due_at = db.Column(db.DateTime, nullable=True, index=True)
     difficulty = db.Column(db.String(20), nullable=False, default='medio', index=True)
+    max_attempts = db.Column(db.Integer, nullable=False, default=0)  # 0 = ilimitado
+    allow_review = db.Column(db.Boolean, nullable=False, default=True)
+    shuffle_questions = db.Column(db.Boolean, nullable=False, default=False)
+    shuffle_options = db.Column(db.Boolean, nullable=False, default=False)
     attempts = db.relationship('ActivityAttempt', back_populates='activity', cascade='all, delete-orphan')
     def get_questions(self):
         try: return json.loads(self.questions_json or '[]')
@@ -137,12 +141,16 @@ class ActivityAttempt(db.Model):
     answers_json = db.Column(db.Text, nullable=False, default='{}')
     score = db.Column(db.Float, nullable=False, default=0)
     total = db.Column(db.Integer, nullable=False, default=0)
+    presented_questions_json = db.Column(db.Text, nullable=False, default='[]')
     created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
     user = db.relationship('User', back_populates='activity_attempts')
     activity = db.relationship('Activity', back_populates='attempts')
     def get_answers(self):
         try: return json.loads(self.answers_json or '{}')
         except (TypeError, ValueError): return {}
+    def get_presented_questions(self):
+        try: return json.loads(self.presented_questions_json or '[]')
+        except (TypeError, ValueError): return []
 
 class Experiment(db.Model):
     __tablename__ = 'experiments'
