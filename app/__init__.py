@@ -177,31 +177,6 @@ def create_app(test_config=None):
                 elif db.engine.dialect.name == 'sqlite':
                     conn.execute(text('ALTER TABLE activities ADD COLUMN due_at DATETIME'))
         inspector = inspect(db.engine)
-        # Migração editorial da Fase 5.3: status, publicação programada e data de publicação.
-        inspector = inspect(db.engine)
-        if 'contents' in inspector.get_table_names():
-            content_cols = {c['name'] for c in inspector.get_columns('contents')}
-            with db.engine.begin() as conn:
-                if 'status' not in content_cols:
-                    if db.engine.dialect.name == 'postgresql':
-                        conn.execute(text("ALTER TABLE contents ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'published'"))
-                    elif db.engine.dialect.name == 'sqlite':
-                        conn.execute(text("ALTER TABLE contents ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'published'"))
-                if 'scheduled_at' not in content_cols:
-                    if db.engine.dialect.name == 'postgresql':
-                        conn.execute(text('ALTER TABLE contents ADD COLUMN IF NOT EXISTS scheduled_at TIMESTAMP'))
-                    elif db.engine.dialect.name == 'sqlite':
-                        conn.execute(text('ALTER TABLE contents ADD COLUMN scheduled_at DATETIME'))
-                if 'published_at' not in content_cols:
-                    if db.engine.dialect.name == 'postgresql':
-                        conn.execute(text('ALTER TABLE contents ADD COLUMN IF NOT EXISTS published_at TIMESTAMP'))
-                    elif db.engine.dialect.name == 'sqlite':
-                        conn.execute(text('ALTER TABLE contents ADD COLUMN published_at DATETIME'))
-                # Conteúdos existentes já eram visíveis aos alunos, portanto são
-                # classificados como publicados na primeira migração.
-                if 'status' not in content_cols:
-                    conn.execute(text("UPDATE contents SET status = 'published' WHERE status IS NULL OR status = ''"))
-
         if 'activities' in inspector.get_table_names() and 'difficulty' not in {c['name'] for c in inspector.get_columns('activities')}:
             with db.engine.begin() as conn:
                 if db.engine.dialect.name == 'postgresql':

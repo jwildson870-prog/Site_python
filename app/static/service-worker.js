@@ -1,4 +1,4 @@
-const CACHE_NAME = 'portal-python-static-v11-theme-system';
+const CACHE_NAME = 'portal-python-static-v12-pwa-fix';
 const STATIC_ASSETS = [
   '/static/css/style.css',
   '/static/css/python-dev-hero-theme.css',
