@@ -80,16 +80,84 @@
     <input type="text" id="sideNavFilter" class="side-nav-filter" placeholder="Filtrar menu..." autocomplete="off" aria-label="Filtrar itens do menu">
   </div>
   <nav class="side-nav" id="sideNav">
-  {% if current_user.is_authenticated and current_user.is_admin %}
-        <a class="side-link {% if request.endpoint == 'student.achievements' %}active{% endif %}" href="{{url_for('student.achievements')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/bolt.svg') }}" alt=""></span><b>Conquistas</b></a>
-        <a class="side-link {% if request.endpoint == 'student.grades' %}active{% endif %}" href="{{url_for('student.grades')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/check.svg') }}" alt=""></span><b>Notas</b></a>
+  {% if current_user.is_admin %}
+    <a class="side-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}" href="{{url_for('admin.dashboard')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/home.svg') }}" alt=""></span><b>Visão geral</b></a>
+
+    <details class="side-section" open data-section="prof-aprendizado">
+      <summary class="side-section-title"><span>Aprendizado</span></summary>
+      <div class="side-section-links">
+        <a class="side-link {% if request.endpoint in ['admin.contents','admin.content_new','admin.content_edit','admin.content_preview','admin.content_history'] %}active{% endif %}" href="{{url_for('admin.contents')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/file.svg') }}" alt=""></span><b>Materiais</b></a>
+        <a class="side-link {% if request.endpoint in ['admin.activities','admin.activity_edit','admin.activity_history','admin.activity_results','admin.activity_attempt_detail'] %}active{% endif %}" href="{{url_for('admin.activities')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/check.svg') }}" alt=""></span><b>Atividades</b></a>
+        <a class="side-link {% if request.endpoint == 'admin.ready_activities' %}active{% endif %}" href="{{url_for('admin.ready_activities')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/bolt.svg') }}" alt=""></span><b>Atividades prontas</b></a>
+        <a class="side-link {% if request.endpoint == 'admin.question_bank' %}active{% endif %}" href="{{url_for('admin.question_bank')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/layers.svg') }}" alt=""></span><b>Banco de questões</b></a>
+        <a class="side-link {% if request.endpoint in ['admin.learning_paths','admin.learning_path_edit'] %}active{% endif %}" href="{{url_for('admin.learning_paths')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/layers.svg') }}" alt=""></span><b>Trilhas</b></a>
+        <a class="side-link {% if request.endpoint in ['admin.series_list','admin.series_edit','admin.series_detail'] %}active{% endif %}" href="{{url_for('admin.series_list')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/users.svg') }}" alt=""></span><b>Séries</b></a>
+        <a class="side-link {% if request.endpoint in ['admin.subjects_list','admin.subject_edit'] %}active{% endif %}" href="{{url_for('admin.subjects_list')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/layers.svg') }}" alt=""></span><b>Disciplinas</b></a>
       </div>
     </details>
+
+    <details class="side-section" open data-section="prof-progresso">
+      <summary class="side-section-title"><span>Meu progresso</span></summary>
+      <div class="side-section-links">
+        <a class="side-link {% if request.endpoint in ['admin.users','admin.user_performance'] %}active{% endif %}" href="{{url_for('admin.users')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/users.svg') }}" alt=""></span><b>Alunos</b></a>
+        <a class="side-link {% if request.endpoint in ['admin.performance','admin.user_performance'] %}active{% endif %}" href="{{url_for('admin.performance')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/chart.svg') }}" alt=""></span><b>Desempenho</b></a>
+        <a class="side-link {% if request.endpoint == 'admin.alerts' %}active{% endif %}" href="{{url_for('admin.alerts')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/bell.svg') }}" alt=""></span><b>Alertas</b></a>
+        <a class="side-link {% if request.endpoint in ['admin.reports','admin.reports_csv','admin.reports_xlsx'] %}active{% endif %}" href="{{url_for('admin.reports')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/file.svg') }}" alt=""></span><b>Relatórios</b></a>
+      </div>
+    </details>
+
+    <details class="side-section" open data-section="prof-projetos">
+      <summary class="side-section-title"><span>Projetos</span></summary>
+      <div class="side-section-links">
+        <a class="side-link {% if request.endpoint in ['admin.experiments','admin.experiment_edit','admin.project_submissions'] %}active{% endif %}" href="{{url_for('admin.experiments')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/bolt.svg') }}" alt=""></span><b>Projetos e experimentos</b></a>
+        <a class="side-link {% if request.endpoint == 'admin.announcements' %}active{% endif %}" href="{{url_for('admin.announcements')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/bell.svg') }}" alt=""></span><b>Avisos</b></a>
+      </div>
+    </details>
+
+    <details class="side-section" open data-section="prof-conta">
+      <summary class="side-section-title"><span>Conta</span></summary>
+      <div class="side-section-links">
+        <a class="side-link {% if request.endpoint == 'admin.settings' %}active{% endif %}" href="{{url_for('admin.settings')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/settings.svg') }}" alt=""></span><b>Configurações</b></a>
+        <a class="side-link {% if request.endpoint == 'admin.import_export' %}active{% endif %}" href="{{url_for('admin.import_export')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/file.svg') }}" alt=""></span><b>Importar / exportar</b></a>
+      </div>
+    </details>
+  {% else %}
+    <a class="side-link {% if request.endpoint == 'student.dashboard' %}active{% endif %}" href="{{url_for('student.dashboard')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/home.svg') }}" alt=""></span><b>Início</b></a>
+
+    <details class="side-section" open data-section="aprendizado">
+      <summary class="side-section-title"><span>Aprendizado</span></summary>
+      <div class="side-section-links">
+        <a class="side-link {% if request.endpoint in ['student.materials','student.content','student.pptx_viewer','student.arquivo','student.pdf'] %}active{% endif %}" href="{{url_for('student.materials')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/file.svg') }}" alt=""></span><b>Materiais</b></a>
+        <a class="side-link {% if request.endpoint in ['student.activities','student.activity','student.activity_result'] %}active{% endif %}" href="{{url_for('student.activities')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/check.svg') }}" alt=""></span><b>Atividades</b></a>
+        <a class="side-link {% if request.endpoint in ['student.learning_paths','student.learning_path'] %}active{% endif %}" href="{{url_for('student.learning_paths')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/layers.svg') }}" alt=""></span><b>Trilhas</b></a>
+        <a class="side-link {% if request.endpoint == 'student.favorites' %}active{% endif %}" href="{{url_for('student.favorites')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/star.svg') }}" alt=""></span><b>Favoritos</b></a>
+        <a class="side-link {% if request.endpoint in ['student.study_tools','student.search'] %}active{% endif %}" href="{{url_for('student.search')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/search.svg') }}" alt=""></span><b>Buscar</b></a>
+      </div>
+    </details>
+
+    <details class="side-section" open data-section="acompanhamento">
+      <summary class="side-section-title"><span>Meu progresso</span></summary>
+      <div class="side-section-links">
+        <a class="side-link {% if request.endpoint == 'student.progress' %}active{% endif %}" href="{{url_for('student.progress')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/chart.svg') }}" alt=""></span><b>Progresso</b></a>
+        <a class="side-link {% if request.endpoint == 'student.performance' %}active{% endif %}" href="{{url_for('student.performance')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/chart.svg') }}" alt=""></span><b>Desempenho</b></a>
+        <a class="side-link {% if request.endpoint == 'student.grades' %}active{% endif %}" href="{{url_for('student.grades')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/check.svg') }}" alt=""></span><b>Notas</b></a>
+        <a class="side-link {% if request.endpoint == 'student.calendar_view' %}active{% endif %}" href="{{url_for('student.calendar_view')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/calendar.svg') }}" alt=""></span><b>Calendário</b></a>
+        <a class="side-link {% if request.endpoint == 'student.engagement' %}active{% endif %}" href="{{url_for('student.engagement')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/bolt.svg') }}" alt=""></span><b>Metas</b></a>
+        <a class="side-link {% if request.endpoint == 'student.achievements' %}active{% endif %}" href="{{url_for('student.achievements')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/bolt.svg') }}" alt=""></span><b>Conquistas</b></a>
+      </div>
+    </details>
+
+    <details class="side-section" open data-section="projetos">
+      <summary class="side-section-title"><span>Projetos</span></summary>
+      <div class="side-section-links">
+        <a class="side-link {% if request.endpoint in ['student.experiments','student.experiment'] %}active{% endif %}" href="{{url_for('student.experiments')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/bolt.svg') }}" alt=""></span><b>Projetos e experimentos</b></a>
+      </div>
+    </details>
+
     <details class="side-section" open data-section="conta">
       <summary class="side-section-title"><span>Conta</span></summary>
       <div class="side-section-links">
         <a class="side-link {% if request.endpoint == 'student.notifications' %}active{% endif %}" href="{{url_for('student.notifications')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/bell.svg') }}" alt=""></span><b>Notificações</b></a>
-        <a class="side-link {% if request.endpoint == 'student.search' %}active{% endif %}" href="{{url_for('student.search')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/search.svg') }}" alt=""></span><b>Buscar</b></a>
         <a class="side-link {% if request.endpoint == 'student.profile' %}active{% endif %}" href="{{url_for('student.profile')}}"><span class="nav-icon"><img src="{{ url_for('static',filename='icons/ui/users.svg') }}" alt=""></span><b>Meu perfil</b></a>
       </div>
     </details>
