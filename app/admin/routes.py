@@ -1233,6 +1233,35 @@ def activity_delete(id):
     flash('Atividade excluída.', 'success')
     return redirect(url_for('admin.activities'))
 
+def _learning_path_item_target(item):
+    if item.item_type == 'content':
+        return Content.query.get(item.target_id)
+    if item.item_type == 'activity':
+        return Activity.query.get(item.target_id)
+    return Experiment.query.get(item.target_id)
+
+
+def _validate_learning_path_targets(path, series_id, subject_id):
+    """Retorna os títulos das etapas incompatíveis com a nova série/matéria."""
+    incompatible = []
+    for existing in path.items:
+        target = _learning_path_item_target(existing)
+        if target is None or target.series_id != series_id or (
+            subject_id is not None and getattr(target, 'subject_id', None) != subject_id
+        ):
+            incompatible.append(existing.title)
+    return incompatible
+
+
+def _learning_path_order_is_valid(items):
+    ordered = sorted(items, key=lambda row: row.position)
+    positions = {row.id: index for index, row in enumerate(ordered)}
+    return all(
+        not row.prerequisite_id or positions.get(row.prerequisite_id, -1) < positions[row.id]
+        for row in ordered
+    )
+
+
 @admin_bp.route('/trilhas', methods=['GET', 'POST'])
 def learning_paths():
     if request.method == 'POST':
@@ -1264,8 +1293,18 @@ def learning_path_edit(id):
             if not title or not series or (subject and subject.series_id != series.id):
                 flash('Dados inválidos.', 'error')
             else:
-                path.title=title; path.description=request.form.get('description','').strip(); path.series_id=series.id; path.subject_id=subject.id if subject else None; path.active=request.form.get('active') == '1'
-                db.session.commit(); flash('Trilha atualizada.', 'success')
+                new_series_id = series.id
+                new_subject_id = subject.id if subject else None
+                incompatible = _validate_learning_path_targets(path, new_series_id, new_subject_id)
+                if incompatible:
+                    flash(
+                        'Não foi possível alterar a série/matéria porque estas etapas ficariam incompatíveis: '
+                        + ', '.join(incompatible) + '.',
+                        'error'
+                    )
+                else:
+                    path.title=title; path.description=request.form.get('description','').strip(); path.series_id=new_series_id; path.subject_id=new_subject_id; path.active=request.form.get('active') == '1'
+                    db.session.commit(); flash('Trilha atualizada.', 'success')
         elif action == 'item':
             item_type=request.form.get('item_type','content').strip().lower()
             target=request.form.get('target_id','').strip()
@@ -1277,17 +1316,49 @@ def learning_path_edit(id):
             else:
                 target_id=int(target)
                 valid = (Content.query.filter_by(id=target_id, series_id=path.series_id).first() if item_type=='content' else Activity.query.filter_by(id=target_id, series_id=path.series_id).first() if item_type=='activity' else Experiment.query.filter_by(id=target_id, series_id=path.series_id).first())
+                if valid and path.subject_id and getattr(valid, 'subject_id', None) != path.subject_id:
+                    valid = None
                 if not valid:
-                    flash('O item escolhido não pertence à série da trilha.', 'error')
+                    flash('O item escolhido não pertence à série/matéria da trilha.', 'error')
                 else:
                     pre=LearningPathItem.query.filter_by(id=int(prerequisite)).first() if prerequisite.isdigit() else None
                     position=(db.session.query(db.func.max(LearningPathItem.position)).filter_by(path_id=path.id).scalar() or -1)+1
-                    db.session.add(LearningPathItem(path_id=path.id,title=title,item_type=item_type,target_id=target_id,position=position,prerequisite_id=pre.id if pre and pre.path_id==path.id and pre.id != position else None,completion_rule=rule if rule in {'access','complete'} else 'access'))
+                    db.session.add(LearningPathItem(path_id=path.id,title=title,item_type=item_type,target_id=target_id,position=position,prerequisite_id=pre.id if pre and pre.path_id == path.id else None,completion_rule=rule if rule in {'access','complete'} else 'access'))
                     db.session.commit(); flash('Item adicionado à trilha.', 'success')
         elif action == 'delete_item':
             item=LearningPathItem.query.filter_by(id=int(request.form.get('item_id','0') or 0),path_id=path.id).first_or_404(); db.session.delete(item); db.session.commit(); flash('Item removido.', 'success')
         return redirect(url_for('admin.learning_path_edit', id=path.id))
-    return render_template('admin/learning_path_form.html', path=path, series=Series.query.order_by(Series.id).all(), contents=Content.query.filter_by(series_id=path.series_id).order_by(Content.title).all(), activities=Activity.query.filter_by(series_id=path.series_id).order_by(Activity.title).all(), experiments=Experiment.query.filter_by(series_id=path.series_id).order_by(Experiment.title).all())
+    content_query = Content.query.filter_by(series_id=path.series_id)
+    activity_query = Activity.query.filter_by(series_id=path.series_id)
+    experiment_query = Experiment.query.filter_by(series_id=path.series_id)
+    if path.subject_id:
+        content_query = content_query.filter_by(subject_id=path.subject_id)
+        activity_query = activity_query.filter_by(subject_id=path.subject_id)
+        experiment_query = experiment_query.filter_by(subject_id=path.subject_id)
+    return render_template('admin/learning_path_form.html', path=path, series=Series.query.order_by(Series.id).all(), contents=content_query.order_by(Content.title).all(), activities=activity_query.order_by(Activity.title).all(), experiments=experiment_query.order_by(Experiment.title).all())
+
+@admin_bp.post('/trilhas/<int:id>/itens/<int:item_id>/mover')
+def learning_path_item_move(id, item_id):
+    path = LearningPath.query.get_or_404(id)
+    item = LearningPathItem.query.filter_by(id=item_id, path_id=path.id).first_or_404()
+    direction = request.form.get('direction', '').strip()
+    if direction not in {'up', 'down'}:
+        flash('Movimento inválido.', 'error')
+        return redirect(url_for('admin.learning_path_edit', id=path.id))
+    items = list(path.items)
+    index = next((i for i, row in enumerate(items) if row.id == item.id), None)
+    target_index = index - 1 if direction == 'up' else index + 1
+    if index is None or target_index < 0 or target_index >= len(items):
+        return redirect(url_for('admin.learning_path_edit', id=path.id))
+    other = items[target_index]
+    item.position, other.position = other.position, item.position
+    if not _learning_path_order_is_valid(items):
+        db.session.rollback()
+        flash('A etapa não pode ficar antes do seu pré-requisito.', 'error')
+        return redirect(url_for('admin.learning_path_edit', id=path.id))
+    db.session.commit()
+    flash('Sequência da trilha atualizada.', 'success')
+    return redirect(url_for('admin.learning_path_edit', id=path.id))
 
 @admin_bp.post('/trilhas/<int:id>/excluir')
 def learning_path_delete(id):

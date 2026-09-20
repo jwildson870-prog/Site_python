@@ -96,25 +96,81 @@ def _visible_contents_query():
 def guard():
     if not current_user.is_authenticated:return redirect(url_for('auth.login',next='/aluno/'))
     if current_user.is_admin:abort(403)
-def _path_item_completed(item, user_id):
+def _path_item_target(item):
     if item.item_type == 'content':
-        return Progress.query.filter_by(user_id=user_id, content_id=item.target_id).first() is not None
+        return Content.query.get(item.target_id)
     if item.item_type == 'activity':
-        return ActivityAttempt.query.filter_by(user_id=user_id, activity_id=item.target_id).first() is not None
-    submission = ProjectSubmission.query.filter_by(user_id=user_id, experiment_id=item.target_id).first()
-    return submission is not None
+        return Activity.query.get(item.target_id)
+    return Experiment.query.get(item.target_id)
+
+def _path_item_visible(item):
+    target = _path_item_target(item)
+    if target is None:
+        return False
+    if item.item_type == 'content':
+        return Content.query.filter(Content.id == target.id, Content.archived_at.is_(None), _published_content_filter()).first() is not None
+    if item.item_type == 'activity':
+        return target.archived_at is None
+    return True
+
+def _path_item_completed(item, user_id):
+    """Calcula a conclusão da etapa respeitando a regra configurada na trilha.
+
+    ``access`` usa o primeiro registro de interação que o sistema já persiste
+    para aquele tipo de item. ``complete`` exige o estado final disponível
+    no próprio fluxo do portal. Para conteúdos, o portal só registra
+    conclusão explícita (Progress), então as duas regras convergem nesse tipo.
+    """
+    if not _path_item_visible(item):
+        return False
+
+    rule = (item.completion_rule or 'access').strip().lower()
+
+    if item.item_type == 'content':
+        # Não existe evento de simples visualização persistido para conteúdo.
+        # O único estado confiável é a marcação explícita de conclusão.
+        return Progress.query.filter_by(user_id=user_id, content_id=item.target_id).first() is not None
+
+    if item.item_type == 'activity':
+        attempts = ActivityAttempt.query.filter_by(
+            user_id=user_id, activity_id=item.target_id
+        ).order_by(ActivityAttempt.id.desc()).all()
+        if not attempts:
+            return False
+        if rule == 'access':
+            return True
+        # Conclusão: todas as questões apresentadas foram respondidas.
+        # Isso não inventa uma nota mínima; a nota continua sendo tratada
+        # separadamente pelo fluxo de atividades.
+        latest = attempts[0]
+        try:
+            answers = latest.get_answers()
+        except AttributeError:
+            answers = {}
+        return latest.total > 0 and len(answers) >= latest.total
+
+    latest = ProjectSubmission.query.filter_by(
+        user_id=user_id, experiment_id=item.target_id
+    ).order_by(ProjectSubmission.id.desc()).first()
+    if latest is None:
+        return False
+    if rule == 'access':
+        return True
+    # Conclusão: a entrega mais recente precisa ter sido revisada pelo professor.
+    # Se o aluno fizer uma nova entrega depois de uma revisão, a trilha volta a
+    # aguardar a revisão dessa nova entrega.
+    return (latest.status or '').strip().lower() == 'reviewed'
 
 def _path_status(path, user_id):
-    completed=[]
-    unlocked=[]
-    for item in path.items:
-        done=_path_item_completed(item,user_id); completed.append(done)
-        unlocked.append(item.prerequisite_id is None or any(x.id==item.prerequisite_id and completed[i] for i,x in enumerate(path.items) if i < len(completed)-1))
-    # Recompute prerequisite checks without relying on list position.
-    by_id={item.id:done for item,done in zip(path.items,completed)}
-    unlocked=[item.prerequisite_id is None or by_id.get(item.prerequisite_id,False) for item in path.items]
-    total=len(path.items); done_count=sum(completed)
-    return completed, unlocked, done_count, (round(done_count/total*100) if total else 0)
+    completed = [_path_item_completed(item, user_id) for item in path.items]
+    by_id = {item.id: done for item, done in zip(path.items, completed)}
+    unlocked = [
+        item.prerequisite_id is None or by_id.get(item.prerequisite_id, False)
+        for item in path.items
+    ]
+    total = len(path.items)
+    done_count = sum(completed)
+    return completed, unlocked, done_count, (round(done_count / total * 100) if total else 0)
 
 @student_bp.get('/trilhas')
 def learning_paths():
@@ -126,8 +182,8 @@ def learning_paths():
 def learning_path(id):
     path=LearningPath.query.filter_by(id=id,active=True).first_or_404()
     completed,unlocked,done_count,percent=_path_status(path,current_user.id)
-    visible_content_ids={c.id for c in _visible_contents_query().filter(Content.id.in_([item.target_id for item in path.items if item.item_type == 'content'] or [-1])).all()}
-    return render_template('student/learning_path.html', path=path, completed=completed, unlocked=unlocked, done_count=done_count, percent=percent, visible_content_ids=visible_content_ids)
+    visible_items = {item.id for item in path.items if _path_item_visible(item)}
+    return render_template('student/learning_path.html', path=path, completed=completed, unlocked=unlocked, done_count=done_count, percent=percent, visible_items=visible_items)
 
 @student_bp.route('/', methods=['GET'])
 def dashboard():
