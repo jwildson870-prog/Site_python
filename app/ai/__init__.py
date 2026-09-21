@@ -46,6 +46,11 @@ def tutor_available():
     return feature_enabled('ai_tutor_enabled') and bool(_api_key())
 
 
+def feature_available(feature):
+    """Retorna True somente quando a feature está ligada e a chave da Anthropic existe."""
+    return feature_enabled(feature) and bool(_api_key())
+
+
 def sanitize_output(text):
     return bleach.clean(text or '', tags=[], attributes={}, strip=True)
 

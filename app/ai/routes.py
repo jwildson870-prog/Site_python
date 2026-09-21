@@ -9,11 +9,12 @@ from ..extensions import db
 from ..models import Content, ActivityAttempt, QuestionBank
 from ..settings import get_bool
 from ..timeutils import utcnow
-from . import TUTOR_MODEL, feature_enabled, log_non_api_event, tutor_available, tutor_rate_limit
+from . import TUTOR_MODEL, feature_enabled, feature_available, log_non_api_event, tutor_available, tutor_rate_limit
 from .models import AICallLog
 from .tutor import ask_tutor
 from .feedback import generate_feedback, _wrong_answers
 from .question_gen import generate_questions
+from .class_summary import generate_class_summary
 from flask_wtf.csrf import validate_csrf
 
 ai_bp = Blueprint('ai', __name__, url_prefix='/ai')
@@ -294,3 +295,32 @@ def feedback_rating(attempt_id):
         {'attempt_id': attempt.id, 'rating': rating},
     )
     return jsonify({'ok': True})
+
+
+@ai_bp.post('/class-summary')
+@login_required
+def class_summary():
+    """Gera resumo somente a partir das métricas já calculadas pela página administrativa."""
+    _require_admin()
+    if not feature_available('ai_class_summary_enabled'):
+        abort(404)
+
+    payload = request.get_json(silent=True) or {}
+    metrics = payload.get('metrics')
+    if not isinstance(metrics, dict):
+        return _json_error('Métricas inválidas para o resumo.', 400)
+
+    # Limite de campos/linhas para evitar que a rota vire um canal de envio de dados arbitrários.
+    if len(metrics) > 20:
+        return _json_error('Conjunto de métricas inválido.', 400)
+
+    result = generate_class_summary(user_id=current_user.id, metrics=metrics)
+    if not result.get('ok'):
+        return _json_error('Resumo indisponível no momento, tente novamente em instantes.', 503)
+
+    return jsonify({
+        'ok': True,
+        'text': result['text'],
+        'badge': '🤖 Gerado por IA — pode conter erros',
+        'timestamp': utcnow().isoformat(),
+    })

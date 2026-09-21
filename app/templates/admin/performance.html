@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
-{% block title %}Desempenho da turma · Portal Python{% endblock %}
+{% block title %}Desempenho da turma · Portal Python<script src="{{ url_for("static", filename="js/ai_class_summary.js") }}" defer></script>
+{% endblock %}
 {% block content %}
 <section class="admin-shell workspace-shell performance-page">
   <div class="workspace-head"><div><span class="eyebrow">ACOMPANHAMENTO</span><h1>Desempenho da turma</h1><p>Veja rapidamente participação, médias e alunos que precisam de atenção.</p></div><a class="btn secondary" href="{{ url_for('admin.reports') }}">Relatórios</a></div>
@@ -9,6 +10,28 @@
     <div class="performance-summary-card"><span class="performance-icon"><img src="{{url_for('static',filename='icons/ui/chart.svg')}}" alt=""></span><strong>{{ '%.1f'|format(overall_average) if overall_average is not none else '—' }}</strong><small>Média atual da turma</small></div>
     <div class="performance-summary-card"><span class="performance-icon"><img src="{{url_for('static',filename='icons/ui/bell.svg')}}" alt=""></span><strong>{{ at_risk }}</strong><small>Precisam de atenção</small></div>
   </div>
+  {% if ai_class_summary_enabled %}
+  <section class="professor-panel ai-class-summary" data-ai-class-summary>
+    <div class="professor-panel-head">
+      <div><span class="eyebrow">ASSISTENTE DO PROFESSOR</span><h2>Resumo da turma com IA</h2>
+      <p>Usa somente as métricas já calculadas nesta página.</p></div>
+      <button class="btn admin-primary" type="button" data-ai-summary-generate>🤖 Gerar resumo com IA</button>
+    </div>
+    <input type="hidden" data-ai-summary-csrf value="{{ csrf_token() }}">
+    <script type="application/json" data-ai-summary-metrics>{{ {
+      "students_displayed": rows|length,
+      "activities_available": activity_total,
+      "overall_average": overall_average,
+      "at_risk": at_risk
+    }|tojson }}</script>
+    <div data-ai-summary-card hidden>
+      <p class="badge">🤖 Gerado por IA — pode conter erros</p>
+      <p data-ai-summary-text></p>
+      <small class="report-note" data-ai-summary-time></small>
+    </div>
+    <p data-ai-summary-status class="muted" role="status" aria-live="polite"></p>
+  </section>
+  {% endif %}
   <form class="admin-search performance-search" method="get"><input name="q" value="{{q or ''}}" placeholder="Buscar aluno por nome ou e-mail..." aria-label="Buscar aluno"><button class="btn admin-primary" type="submit">Buscar</button>{% if q %}<a class="btn secondary" href="{{url_for('admin.performance')}}">Limpar</a>{% endif %}</form>
   <div class="professor-panel"><div class="professor-panel-head"><div><span class="eyebrow">TURMA</span><h2>Alunos</h2><p>Média considera a tentativa mais recente de cada atividade.</p></div></div>
     <div class="performance-table-wrap"><table class="professor-table performance-table"><thead><tr><th>Aluno</th><th>Média</th><th>Concluídas</th><th>Progresso</th><th>Tentativas</th><th>Status</th><th></th></tr></thead><tbody>
@@ -16,4 +39,5 @@
     </tbody></table></div>
   </div>
 </section>
+<script src="{{ url_for("static", filename="js/ai_class_summary.js") }}" defer></script>
 {% endblock %}

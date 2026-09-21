@@ -1,4 +1,5 @@
-{% extends 'base.html' %}{% block title %}Relatórios · Portal Python{% endblock %}{% block content %}
+{% extends 'base.html' %}{% block title %}Relatórios · Portal Python<script src="{{ url_for("static", filename="js/ai_class_summary.js") }}" defer></script>
+{% endblock %}{% block content %}
 <section class="admin-shell workspace-shell report-center">
   <div class="workspace-head"><div><span class="eyebrow">ANÁLISES</span><h1>Centro de relatórios</h1><p>Transforme as atividades e notas em uma visão clara para decidir onde agir.</p></div><div class="report-head-actions"><a class="btn secondary" href="{{url_for('admin.reports_csv', **request.args)}}">CSV</a><a class="btn secondary" href="{{url_for('admin.reports_xlsx', **request.args)}}">Excel</a><button class="btn admin-primary" type="button" onclick="window.print()">Imprimir / PDF</button></div></div>
   <form class="report-filter" method="get">
@@ -9,10 +10,37 @@
     <button class="btn admin-primary" type="submit">Aplicar filtros</button>{% if q or activity_id or period != '30' %}<a class="btn secondary" href="{{url_for('admin.reports')}}">Limpar</a>{% endif %}
   </form>
   <div class="professor-metrics report-metrics"><div class="pjm-card pjm-card--stat"><div class="pjm-card__icon"><img src="{{url_for('static',filename='icons/ui/users.svg')}}" alt=""></div><div class="pjm-card__body"><p class="pjm-card__value">{{students|length}}</p><p class="pjm-card__meta">Alunos analisados</p></div></div><div class="pjm-card pjm-card--stat"><div class="pjm-card__icon"><img src="{{url_for('static',filename='icons/ui/check.svg')}}" alt=""></div><div class="pjm-card__body"><p class="pjm-card__value">{{attempts|length}}</p><p class="pjm-card__meta">Tentativas no período</p></div></div><div class="pjm-card pjm-card--stat"><div class="pjm-card__icon"><img src="{{url_for('static',filename='icons/ui/chart.svg')}}" alt=""></div><div class="pjm-card__body"><p class="pjm-card__value">{{average}}</p><p class="pjm-card__meta">Média das notas</p></div></div><div class="pjm-card pjm-card--stat"><div class="pjm-card__icon"><img src="{{url_for('static',filename='icons/ui/bolt.svg')}}" alt=""></div><div class="pjm-card__body"><p class="pjm-card__value">{{completion}}%</p><p class="pjm-card__meta">Conclusão</p></div></div></div>
+  {% if ai_class_summary_enabled %}
+  <section class="professor-panel ai-class-summary" data-ai-class-summary>
+    <div class="professor-panel-head">
+      <div><span class="eyebrow">ASSISTENTE DO PROFESSOR</span><h2>Resumo da turma com IA</h2>
+      <p>Usa somente as métricas já calculadas neste relatório.</p></div>
+      <button class="btn admin-primary" type="button" data-ai-summary-generate>🤖 Gerar resumo com IA</button>
+    </div>
+    <input type="hidden" data-ai-summary-csrf value="{{ csrf_token() }}">
+    <script type="application/json" data-ai-summary-metrics>{{ {
+      "students_analyzed": students|length,
+      "attempts": attempts|length,
+      "average": average,
+      "completion": completion,
+      "below_six": below,
+      "activities_analyzed": activity_rows|length,
+      "students_with_attempt": student_rows|selectattr("average", "ne", none)|list|length,
+      "period_days": days,
+          }|tojson }}</script>
+    <div data-ai-summary-card hidden>
+      <p class="badge">🤖 Gerado por IA — pode conter erros</p>
+      <p data-ai-summary-text></p>
+      <small class="report-note" data-ai-summary-time></small>
+    </div>
+    <p data-ai-summary-status class="muted" role="status" aria-live="polite"></p>
+  </section>
+  {% endif %}
   <div class="report-grid-two">
     <div class="professor-panel"><div class="professor-panel-head"><div><span class="eyebrow">EVOLUÇÃO</span><h2>Média ao longo do período</h2></div><span class="report-note">{{days}} dias</span></div><div class="report-chart" role="img" aria-label="Média das notas por período">{% for b in buckets %}<div class="report-chart-row"><span>{{b.label}}</span><div class="report-chart-track"><i style="height:{{((b.average or 0) / max_chart * 100)|round(0)}}%"></i></div><strong>{{'%.1f'|format(b.average) if b.average is not none else '—'}}</strong></div>{% endfor %}</div></div>
     <div class="professor-panel"><div class="professor-panel-head"><div><span class="eyebrow">QUALIDADE</span><h2>Sinais da turma</h2></div></div><div class="report-insights"><div><strong>{{below}}</strong><span>notas abaixo de 6</span></div><div><strong>{{activity_rows|length}}</strong><span>atividades analisadas</span></div><div><strong>{{student_rows|selectattr('average', 'ne', none)|list|length}}</strong><span>alunos com tentativa</span></div></div><p class="report-tip">Use os filtros para localizar uma atividade ou aluno e exporte os dados quando precisar compartilhar o acompanhamento.</p></div>
   </div>
   <div class="professor-panel"><div class="professor-panel-head"><div><span class="eyebrow">ATIVIDADES</span><h2>Desempenho por atividade</h2></div></div><div class="professor-table-wrap"><table class="professor-table"><thead><tr><th>Atividade</th><th>Participação</th><th>Tentativas</th><th>Média</th><th>Melhor</th></tr></thead><tbody>{% for row in activity_rows %}<tr><td><strong>{{row.activity.title}}</strong><small class="table-subline">{{row.activity.series.name}} · {{row.activity.subject.name}}</small></td><td><div class="report-inline-progress"><span style="width:{{row.completion}}%"></span></div><small>{{row.completion}}%</small></td><td>{{row.attempts}}</td><td class="professor-score">{{'%.1f'|format(row.average) if row.average is not none else '—'}}</td><td>{{'%.1f'|format(row.best) if row.best is not none else '—'}}</td></tr>{% else %}<tr><td colspan="5"><div class="professor-empty">Nenhuma atividade encontrada para os filtros atuais.</div></td></tr>{% endfor %}</tbody></table></div></div>
   <div class="professor-panel"><div class="professor-panel-head"><div><span class="eyebrow">ALUNOS</span><h2>Acompanhamento individual</h2></div></div><div class="professor-table-wrap"><table class="professor-table"><thead><tr><th>Aluno</th><th>Média</th><th>Conclusão</th><th>Tentativas</th><th>Melhor</th><th></th></tr></thead><tbody>{% for row in student_rows %}<tr><td><strong>{{row.student.name}}</strong><small class="table-subline">{{row.student.email}}</small></td><td class="professor-score">{{'%.1f'|format(row.average) if row.average is not none else '—'}}</td><td><div class="report-inline-progress"><span style="width:{{row.completion}}%"></span></div><small>{{row.completion}}%</small></td><td>{{row.attempts}}</td><td>{{'%.1f'|format(row.best) if row.best is not none else '—'}}</td><td><a class="btn secondary btn-small" href="{{url_for('admin.user_performance',id=row.student.id)}}">Detalhes</a></td></tr>{% else %}<tr><td colspan="6"><div class="professor-empty">Nenhum aluno encontrado.</div></td></tr>{% endfor %}</tbody></table></div></div>
-</section>{% endblock %}
+</section><script src="{{ url_for("static", filename="js/ai_class_summary.js") }}" defer></script>
+{% endblock %}

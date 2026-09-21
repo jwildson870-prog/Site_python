@@ -808,7 +808,7 @@ def performance():
         })
     overall_average = round(sum(all_latest_scores) / len(all_latest_scores), 1) if all_latest_scores else None
     at_risk = sum(1 for row in rows if row['low_performance'] or (row['pending'] > 0 and activity_total > 0))
-    return render_template('admin/performance.html', rows=rows, q=q, activity_total=activity_total, overall_average=overall_average, at_risk=at_risk)
+    return render_template('admin/performance.html', rows=rows, q=q, activity_total=activity_total, overall_average=overall_average, at_risk=at_risk, ai_class_summary_enabled=get_bool('ai_class_summary_enabled', False))
 
 @admin_bp.get('/users/<int:id>/desempenho')
 def user_performance(id):
@@ -1616,7 +1616,7 @@ def _report_dataset():
 @admin_bp.get('/relatorios')
 def reports():
     data = _report_dataset()
-    return render_template('admin/reports.html', **data, activity_options=Activity.query.order_by(Activity.title.asc()).all(), student_options=User.query.filter_by(role='student').order_by(User.name.asc()).all())
+    return render_template('admin/reports.html', **data, activity_options=Activity.query.order_by(Activity.title.asc()).all(), student_options=User.query.filter_by(role='student').order_by(User.name.asc()).all(), ai_class_summary_enabled=get_bool('ai_class_summary_enabled', False))
 
 @admin_bp.get('/relatorios/export.csv')
 def reports_csv():
