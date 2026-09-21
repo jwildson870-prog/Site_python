@@ -1687,9 +1687,16 @@ def settings():
             'alert_inactive_students', 'alert_pending_activities',
             'alert_low_performance', 'alert_performance_drop',
             'alert_deadlines',
+            'ai_tutor_enabled', 'ai_feedback_enabled', 'ai_question_gen_enabled',
+            'ai_class_summary_enabled', 'ai_project_precorrect_enabled', 'ai_code_review_enabled',
         )
         set_setting('institution_name', institution_name)
         set_setting('upload_limit_mb', upload_limit)
+        try:
+            ai_rate_limit = max(1, min(int(request.form.get('ai_tutor_rate_limit', '10')), 100))
+        except (TypeError, ValueError):
+            ai_rate_limit = 10
+        set_setting('ai_tutor_rate_limit', ai_rate_limit)
         for key in checkbox_keys:
             set_setting(key, 'true' if request.form.get(key) == 'on' else 'false')
         db.session.commit()

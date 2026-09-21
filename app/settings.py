@@ -17,6 +17,13 @@ DEFAULT_SETTINGS = {
     "alert_low_performance": "true",
     "alert_performance_drop": "true",
     "alert_deadlines": "true",
+    "ai_tutor_enabled": "false",
+    "ai_feedback_enabled": "false",
+    "ai_question_gen_enabled": "false",
+    "ai_class_summary_enabled": "false",
+    "ai_project_precorrect_enabled": "false",
+    "ai_code_review_enabled": "false",
+    "ai_tutor_rate_limit": "10",
 }
 
 def get_setting(key, default=None):

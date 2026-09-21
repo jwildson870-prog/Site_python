@@ -40,6 +40,20 @@
     </section>
 
     <section class="publisher-card settings-card">
+      <h2>Inteligência artificial</h2>
+      <p class="muted">Os recursos de IA começam desligados. Quando ativados, cada resposta recebe identificação de IA e continua sujeita aos controles de segurança do Portal.</p>
+      <label class="setting-row"><span><strong>Tutor de dúvidas</strong><small>Permite ao aluno tirar dúvidas usando somente o conteúdo da aula.</small></span><input type="checkbox" name="ai_tutor_enabled" {% if settings.ai_tutor_enabled == 'true' %}checked{% endif %}></label>
+      <label class="setting-row"><span><strong>Feedback pós-atividade</strong><small>Reserva a configuração para a próxima etapa da integração.</small></span><input type="checkbox" name="ai_feedback_enabled" {% if settings.ai_feedback_enabled == 'true' %}checked{% endif %}></label>
+      <label class="setting-row"><span><strong>Geração de questões</strong><small>Reserva a configuração para a próxima etapa da integração.</small></span><input type="checkbox" name="ai_question_gen_enabled" {% if settings.ai_question_gen_enabled == 'true' %}checked{% endif %}></label>
+      <label class="setting-row"><span><strong>Resumo de turma</strong><small>Reserva a configuração para a próxima etapa da integração.</small></span><input type="checkbox" name="ai_class_summary_enabled" {% if settings.ai_class_summary_enabled == 'true' %}checked{% endif %}></label>
+      <label class="setting-row"><span><strong>Pré-correção de projetos</strong><small>Reserva a configuração para a próxima etapa da integração.</small></span><input type="checkbox" name="ai_project_precorrect_enabled" {% if settings.ai_project_precorrect_enabled == 'true' %}checked{% endif %}></label>
+      <label class="setting-row"><span><strong>Revisão de código</strong><small>Reserva a configuração para a próxima etapa da integração.</small></span><input type="checkbox" name="ai_code_review_enabled" {% if settings.ai_code_review_enabled == 'true' %}checked{% endif %}></label>
+      <label class="field-block" style="margin-top:1rem;display:block;max-width:260px;">Limite do tutor (mensagens/hora)
+        <input type="number" name="ai_tutor_rate_limit" min="1" max="100" value="{{ settings.ai_tutor_rate_limit }}">
+      </label>
+    </section>
+
+    <section class="publisher-card settings-card">
       <h2>Alertas do professor</h2>
       <label class="setting-row"><span><strong>Alertas inteligentes</strong><small>Ativa a geração de alertas de acompanhamento no painel.</small></span><input type="checkbox" name="alerts_enabled" {% if settings.alerts_enabled == 'true' %}checked{% endif %}></label>
       <label class="setting-row"><span><strong>Alunos inativos</strong><small>Detecta ausência prolongada de entregas.</small></span><input type="checkbox" name="alert_inactive_students" {% if settings.alert_inactive_students == 'true' %}checked{% endif %}></label>

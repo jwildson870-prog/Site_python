@@ -1,0 +1,22 @@
+<div id="aiTutor" class="card" data-content-id="{{ content.id }}" hidden style="margin-top:1rem;border:1px solid rgba(52,211,153,.28);">
+  <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;flex-wrap:wrap;">
+    <div>
+      <span class="badge">🤖 Tutor de IA</span>
+      <h2 style="margin:.55rem 0 .25rem;">Tire sua dúvida sobre esta aula</h2>
+      <p class="muted" style="margin:0;">O tutor usa somente o conteúdo desta aula.</p>
+    </div>
+    <button id="aiTutorClear" class="btn secondary" type="button">Limpar conversa</button>
+  </div>
+  <div id="aiTutorMessages" aria-live="polite" style="display:grid;gap:.75rem;margin:1rem 0;"></div>
+  <form id="aiTutorForm" style="display:grid;gap:.65rem;">
+    <label for="aiTutorQuestion"><strong>Sua dúvida</strong></label>
+    <textarea id="aiTutorQuestion" rows="3" maxlength="4000" placeholder="Ex.: Você pode explicar a parte sobre..." required></textarea>
+    <input type="hidden" id="aiTutorCsrf" value="{{ csrf_token() }}">
+    <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;">
+      <button class="btn admin-primary" type="submit" id="aiTutorSubmit">Perguntar ao tutor</button>
+      <small class="muted">🤖 Gerado por IA — pode conter erros</small>
+    </div>
+    <p id="aiTutorStatus" class="muted" role="status" aria-live="polite" hidden></p>
+  </form>
+</div>
+<script src="{{ url_for('static', filename='js/ai_tutor.js', v='20260921-ai-tutor-1') }}" defer></script>

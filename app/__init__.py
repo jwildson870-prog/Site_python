@@ -129,7 +129,8 @@ def create_app(test_config=None):
     from .auth.routes import auth_bp
     from .student.routes import student_bp
     from .admin.routes import admin_bp
-    app.register_blueprint(auth_bp); app.register_blueprint(student_bp); app.register_blueprint(admin_bp)
+    from .ai.routes import ai_bp
+    app.register_blueprint(auth_bp); app.register_blueprint(student_bp); app.register_blueprint(admin_bp); app.register_blueprint(ai_bp)
     @app.get('/')
     def home():
         if current_user.is_authenticated:
@@ -168,6 +169,8 @@ def create_app(test_config=None):
         from .services import promote_due_scheduled_contents
         from .settings import ensure_default_settings, get_int, get_bool
         ensure_default_settings()
+        from .ai.migration import ensure_ai_schema
+        ensure_ai_schema()
         # O limite configurável continua respeitando o limite seguro do Flask.
         app.config['MAX_CONTENT_LENGTH'] = max(1, min(get_int('upload_limit_mb', 25), 100)) * 1024 * 1024
         # Migração leve e retrocompatível para instalações existentes: adiciona
