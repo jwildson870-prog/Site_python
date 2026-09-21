@@ -1,4 +1,9 @@
-<div id="aiTutor" class="card" data-content-id="{{ content.id }}" hidden style="margin-top:1rem;border:1px solid rgba(52,211,153,.28);">
+<div id="aiTutor" class="card" data-content-id="{{ content.id }}" style="margin-top:1rem;border:1px solid rgba(52,211,153,.28);">
+  <div data-ai-tutor-launch style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;flex-wrap:wrap;">
+    <div><span class="badge">🤖 Tutor de IA</span><h2 style="margin:.55rem 0 .25rem;">Tutor de dúvidas</h2><p class="muted" style="margin:0;">Clique para abrir o tutor desta aula.</p></div>
+    <button id="aiTutorOpen" class="btn admin-primary" type="button">🤖 Abrir Tutor de IA</button>
+  </div>
+  <div data-ai-tutor-panel hidden>
   <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;flex-wrap:wrap;">
     <div>
       <span class="badge">🤖 Tutor de IA</span>
@@ -18,5 +23,6 @@
     </div>
     <p id="aiTutorStatus" class="muted" role="status" aria-live="polite" hidden></p>
   </form>
+  </div>
 </div>
 <script src="{{ url_for('static', filename='js/ai_tutor.js', v='20260921-ai-tutor-1') }}" defer></script>

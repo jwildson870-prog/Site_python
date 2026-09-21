@@ -9,12 +9,12 @@
     <div class="performance-summary-card"><span class="performance-icon"><img src="{{url_for('static',filename='icons/ui/chart.svg')}}" alt=""></span><strong>{{ '%.1f'|format(overall_average) if overall_average is not none else '—' }}</strong><small>Média atual da turma</small></div>
     <div class="performance-summary-card"><span class="performance-icon"><img src="{{url_for('static',filename='icons/ui/bell.svg')}}" alt=""></span><strong>{{ at_risk }}</strong><small>Precisam de atenção</small></div>
   </div>
-  {% if ai_class_summary_enabled %}
   <section class="professor-panel ai-class-summary" data-ai-class-summary>
     <div class="professor-panel-head">
       <div><span class="eyebrow">ASSISTENTE DO PROFESSOR</span><h2>Resumo da turma com IA</h2>
       <p>Usa somente as métricas já calculadas nesta página.</p></div>
       <button class="btn admin-primary" type="button" data-ai-summary-generate data-ai-manual="true" title="A IA só será acionada após o clique">🤖 Gerar resumo com IA</button>
+      <button class="btn admin-primary" type="button" data-ai-summary-generate{% if not ai_class_summary_enabled %} disabled title="Ative 'Resumo de turma' em Configurações → IA."{% endif %}>🤖 Gerar resumo com IA</button>
     </div>
     <input type="hidden" data-ai-summary-csrf value="{{ csrf_token() }}">
     <script type="application/json" data-ai-summary-metrics>{{ {
@@ -30,7 +30,6 @@
     </div>
     <p data-ai-summary-status class="muted" role="status" aria-live="polite"></p>
   </section>
-  {% endif %}
   <form class="admin-search performance-search" method="get"><input name="q" value="{{q or ''}}" placeholder="Buscar aluno por nome ou e-mail..." aria-label="Buscar aluno"><button class="btn admin-primary" type="submit">Buscar</button>{% if q %}<a class="btn secondary" href="{{url_for('admin.performance')}}">Limpar</a>{% endif %}</form>
   <div class="professor-panel"><div class="professor-panel-head"><div><span class="eyebrow">TURMA</span><h2>Alunos</h2><p>Média considera a tentativa mais recente de cada atividade.</p></div></div>
     <div class="performance-table-wrap"><table class="professor-table performance-table"><thead><tr><th>Aluno</th><th>Média</th><th>Concluídas</th><th>Progresso</th><th>Tentativas</th><th>Status</th><th></th></tr></thead><tbody>

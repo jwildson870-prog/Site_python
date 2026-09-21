@@ -6,6 +6,9 @@
     if (!root) return;
     var contentId = root.dataset.contentId;
     var form = document.getElementById('aiTutorForm');
+    var openButton = document.getElementById('aiTutorOpen');
+    var panel = root.querySelector('[data-ai-tutor-panel]');
+    var launch = root.querySelector('[data-ai-tutor-launch]');
     var question = document.getElementById('aiTutorQuestion');
     var submit = document.getElementById('aiTutorSubmit');
     var messages = document.getElementById('aiTutorMessages');
@@ -42,17 +45,13 @@
       item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
-    fetch('/ai/tutor/status/' + encodeURIComponent(contentId), { credentials: 'same-origin' })
-      .then(function (response) {
-        if (!response.ok) throw new Error('disabled');
-        return response.json();
-      })
-      .then(function (data) {
-        if (data.enabled) root.hidden = false;
-      })
-      .catch(function () {
-        root.remove();
+    if (openButton && panel) {
+      openButton.addEventListener('click', function () {
+        panel.hidden = false;
+        launch.hidden = true;
+        question.focus();
       });
+    }
 
     form.addEventListener('submit', function (event) {
       event.preventDefault();

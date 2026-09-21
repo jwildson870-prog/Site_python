@@ -3,6 +3,7 @@
   if (!box) return;
 
   const attemptId = box.dataset.attemptId;
+  const generate = box.querySelector('[data-ai-feedback-generate]');
   const loading = box.querySelector('[data-ai-feedback-loading]');
   const error = box.querySelector('[data-ai-feedback-error]');
   const text = box.querySelector('[data-ai-feedback-text]');
@@ -13,26 +14,36 @@
     document.querySelector('input[name="csrf_token"]')?.value || '';
 
   async function load() {
+    if (!generate) return;
+    generate.disabled = true;
+    generate.hidden = true;
+    loading.hidden = false;
+    error.hidden = true;
     try {
       const response = await fetch(`/ai/feedback/${attemptId}`, {
         headers: { 'Accept': 'application/json' },
         credentials: 'same-origin'
       });
-      if (response.status === 404) return;
       if (!response.ok) throw new Error('feedback-unavailable');
       const data = await response.json();
-      if (!data.has_errors) return;
-      box.hidden = false;
+      if (!data.has_errors) {
+        error.textContent = 'Não há erros objetivos para gerar feedback.';
+        error.hidden = false;
+        return;
+      }
       loading.hidden = true;
       text.textContent = data.feedback || '';
       text.hidden = false;
       rating.hidden = false;
     } catch (err) {
-      box.hidden = false;
       loading.hidden = true;
       error.hidden = false;
+      generate.hidden = false;
+      generate.disabled = false;
     }
   }
+
+  if (generate) generate.addEventListener('click', load);
 
   box.querySelectorAll('[data-ai-feedback-rate]').forEach(button => {
     button.addEventListener('click', async () => {

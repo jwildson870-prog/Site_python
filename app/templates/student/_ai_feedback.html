@@ -1,4 +1,4 @@
-<section class="card ai-feedback-card" id="ai-feedback" data-attempt-id="{{ attempt_id }}" hidden aria-live="polite">
+<section class="card ai-feedback-card" id="ai-feedback" data-attempt-id="{{ attempt_id }}" aria-live="polite">
   <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
     <div>
       <span class="eyebrow">APOIO AO ESTUDO</span>
@@ -7,7 +7,7 @@
     </div>
     <span class="badge" data-ai-feedback-badge>🤖 Gerado por IA — pode conter erros</span>
   </div>
-  <div data-ai-feedback-loading style="margin-top:16px;">Analisando seus erros...</div>
+  <button type="button" class="btn admin-primary" data-ai-feedback-generate>🤖 Gerar feedback com IA</button><div data-ai-feedback-loading style="margin-top:16px;" hidden>Analisando seus erros...</div>
   <div data-ai-feedback-error style="margin-top:16px;" hidden>Tutor indisponível no momento, tente novamente em instantes.</div>
   <div data-ai-feedback-text class="prose" style="margin-top:16px;" hidden></div>
   <div data-ai-feedback-rating style="display:flex;align-items:center;gap:8px;margin-top:18px;" hidden>
