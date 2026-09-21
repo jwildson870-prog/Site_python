@@ -4,7 +4,7 @@ import re
 import bleach
 
 from ..models import Content
-from . import MAX_CONTEXT_CHARS, TUTOR_MODEL, call_anthropic
+from . import MAX_CONTEXT_CHARS, TUTOR_MODEL, call_gemini
 
 
 def _plain(text):
@@ -104,7 +104,7 @@ def generate_feedback(*, user_id, attempt):
         return {"ok": True, "text": "", "error": None, "has_errors": False}
 
     contents = _relevant_contents(attempt)
-    result = call_anthropic(
+    result = call_gemini(
         user_id=user_id,
         feature="ai_feedback",
         model=TUTOR_MODEL,

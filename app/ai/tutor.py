@@ -3,7 +3,7 @@ import re
 
 import bleach
 
-from . import MAX_CONTEXT_CHARS, TUTOR_MODEL, call_anthropic
+from . import MAX_CONTEXT_CHARS, TUTOR_MODEL, call_gemini
 
 
 def _plain_body(body):
@@ -42,7 +42,7 @@ def ask_tutor(*, user_id, content, history, question):
         if role in {'user', 'assistant'} and text:
             messages.append({'role': role, 'content': text[:6000]})
     messages.append({'role': 'user', 'content': question[:4000]})
-    return call_anthropic(
+    return call_gemini(
         user_id=user_id,
         feature='ai_tutor',
         model=TUTOR_MODEL,

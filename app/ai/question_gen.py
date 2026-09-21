@@ -5,7 +5,7 @@ import re
 import bleach
 
 from ..models import Content
-from . import TUTOR_MODEL, MAX_CONTEXT_CHARS, call_anthropic
+from . import TUTOR_MODEL, MAX_CONTEXT_CHARS, call_gemini
 
 
 def _clean_text(value, limit):
@@ -82,7 +82,7 @@ def generate_questions(*, user_id, content, count):
         f'Conteúdo: {content.title}\n\nMaterial:\n{context}\n\n'
         f'Gere {count} questão(ões) de múltipla escolha. Cada questão deve testar compreensão real do material.'
     )
-    result = call_anthropic(
+    result = call_gemini(
         user_id=user_id,
         feature='ai_question_gen',
         model=TUTOR_MODEL,

@@ -1,7 +1,7 @@
 """Geração do resumo de turma usando somente métricas já calculadas pela aplicação."""
 import json
 
-from . import TUTOR_MODEL, call_anthropic
+from . import TUTOR_MODEL, call_gemini
 
 
 SUMMARY_SYSTEM = """Você é um assistente pedagógico para professores.
@@ -54,7 +54,7 @@ def generate_class_summary(*, user_id, metrics):
     except ValueError as exc:
         return {"ok": False, "text": "", "error": str(exc)}
 
-    return call_anthropic(
+    return call_gemini(
         user_id=user_id,
         feature="ai_class_summary",
         model=TUTOR_MODEL,

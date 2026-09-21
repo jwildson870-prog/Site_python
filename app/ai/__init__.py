@@ -1,4 +1,4 @@
-"""Infraestrutura central da integração Anthropic do Portal Python."""
+"""Infraestrutura central da integração Gemini do Portal Python."""
 import logging
 import os
 import time
@@ -12,8 +12,8 @@ from .models import AICallLog
 
 logger = logging.getLogger(__name__)
 
-TUTOR_MODEL = 'claude-haiku-4-5-20251001'
-SONNET_MODEL = 'claude-sonnet-4-5-20250929'
+TUTOR_MODEL = 'gemini-3-flash-preview'
+SONNET_MODEL = TUTOR_MODEL
 TUTOR_TIMEOUT_SECONDS = 15
 LONG_TIMEOUT_SECONDS = 60
 MAX_CONTEXT_CHARS = 48000  # aproximadamente 12k tokens em texto comum
@@ -31,9 +31,9 @@ FEATURE_DEFAULTS = {
 
 
 def _api_key():
-    key = os.getenv('ANTHROPIC_API_KEY', '').strip()
+    key = os.getenv('GEMINI_API_KEY', '').strip()
     if not key:
-        logger.warning('Integração Anthropic indisponível: ANTHROPIC_API_KEY não configurada.')
+        logger.warning('Integração Gemini indisponível: GEMINI_API_KEY não configurada.')
         return None
     return key
 
@@ -47,7 +47,7 @@ def tutor_available():
 
 
 def feature_available(feature):
-    """Retorna True somente quando a feature está ligada e a chave da Anthropic existe."""
+    """Retorna True somente quando a feature está ligada e a chave do Gemini existe."""
     return feature_enabled(feature) and bool(_api_key())
 
 
@@ -82,12 +82,12 @@ def log_non_api_event(user_id, feature, model, error, metadata=None):
 
 
 def _client(timeout):
-    from anthropic import Anthropic
-    return Anthropic(api_key=_api_key(), timeout=timeout, max_retries=0)
+    from google import genai
+    return genai.Client(api_key=_api_key(), http_options={"timeout": int(timeout * 1000)})
 
 
-def call_anthropic(*, user_id, feature, model, system, messages, timeout=15, metadata=None, max_tokens=1200):
-    """Faz uma única operação centralizada com retry de 429/5xx.
+def call_gemini(*, user_id, feature, model, system, messages, timeout=15, metadata=None, max_tokens=1200):
+    """Faz uma única operação centralizada com Gemini, com retry de erros transitórios.
 
     Nenhuma exceção da SDK atravessa este limite: a rota recebe sempre
     {ok, text, error}.
@@ -95,48 +95,53 @@ def call_anthropic(*, user_id, feature, model, system, messages, timeout=15, met
     started = time.monotonic()
     key = _api_key()
     if not key:
-        error = 'Anthropic indisponível.'
+        error = 'Gemini indisponível.'
         _log_call(user_id, feature, model, started, False, error=error, metadata=metadata)
         return {'ok': False, 'text': '', 'error': error}
 
-    try:
-        from anthropic import APIStatusError
-    except Exception:  # pragma: no cover - compatibilidade com SDKs da faixa suportada
-        APIStatusError = Exception
+    # O Gemini recebe a instrução de sistema separadamente e o histórico
+    # no formato de texto para preservar o contrato existente das features.
+    prompt_parts = []
+    for item in messages or []:
+        role = item.get('role', 'user')
+        content = str(item.get('content', '')).strip()
+        if content:
+            label = 'Aluno' if role == 'user' else 'Tutor'
+            prompt_parts.append(f'{label}:\n{content}')
+    prompt = '\n\n'.join(prompt_parts)
 
     last_error = None
     for attempt in range(2):
         try:
-            response = _client(timeout).messages.create(
+            response = _client(timeout).models.generate_content(
                 model=model,
-                max_tokens=max_tokens,
-                system=system,
-                messages=messages,
+                contents=prompt,
+                config={
+                    'system_instruction': system,
+                    'max_output_tokens': max_tokens,
+                },
             )
-            raw_text = ''.join(getattr(block, 'text', '') for block in getattr(response, 'content', []) if getattr(block, 'type', '') == 'text')
+            raw_text = getattr(response, 'text', '') or ''
             text = sanitize_output(raw_text)
-            usage = getattr(response, 'usage', None)
+            usage = getattr(response, 'usage_metadata', None)
             _log_call(
                 user_id, feature, model, started, True,
-                input_tokens=getattr(usage, 'input_tokens', 0),
-                output_tokens=getattr(usage, 'output_tokens', 0),
+                input_tokens=getattr(usage, 'prompt_token_count', 0),
+                output_tokens=getattr(usage, 'candidates_token_count', 0),
                 metadata=metadata,
             )
             return {'ok': True, 'text': text, 'error': None}
-        except APIStatusError as exc:
-            status = getattr(exc, 'status_code', None)
-            last_error = exc
-            if status not in (429, 500, 502, 503, 504) or attempt == 1:
-                break
         except Exception as exc:
             last_error = exc
-            break
+            status = getattr(exc, 'code', None) or getattr(exc, 'status_code', None)
+            if status not in (429, 500, 502, 503, 504) or attempt == 1:
+                break
+            time.sleep(0.5)
 
-    safe_error = 'Tutor indisponível no momento, tente novamente em instantes.'
-    logger.warning('Falha na chamada Anthropic (%s/%s): %s', feature, model, last_error)
+    safe_error = 'IA indisponível no momento, tente novamente em instantes.'
+    logger.warning('Falha na chamada Gemini (%s/%s): %s', feature, model, last_error)
     _log_call(user_id, feature, model, started, False, error=str(last_error), metadata=metadata)
     return {'ok': False, 'text': '', 'error': safe_error}
-
 
 def tutor_rate_limit():
     return max(1, get_int('ai_tutor_rate_limit', 10))
