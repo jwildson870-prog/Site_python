@@ -19,4 +19,7 @@ class AICallLog(db.Model):
     latency_ms = db.Column(db.Integer, nullable=False, default=0)
     success = db.Column(db.Boolean, nullable=False, default=False, index=True)
     error = db.Column(db.Text, nullable=True)
-    metadata = db.Column(JSON().with_variant(JSONB(), 'postgresql'), nullable=True)
+    # 'metadata' is reserved by SQLAlchemy's Declarative API.
+    # Keep the database column name required by the IA contract, but expose it
+    # through a non-reserved Python attribute.
+    call_metadata = db.Column('metadata', JSON().with_variant(JSONB(), 'postgresql'), nullable=True)

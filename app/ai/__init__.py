@@ -61,7 +61,7 @@ def _log_call(user_id, feature, model, started, success, error=None, input_token
             latency_ms=latency_ms,
             success=bool(success),
             error=(str(error)[:4000] if error else None),
-            metadata=metadata,
+            call_metadata=metadata,
         ))
         db.session.commit()
     except Exception:
@@ -114,7 +114,7 @@ def call_anthropic(*, user_id, feature, model, system, messages, timeout=15, met
                 user_id, feature, model, started, True,
                 input_tokens=getattr(usage, 'input_tokens', 0),
                 output_tokens=getattr(usage, 'output_tokens', 0),
-                metadata=metadata,
+                call_metadata=metadata,
             )
             return {'ok': True, 'text': text, 'error': None}
         except APIStatusError as exc:
