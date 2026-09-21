@@ -1,6 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Desempenho da turma · Portal Python<script src="{{ url_for("static", filename="js/ai_class_summary.js") }}" defer></script>
-{% endblock %}
+{% block title %}Desempenho da turma · Portal Python{% endblock %}
 {% block content %}
 <section class="admin-shell workspace-shell performance-page">
   <div class="workspace-head"><div><span class="eyebrow">ACOMPANHAMENTO</span><h1>Desempenho da turma</h1><p>Veja rapidamente participação, médias e alunos que precisam de atenção.</p></div><a class="btn secondary" href="{{ url_for('admin.reports') }}">Relatórios</a></div>
@@ -39,5 +38,5 @@
     </tbody></table></div>
   </div>
 </section>
-<script src="{{ url_for("static", filename="js/ai_class_summary.js") }}" defer></script>
+<script src="{{ url_for('static', filename='js/ai_class_summary.js') }}" defer></script>
 {% endblock %}
