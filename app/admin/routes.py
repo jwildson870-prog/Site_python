@@ -929,8 +929,10 @@ def question_bank():
         query = query.order_by(QuestionBank.id.desc())
 
     items = query.all()
+    from ..settings import get_bool
     return render_template('admin/question_bank.html', items=items, series=series, subjects=subjects,
                            categories=categories, q=q, series_id=series_id, subject_id=subject_id,
+                           ai_question_gen_enabled=get_bool('ai_question_gen_enabled', False),
                            difficulty=difficulty, category=category, tag=tag, sort=sort)
 
 @admin_bp.post('/question-bank/<int:id>/delete')
@@ -1697,6 +1699,11 @@ def settings():
         except (TypeError, ValueError):
             ai_rate_limit = 10
         set_setting('ai_tutor_rate_limit', ai_rate_limit)
+        try:
+            ai_question_gen_rate_limit = max(1, min(int(request.form.get('ai_question_gen_rate_limit', '20')), 100))
+        except (TypeError, ValueError):
+            ai_question_gen_rate_limit = 20
+        set_setting('ai_question_gen_rate_limit', ai_question_gen_rate_limit)
         for key in checkbox_keys:
             set_setting(key, 'true' if request.form.get(key) == 'on' else 'false')
         db.session.commit()

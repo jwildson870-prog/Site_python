@@ -26,6 +26,7 @@ FEATURE_DEFAULTS = {
     'ai_project_precorrect_enabled': 'false',
     'ai_code_review_enabled': 'false',
     'ai_tutor_rate_limit': '10',
+    'ai_question_gen_rate_limit': '20',
 }
 
 
@@ -80,7 +81,7 @@ def _client(timeout):
     return Anthropic(api_key=_api_key(), timeout=timeout, max_retries=0)
 
 
-def call_anthropic(*, user_id, feature, model, system, messages, timeout=15, metadata=None):
+def call_anthropic(*, user_id, feature, model, system, messages, timeout=15, metadata=None, max_tokens=1200):
     """Faz uma única operação centralizada com retry de 429/5xx.
 
     Nenhuma exceção da SDK atravessa este limite: a rota recebe sempre
@@ -103,7 +104,7 @@ def call_anthropic(*, user_id, feature, model, system, messages, timeout=15, met
         try:
             response = _client(timeout).messages.create(
                 model=model,
-                max_tokens=1200,
+                max_tokens=max_tokens,
                 system=system,
                 messages=messages,
             )

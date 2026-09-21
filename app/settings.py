@@ -24,6 +24,7 @@ DEFAULT_SETTINGS = {
     "ai_project_precorrect_enabled": "false",
     "ai_code_review_enabled": "false",
     "ai_tutor_rate_limit": "10",
+    "ai_question_gen_rate_limit": "20",
 }
 
 def get_setting(key, default=None):

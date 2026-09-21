@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Geração de questões com IA · Portal Python{% endblock %}
+{% block content %}
+<section class="admin-shell workspace-shell ai-question-generator-page">
+  <div class="workspace-head">
+    <div><a class="back-link" href="{{ url_for('admin.question_bank') }}">← Banco de questões</a><span class="eyebrow">ASSISTENTE DO PROFESSOR</span><h1>Geração de questões com IA</h1><p>A IA cria apenas rascunhos com base no material selecionado. Nada é salvo automaticamente.</p></div>
+  </div>
+
+  <section class="publisher-card form-section">
+    <div class="form-section-head"><div class="step-number">1</div><div><span class="eyebrow">FONTE</span><h2>Escolha o conteúdo</h2><p>O material é a única fonte enviada para a geração.</p></div></div>
+    <input type="hidden" id="aiQuestionCsrf" value="{{ csrf_token() }}">
+    <label class="field-block full">Conteúdo
+      <select id="aiQuestionContent" required>
+        <option value="">Selecione um material...</option>
+        {% for content in contents %}<option value="{{content.id}}">{{content.title}} · {{content.series.name}} · {{content.subject.name}}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="field-block" style="max-width:220px;display:block;">Quantidade
+      <input id="aiQuestionCount" type="number" min="1" max="10" value="3">
+    </label>
+    <div class="button-row"><button class="btn admin-primary" id="aiQuestionGenerate" type="button">🤖 Gerar rascunhos</button><span class="muted">Limite diário configurado: {{limit}} geração(ões).</span></div>
+    <p id="aiQuestionStatus" class="muted" role="status" aria-live="polite"></p>
+  </section>
+
+  <section id="aiQuestionDrafts" class="ai-question-drafts" hidden>
+    <div class="publisher-card"><div class="form-section-head"><div class="step-number">2</div><div><span class="eyebrow">RASCUNHOS</span><h2>Revise antes de salvar</h2><p>🤖 Rascunho gerado por IA — revise e edite. Cada questão precisa de confirmação explícita.</p></div></div></div>
+    <div id="aiQuestionDraftList"></div>
+  </section>
+</section>
+{% endblock %}
+<script src="{{ url_for('static', filename='js/ai_question_gen.js') }}" defer></script>
