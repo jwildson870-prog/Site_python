@@ -14,7 +14,7 @@
     <div class="professor-panel-head">
       <div><span class="eyebrow">ASSISTENTE DO PROFESSOR</span><h2>Resumo da turma com IA</h2>
       <p>Usa somente as métricas já calculadas nesta página.</p></div>
-      <button class="btn admin-primary" type="button" data-ai-summary-generate>🤖 Gerar resumo com IA</button>
+      <button class="btn admin-primary" type="button" data-ai-summary-generate data-ai-manual="true" title="A IA só será acionada após o clique">🤖 Gerar resumo com IA</button>
     </div>
     <input type="hidden" data-ai-summary-csrf value="{{ csrf_token() }}">
     <script type="application/json" data-ai-summary-metrics>{{ {
