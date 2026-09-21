@@ -152,6 +152,7 @@ class ActivityAttempt(db.Model):
     score = db.Column(db.Float, nullable=False, default=0)
     total = db.Column(db.Integer, nullable=False, default=0)
     presented_questions_json = db.Column(db.Text, nullable=False, default='[]')
+    ai_feedback = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=utcnow, nullable=False)
     user = db.relationship('User', back_populates='activity_attempts')
     activity = db.relationship('Activity', back_populates='attempts')

@@ -1,0 +1,19 @@
+<section class="card ai-feedback-card" id="ai-feedback" data-attempt-id="{{ attempt_id }}" hidden aria-live="polite">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+    <div>
+      <span class="eyebrow">APOIO AO ESTUDO</span>
+      <h2 style="margin:6px 0 4px;">Entenda seus erros</h2>
+      <p class="muted" style="margin:0;">Uma explicação para ajudar você a revisar o conteúdo.</p>
+    </div>
+    <span class="badge" data-ai-feedback-badge>🤖 Gerado por IA — pode conter erros</span>
+  </div>
+  <div data-ai-feedback-loading style="margin-top:16px;">Analisando seus erros...</div>
+  <div data-ai-feedback-error style="margin-top:16px;" hidden>Tutor indisponível no momento, tente novamente em instantes.</div>
+  <div data-ai-feedback-text class="prose" style="margin-top:16px;" hidden></div>
+  <div data-ai-feedback-rating style="display:flex;align-items:center;gap:8px;margin-top:18px;" hidden>
+    <span>Isso ajudou?</span>
+    <button type="button" class="btn secondary" data-ai-feedback-rate="up" aria-label="Sim, isso ajudou">👍</button>
+    <button type="button" class="btn secondary" data-ai-feedback-rate="down" aria-label="Não, isso não ajudou">👎</button>
+    <span data-ai-feedback-rated class="muted" hidden>Obrigado pelo feedback.</span>
+  </div>
+</section>

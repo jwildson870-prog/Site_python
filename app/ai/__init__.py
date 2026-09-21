@@ -114,7 +114,7 @@ def call_anthropic(*, user_id, feature, model, system, messages, timeout=15, met
                 user_id, feature, model, started, True,
                 input_tokens=getattr(usage, 'input_tokens', 0),
                 output_tokens=getattr(usage, 'output_tokens', 0),
-                call_metadata=metadata,
+                metadata=metadata,
             )
             return {'ok': True, 'text': text, 'error': None}
         except APIStatusError as exc:
