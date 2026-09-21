@@ -48,6 +48,6 @@ def ask_tutor(*, user_id, content, history, question):
         model=TUTOR_MODEL,
         system=build_system_prompt(content),
         messages=messages,
-        timeout=15,
+        timeout=20,
         metadata={'content_id': content.id},
     )

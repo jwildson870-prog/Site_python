@@ -41,7 +41,7 @@
 
     <section class="publisher-card settings-card">
       <h2>Inteligência artificial</h2>
-      <p class="muted">Os recursos de IA começam desligados. Quando ativados, cada resposta recebe identificação de IA e continua sujeita aos controles de segurança do Portal.</p>
+      <p class="muted">Os recursos de IA só executam quando o professor ou aluno aciona o botão correspondente. A chave GEMINI_API_KEY permanece no ambiente do servidor.</p>
       <label class="setting-row"><span><strong>Tutor de dúvidas</strong><small>Permite ao aluno tirar dúvidas usando somente o conteúdo da aula.</small></span><input type="checkbox" name="ai_tutor_enabled" {% if settings.ai_tutor_enabled == 'true' %}checked{% endif %}></label>
       <label class="setting-row"><span><strong>Feedback pós-atividade</strong><small>Reserva a configuração para a próxima etapa da integração.</small></span><input type="checkbox" name="ai_feedback_enabled" {% if settings.ai_feedback_enabled == 'true' %}checked{% endif %}></label>
       <label class="setting-row"><span><strong>Geração de questões</strong><small>Permite ao professor gerar rascunhos de questões a partir de um material para revisar e salvar manualmente.</small></span><input type="checkbox" name="ai_question_gen_enabled" {% if settings.ai_question_gen_enabled == 'true' %}checked{% endif %}></label>

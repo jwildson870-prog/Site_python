@@ -12,16 +12,17 @@ from .models import AICallLog
 
 logger = logging.getLogger(__name__)
 
-TUTOR_MODEL = 'gemini-3-flash-preview'
+# Stable model suitable for production; the preview endpoint is avoided to reduce model-availability surprises.
+TUTOR_MODEL = 'gemini-3.8-flash'
 SONNET_MODEL = TUTOR_MODEL
-TUTOR_TIMEOUT_SECONDS = 15
-LONG_TIMEOUT_SECONDS = 60
+TUTOR_TIMEOUT_SECONDS = 20
+LONG_TIMEOUT_SECONDS = 45
 MAX_CONTEXT_CHARS = 48000  # aproximadamente 12k tokens em texto comum
 
 FEATURE_DEFAULTS = {
     'ai_tutor_enabled': 'false',
     'ai_feedback_enabled': 'false',
-    'ai_question_gen_enabled': 'false',
+    'ai_question_gen_enabled': 'true',
     'ai_class_summary_enabled': 'false',
     'ai_project_precorrect_enabled': 'false',
     'ai_code_review_enabled': 'false',
@@ -83,10 +84,19 @@ def log_non_api_event(user_id, feature, model, error, metadata=None):
 
 def _client(timeout):
     from google import genai
-    return genai.Client(api_key=_api_key(), http_options={"timeout": int(timeout * 1000)})
+    from google.genai import types
+
+    # The SDK has its own transient-error retry mechanism. Keep it to one
+    # network attempt here so a single request cannot outlive the web request
+    # and leave the browser in an apparently endless loading state.
+    http_options = types.HttpOptions(
+        timeout=int(timeout * 1000),
+        retry_options=types.HttpRetryOptions(attempts=1),
+    )
+    return genai.Client(api_key=_api_key(), http_options=http_options)
 
 
-def call_gemini(*, user_id, feature, model, system, messages, timeout=15, metadata=None, max_tokens=1200):
+def call_gemini(*, user_id, feature, model, system, messages, timeout=20, metadata=None, max_tokens=1200, response_mime_type=None):
     """Faz uma única operação centralizada com Gemini, com retry de erros transitórios.
 
     Nenhuma exceção da SDK atravessa este limite: a rota recebe sempre
@@ -111,34 +121,46 @@ def call_gemini(*, user_id, feature, model, system, messages, timeout=15, metada
     prompt = '\n\n'.join(prompt_parts)
 
     last_error = None
-    for attempt in range(2):
-        try:
-            response = _client(timeout).models.generate_content(
-                model=model,
-                contents=prompt,
-                config={
-                    'system_instruction': system,
-                    'max_output_tokens': max_tokens,
-                },
-            )
-            raw_text = getattr(response, 'text', '') or ''
-            text = sanitize_output(raw_text)
-            usage = getattr(response, 'usage_metadata', None)
-            _log_call(
-                user_id, feature, model, started, True,
-                input_tokens=getattr(usage, 'prompt_token_count', 0),
-                output_tokens=getattr(usage, 'candidates_token_count', 0),
-                metadata=metadata,
-            )
-            return {'ok': True, 'text': text, 'error': None}
-        except Exception as exc:
-            last_error = exc
-            status = getattr(exc, 'code', None) or getattr(exc, 'status_code', None)
-            if status not in (429, 500, 502, 503, 504) or attempt == 1:
-                break
-            time.sleep(0.5)
+    try:
+        config = {
+            'system_instruction': system,
+            'max_output_tokens': max_tokens,
+        }
+        if response_mime_type:
+            config['response_mime_type'] = response_mime_type
 
-    safe_error = 'IA indisponível no momento, tente novamente em instantes.'
+        response = _client(timeout).models.generate_content(
+            model=model,
+            contents=prompt,
+            config=config,
+        )
+        raw_text = getattr(response, 'text', '') or ''
+        text = sanitize_output(raw_text)
+        if not text.strip():
+            raise RuntimeError('O Gemini retornou uma resposta vazia.')
+        usage = getattr(response, 'usage_metadata', None)
+        _log_call(
+            user_id, feature, model, started, True,
+            input_tokens=getattr(usage, 'prompt_token_count', 0),
+            output_tokens=getattr(usage, 'candidates_token_count', 0),
+            metadata=metadata,
+        )
+        return {'ok': True, 'text': text, 'error': None}
+    except Exception as exc:
+        last_error = exc
+
+    status = getattr(last_error, 'code', None) or getattr(last_error, 'status_code', None)
+    message = str(last_error or '').lower()
+    if status in (401, 403) or 'api key' in message or 'permission' in message:
+        safe_error = 'A chave do Gemini não foi aceita. Verifique GEMINI_API_KEY no Render.'
+    elif status == 404 or 'not found' in message or 'not_found' in message:
+        safe_error = 'O modelo do Gemini não está disponível para esta chave. Tente novamente após atualizar o deploy.'
+    elif status == 429 or 'resource exhausted' in message or 'rate limit' in message:
+        safe_error = 'O limite do Gemini foi atingido. Aguarde um pouco e tente novamente.'
+    elif 'timeout' in message or 'timed out' in message or 'deadline' in message:
+        safe_error = 'O Gemini demorou demais para responder. Tente novamente.'
+    else:
+        safe_error = 'IA indisponível no momento, tente novamente em instantes.'
     logger.warning('Falha na chamada Gemini (%s/%s): %s', feature, model, last_error)
     _log_call(user_id, feature, model, started, False, error=str(last_error), metadata=metadata)
     return {'ok': False, 'text': '', 'error': safe_error}

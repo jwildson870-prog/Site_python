@@ -46,9 +46,12 @@
     if (!currentContentId) { status.textContent = 'Selecione um conteúdo primeiro.'; return; }
     generate.disabled = true;
     status.textContent = 'Gerando rascunhos...';
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
     try {
       const response = await fetch(`/ai/questions/generate/${currentContentId}`, {
         method: 'POST', headers: {'Content-Type': 'application/json'},
+        signal: controller.signal,
         body: JSON.stringify({csrf_token: csrf, count: Math.max(1, Math.min(10, Number(count.value) || 3))})
       });
       const data = await response.json().catch(() => ({}));
@@ -57,8 +60,13 @@
       render();
       status.textContent = `${draftQuestions.length} rascunho(s) gerado(s). Revise antes de salvar.`;
     } catch (error) {
-      status.textContent = error.message || 'Não foi possível gerar as questões.';
-    } finally { generate.disabled = false; }
+      status.textContent = error.name === 'AbortError'
+        ? 'A geração demorou demais. Verifique a configuração do Gemini no Render e tente novamente.'
+        : (error.message || 'Não foi possível gerar as questões.');
+    } finally {
+      clearTimeout(timeoutId);
+      generate.disabled = false;
+    }
   });
 
   list.addEventListener('click', async (event) => {

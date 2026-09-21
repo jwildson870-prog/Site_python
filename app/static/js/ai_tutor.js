@@ -59,8 +59,11 @@
       if (!text || submit.disabled) return;
       submit.disabled = true;
       question.disabled = true;
-      showStatus('Consultando o material...', false);
+      showStatus('🤖 Gerando resposta...', false);
       addMessage('Você', text, false);
+
+      var controller = new AbortController();
+      var timeoutId = setTimeout(function () { controller.abort(); }, 30000);
 
       fetch('/ai/tutor/' + encodeURIComponent(contentId), {
         method: 'POST',
@@ -69,6 +72,7 @@
           'Content-Type': 'application/json',
           'X-CSRFToken': csrf.value
         },
+        signal: controller.signal,
         body: JSON.stringify({ question: text })
       })
         .then(function (response) {
@@ -86,9 +90,12 @@
           showStatus('', false);
         })
         .catch(function (error) {
-          showStatus(error.message || 'Tutor indisponível no momento, tente novamente em instantes.', true);
+          showStatus(error.name === 'AbortError'
+            ? 'O Gemini demorou demais para responder. Tente novamente.'
+            : (error.message || 'Tutor indisponível no momento, tente novamente em instantes.'), true);
         })
         .finally(function () {
+          clearTimeout(timeoutId);
           submit.disabled = false;
           question.disabled = false;
           question.focus();

@@ -110,7 +110,7 @@ def generate_feedback(*, user_id, attempt):
         model=TUTOR_MODEL,
         system=build_feedback_prompt(attempt, wrong_answers, contents),
         messages=[{"role": "user", "content": "Explique meus erros e diga quais materiais devo revisar."}],
-        timeout=15,
+        timeout=20,
         metadata={
             "attempt_id": attempt.id,
             "activity_id": attempt.activity_id,

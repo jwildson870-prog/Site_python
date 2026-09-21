@@ -88,7 +88,8 @@ def generate_questions(*, user_id, content, count):
         model=TUTOR_MODEL,
         system=system,
         messages=[{'role': 'user', 'content': prompt}],
-        timeout=15,
+        timeout=20,
+        response_mime_type='application/json',
         metadata={'content_id': content.id, 'requested_count': count},
         max_tokens=max(1600, count * 420),
     )

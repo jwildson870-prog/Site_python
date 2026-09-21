@@ -63,7 +63,7 @@ def generate_class_summary(*, user_id, metrics):
             "role": "user",
             "content": "Analise somente estas métricas já calculadas pelo Portal:\n" + compact,
         }],
-        timeout=15,
+        timeout=20,
         metadata={"source": "precomputed_metrics"},
         max_tokens=700,
     )

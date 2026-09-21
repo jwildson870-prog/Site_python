@@ -1,3 +1,5 @@
+import os
+
 from .extensions import db
 from .models import PortalSetting
 
@@ -17,9 +19,9 @@ DEFAULT_SETTINGS = {
     "alert_low_performance": "true",
     "alert_performance_drop": "true",
     "alert_deadlines": "true",
-    "ai_tutor_enabled": "false",
+    "ai_tutor_enabled": "true",
     "ai_feedback_enabled": "false",
-    "ai_question_gen_enabled": "false",
+    "ai_question_gen_enabled": "true",
     "ai_class_summary_enabled": "false",
     "ai_project_precorrect_enabled": "false",
     "ai_code_review_enabled": "false",
@@ -58,5 +60,22 @@ def ensure_default_settings():
         if PortalSetting.query.filter_by(key=key).first() is None:
             db.session.add(PortalSetting(key=key, value=value))
             changed = True
+
+    # Migração única da integração Gemini: a versão anterior criava as
+    # opções de Tutor/Geração de questões desligadas, o que deixava os
+    # botões indisponíveis mesmo com GEMINI_API_KEY configurada. A migração
+    # só acontece uma vez e somente quando existe uma chave Gemini no
+    # ambiente. Depois disso, o administrador continua podendo desligar
+    # cada recurso normalmente pelas Configurações.
+    if os.getenv('GEMINI_API_KEY', '').strip() and not PortalSetting.query.filter_by(key='gemini_ai_enable_migrated_v1').first():
+        for key in ('ai_tutor_enabled', 'ai_question_gen_enabled'):
+            row = PortalSetting.query.filter_by(key=key).first()
+            if row is None:
+                db.session.add(PortalSetting(key=key, value='true'))
+            else:
+                row.value = 'true'
+        db.session.add(PortalSetting(key='gemini_ai_enable_migrated_v1', value='true'))
+        changed = True
+
     if changed:
         db.session.commit()

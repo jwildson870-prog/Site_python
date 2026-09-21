@@ -2,7 +2,7 @@
 {% block title %}Banco de questões · Portal Python{% endblock %}
 {% block content %}
 <section class="admin-shell workspace-shell question-bank-page">
-  <div class="workspace-head"><div><span class="eyebrow">AVALIAÇÃO</span><h1>Banco de questões</h1><p>Crie, organize e encontre questões por série, matéria, categoria, tags e dificuldade.</p></div>{% if ai_question_gen_enabled %}<a class="btn admin-primary" href="{{url_for('ai.question_generator')}}">🤖 Gerar questões com IA</a>{% else %}<button class="btn admin-primary" type="button" disabled title="Ative 'Geração de questões' em Configurações → IA.">🤖 Gerar questões com IA</button>{% endif %}</div>
+  <div class="workspace-head"><div><span class="eyebrow">AVALIAÇÃO</span><h1>Banco de questões</h1><p>Crie, organize e encontre questões por série, matéria, categoria, tags e dificuldade.</p></div><a class="btn admin-primary" href="{{url_for('ai.question_generator')}}">🤖 Gerar questões com IA</a></div>
 
   <form class="publisher-card form-section" method="post">
     <input type="hidden" name="csrf_token" value="{{csrf_token()}}">

@@ -150,7 +150,7 @@ def _question_gen_limit():
 @login_required
 def question_generator():
     _require_admin()
-    if not feature_enabled('ai_question_gen_enabled') or not tutor_available():
+    if not feature_available('ai_question_gen_enabled'):
         abort(404)
     contents = Content.query.filter(
         Content.archived_at.is_(None),
@@ -164,7 +164,7 @@ def question_generator():
 @login_required
 def question_generate(content_id):
     _require_admin()
-    if not feature_enabled('ai_question_gen_enabled') or not tutor_available():
+    if not feature_available('ai_question_gen_enabled'):
         abort(404)
     content = Content.query.filter(Content.id == content_id, Content.archived_at.is_(None)).first_or_404()
     if not (content.body or '').strip():
@@ -253,7 +253,7 @@ def question_save():
 def feedback(attempt_id):
     if current_user.is_admin:
         abort(403)
-    if not feature_enabled('ai_feedback_enabled'):
+    if not feature_available('ai_feedback_enabled'):
         abort(404)
 
     attempt = ActivityAttempt.query.filter_by(id=attempt_id, user_id=current_user.id).first_or_404()
@@ -278,7 +278,7 @@ def feedback(attempt_id):
 def feedback_rating(attempt_id):
     if current_user.is_admin:
         abort(403)
-    if not feature_enabled('ai_feedback_enabled'):
+    if not feature_available('ai_feedback_enabled'):
         abort(404)
 
     attempt = ActivityAttempt.query.filter_by(id=attempt_id, user_id=current_user.id).first_or_404()
