@@ -7,6 +7,11 @@
     <div class="hero-python-art" aria-hidden="true"><img class="python-art-logo" src="{{url_for('static',filename='icons/python-brand.png')}}" alt=""><div class="hero-code"><span>def ensinar():</span><br><span>    return "Conhecimento"</span><br><b>&gt;&gt;&gt;</b></div></div>
   </div>
 
+  <div class="professor-command-strip" aria-label="Atalhos do professor">
+    <div><span class="eyebrow">CENTRAL DO PROFESSOR</span><strong>Seu painel de comando</strong><small>Use os atalhos abaixo para acompanhar a rotina sem perder o contexto.</small></div>
+    <nav aria-label="Atalhos rápidos"><a href="{{url_for('admin.alerts')}}">Alertas <b>{{alert_counts.high + alert_counts.medium}}</b></a><a href="{{url_for('admin.reports')}}">Relatórios</a><a href="{{url_for('admin.settings')}}">Configurações</a></nav>
+  </div>
+
   <div class="professor-metrics">
     <a class="pjm-card pjm-card--stat" href="{{url_for('admin.users')}}"><div class="pjm-card__icon"><img src="{{url_for('static',filename='icons/ui/users.svg')}}" alt=""></div><div class="pjm-card__body"><p class="pjm-card__value">{{students_count}}</p><p class="pjm-card__meta">Alunos cadastrados</p></div></a>
     <a class="pjm-card pjm-card--stat" href="{{url_for('admin.activities')}}"><div class="pjm-card__icon"><img src="{{url_for('static',filename='icons/ui/check.svg')}}" alt=""></div><div class="pjm-card__body"><p class="pjm-card__value">{{activities}}</p><p class="pjm-card__meta">Atividades criadas</p></div></a>

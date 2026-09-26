@@ -1,0 +1,105 @@
+/* Portal Python — área do professor
+   Camada visual adicional: preserva rotas, dados e animações existentes. */
+
+body.pjm-dense-screen .main-content{padding-top:28px}
+body.pjm-dense-screen .admin-shell{max-width:1560px;width:min(100% - 34px,1560px);margin:0 auto;padding-bottom:48px}
+body.pjm-dense-screen .side-menu{width:286px}
+
+/* Navegação */
+body.pjm-dense-screen .side-link{margin:3px 10px;border-radius:12px;min-height:44px;transition:transform .18s ease,background .18s ease,border-color .18s ease}
+body.pjm-dense-screen .side-link:hover{transform:translateX(3px)}
+body.pjm-dense-screen .side-link.active{background:linear-gradient(90deg,rgba(56,189,248,.16),rgba(37,99,235,.08));border:1px solid rgba(56,189,248,.18);box-shadow:inset 3px 0 #38bdf8}
+body.pjm-dense-screen .side-section-title{padding-left:18px;letter-spacing:.13em}
+
+/* Dashboard */
+.professor-dashboard{gap:18px!important}
+.professor-dashboard .reference-hero{min-height:235px;padding:30px 34px;border-radius:24px;overflow:hidden;border:1px solid rgba(56,189,248,.18);background:radial-gradient(650px 260px at 90% 50%,rgba(14,165,233,.12),transparent 68%),linear-gradient(135deg,rgba(8,24,43,.96),rgba(7,16,30,.98));box-shadow:0 24px 60px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.06)}
+.professor-dashboard .reference-hero:after{content:"";position:absolute;inset:auto -8% -55% 45%;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(34,211,238,.10),transparent 65%);pointer-events:none}
+.professor-dashboard .hero-copy{max-width:760px;position:relative;z-index:2}
+.professor-dashboard .hero-copy h1{font-size:clamp(2rem,4vw,3.3rem);letter-spacing:-.055em;margin:8px 0 10px}
+.professor-dashboard .hero-copy p{max-width:650px;font-size:.95rem;color:#9bb1c8;line-height:1.65}
+.professor-dashboard .hero-cta{margin-top:18px;min-height:46px;padding:0 17px;border-radius:12px}
+.professor-dashboard .hero-python-art{opacity:.92;transform:translateY(2px) scale(1.04)}
+
+.professor-metrics{gap:13px!important}
+.professor-metrics .pjm-card{min-height:92px;border-radius:17px;background:linear-gradient(145deg,rgba(14,36,61,.94),rgba(7,21,37,.96));border-color:rgba(86,146,198,.16);box-shadow:0 14px 30px rgba(0,0,0,.20),inset 0 1px rgba(255,255,255,.05)}
+.professor-metrics .pjm-card:hover{transform:translateY(-3px);border-color:rgba(56,189,248,.32)}
+.professor-metrics .pjm-card__icon{background:rgba(56,189,248,.09);border-color:rgba(56,189,248,.17)}
+.professor-metrics .pjm-card__value{font-size:1.55rem}
+.professor-metrics .pjm-card__meta{text-transform:uppercase;letter-spacing:.055em}
+
+.professor-panel{border-radius:20px!important;padding:21px!important;background:linear-gradient(145deg,rgba(9,27,47,.93),rgba(6,18,32,.96))!important;border:1px solid rgba(86,146,198,.15)!important;box-shadow:0 18px 42px rgba(0,0,0,.20),inset 0 1px rgba(255,255,255,.045)!important}
+.professor-panel:hover{transform:none!important;border-color:rgba(86,146,198,.22)!important}
+.professor-panel-head{margin-bottom:16px!important}
+.professor-panel-head h2{font-size:1.08rem!important;letter-spacing:-.025em!important}
+.professor-panel-head p{max-width:70ch}
+.text-link{font-weight:750;text-decoration:none}
+.text-link:hover{text-decoration:underline;text-underline-offset:3px}
+
+/* Ações rápidas */
+.professor-action-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:10px!important}
+.professor-action{min-height:78px!important;padding:14px!important;border-radius:14px!important;background:rgba(8,25,43,.70)!important;border:1px solid rgba(86,146,198,.13)!important}
+.professor-action:hover{background:linear-gradient(135deg,rgba(14,53,83,.82),rgba(8,30,50,.88))!important;border-color:rgba(56,189,248,.28)!important;transform:translateY(-2px)!important}
+.professor-action img{width:22px;height:22px}
+.professor-action strong{font-size:.82rem}
+.professor-action small{font-size:.68rem;color:#7894ac}
+
+/* Listas e indicadores */
+.smart-alert-mini,.risk-row,.deadline-row{border-radius:13px!important;border-color:rgba(86,146,198,.12)!important;background:rgba(5,20,34,.42)!important;transition:transform .16s ease,border-color .16s ease,background .16s ease}
+.smart-alert-mini:hover,.risk-row:hover,.deadline-row:hover{transform:translateX(3px);border-color:rgba(56,189,248,.25)!important;background:rgba(9,34,57,.65)!important}
+.dashboard-series-grid{gap:11px!important}
+.dashboard-series-card{border-radius:15px!important;background:rgba(5,20,34,.48)!important;border:1px solid rgba(86,146,198,.12)!important;padding:15px!important}
+.dashboard-series-card:hover{border-color:rgba(56,189,248,.24)!important}
+.dashboard-series-head strong{font-size:.85rem}
+.dashboard-series-metrics{gap:8px!important}
+.dashboard-series-metrics>div{padding:9px;border-radius:11px;background:rgba(13,37,60,.55);border:1px solid rgba(86,146,198,.09)}
+.dashboard-series-metrics strong{font-size:1rem}
+.dashboard-series-bar{height:6px!important;margin-top:11px!important;background:#061522!important}
+.dashboard-series-bar span{background:linear-gradient(90deg,#22c1ee,#38bdf8)!important}
+
+.dashboard-chart{padding:4px 0}
+.chart-row{gap:11px!important;margin:13px 0!important}
+.chart-track{background:#061522!important;border:1px solid rgba(86,146,198,.10);height:9px!important}
+.chart-track i{background:linear-gradient(90deg,#0ea5e9,#22d3ee)!important}
+.dashboard-mini-stats{gap:9px!important}
+.dashboard-mini-stats span{padding:9px 11px;border-radius:10px;background:rgba(13,37,60,.48);border:1px solid rgba(86,146,198,.10)}
+
+.activity-stat-row{padding:10px 0!important;border-bottom-color:rgba(86,146,198,.09)!important}
+.activity-stat-bar{background:#061522!important;border:1px solid rgba(86,146,198,.08);height:7px!important}
+.activity-stat-bar span{background:linear-gradient(90deg,#0ea5e9,#22d3ee)!important}
+
+.professor-table-wrap{border-radius:13px;border:1px solid rgba(86,146,198,.12);overflow:auto}
+.professor-table{margin:0!important}
+.professor-table th{background:rgba(8,27,46,.86);position:sticky;top:0;z-index:1}
+.professor-table tr:hover td{background:rgba(14,45,72,.32)}
+
+/* Todas as páginas internas do professor */
+body.pjm-dense-screen .card,
+body.pjm-dense-screen .panel,
+body.pjm-dense-screen .manage-card,
+body.pjm-dense-screen .content-card,
+body.pjm-dense-screen .publisher-card,
+body.pjm-dense-screen .reference-section,
+body.pjm-dense-screen .admin-stat,
+body.pjm-dense-screen .admin-action-card{border-radius:17px;border-color:rgba(86,146,198,.14)}
+body.pjm-dense-screen .admin-hero{border-radius:22px}
+body.pjm-dense-screen .admin-search{padding:10px;border-radius:15px;background:rgba(7,23,39,.55);border:1px solid rgba(86,146,198,.10)}
+body.pjm-dense-screen .admin-search input{background:rgba(3,14,25,.60)}
+body.pjm-dense-screen .btn{border-radius:11px}
+body.pjm-dense-screen input,body.pjm-dense-screen select,body.pjm-dense-screen textarea{border-radius:10px}
+
+@media(max-width:1100px){
+  .professor-action-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(max-width:700px){
+  body.pjm-dense-screen .admin-shell{width:min(100% - 20px,1560px)}
+  .professor-dashboard .reference-hero{padding:22px 20px;min-height:205px}
+  .professor-dashboard .hero-python-art{display:none}
+  .professor-dashboard .hero-copy h1{font-size:2rem}
+  .professor-panel{padding:16px!important;border-radius:16px!important}
+  .professor-action-grid{grid-template-columns:1fr!important}
+  .professor-metrics{gap:9px!important}
+  .professor-metrics .pjm-card{min-height:82px;padding:12px}
+}
+.professor-command-strip{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:14px 17px;border:1px solid rgba(86,146,198,.13);border-radius:15px;background:linear-gradient(90deg,rgba(8,28,48,.78),rgba(7,20,35,.68));box-shadow:0 10px 28px rgba(0,0,0,.13)}
+.professor-command-strip>div{display:grid;gap:2px}.professor-command-strip strong{font-size:.9rem}.professor-command-strip small{color:#7894ac;font-size:.68rem}.professor-command-strip nav{display:flex;flex-wrap:wrap;gap:7px}.professor-command-strip nav a{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border-radius:9px;border:1px solid rgba(86,146,198,.13);background:rgba(5,20,34,.48);color:#b8d7eb;text-decoration:none;font-size:.72rem;font-weight:700}.professor-command-strip nav a:hover{border-color:rgba(56,189,248,.30);color:#e6f8ff}.professor-command-strip nav b{min-width:18px;padding:2px 5px;text-align:center;border-radius:999px;background:rgba(239,68,68,.15);color:#fca5a5;font-size:.62rem}@media(max-width:700px){.professor-command-strip{align-items:flex-start;flex-direction:column}.professor-command-strip nav{width:100%}.professor-command-strip nav a{flex:1;justify-content:center}}

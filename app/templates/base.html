@@ -31,6 +31,7 @@
   <link rel="stylesheet" href="{{ url_for('static',filename='css/card-accents.css', v='20260918-card-accents-1') }}">
   <link rel="stylesheet" href="{{ url_for('static',filename='css/theme-switcher.css', v='20260919-blue-redesign-1') }}">
   <link rel="stylesheet" href="{{ url_for('static',filename='css/design-system.css', v='20260919-blue-redesign-1') }}">
+  {% if request.blueprint == 'admin' %}<link rel="stylesheet" href="{{ url_for('static',filename='css/admin-professor.css', v='20260926-professor-1') }}">{% endif %}
   <link rel="stylesheet" href="{{ url_for('static',filename='css/login-professional.css', v='20260920-login-3') }}">
 </head>
 <body class="portal-rpg-tech {% if current_user.is_authenticated %}app-authenticated{% else %}public-page{% endif %}{% if request.blueprint == 'admin' %} pjm-dense-screen{% endif %}">
