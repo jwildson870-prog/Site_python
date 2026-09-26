@@ -5,6 +5,7 @@ import time
 from typing import Any
 
 import bleach
+import requests
 
 from ..extensions import db
 from ..settings import get_bool, get_int
@@ -32,11 +33,19 @@ FEATURE_DEFAULTS = {
 
 
 def _api_key():
-    key = os.getenv('GEMINI_API_KEY', '').strip()
+    # Gemini Developer API accepts GEMINI_API_KEY and GOOGLE_API_KEY.
+    # Prefer the project-specific name used by Portal Python.
+    key = (os.getenv('GEMINI_API_KEY') or os.getenv('GOOGLE_API_KEY') or '').strip()
     if not key:
-        logger.warning('Integração Gemini indisponível: GEMINI_API_KEY não configurada.')
+        logger.warning('Integração Gemini indisponível: GEMINI_API_KEY/GOOGLE_API_KEY não configurada.')
         return None
     return key
+
+
+def _model_name(model=None):
+    value = (model or TUTOR_MODEL).strip()
+    # The REST endpoint expects the bare model id, not models/<id>.
+    return value.removeprefix('models/').strip() or 'gemini-3.8-flash'
 
 
 def feature_enabled(feature):
@@ -82,36 +91,39 @@ def log_non_api_event(user_id, feature, model, error, metadata=None):
     _log_call(user_id, feature, model, started, False, error=error, metadata=metadata)
 
 
-def _client(timeout):
-    from google import genai
-    from google.genai import types
+def _extract_response_text(data):
+    candidates = data.get('candidates') if isinstance(data, dict) else None
+    if not isinstance(candidates, list) or not candidates:
+        prompt_feedback = data.get('promptFeedback') if isinstance(data, dict) else None
+        block_reason = (prompt_feedback or {}).get('blockReason') if isinstance(prompt_feedback, dict) else None
+        if block_reason:
+            raise RuntimeError(f'Resposta bloqueada pelo Gemini: {block_reason}')
+        raise RuntimeError('O Gemini não retornou candidatos de resposta.')
 
-    # The SDK has its own transient-error retry mechanism. Keep it to one
-    # network attempt here so a single request cannot outlive the web request
-    # and leave the browser in an apparently endless loading state.
-    http_options = types.HttpOptions(
-        api_version='v1',
-        timeout=int(timeout * 1000),
-        retry_options=types.HttpRetryOptions(attempts=1),
-    )
-    return genai.Client(api_key=_api_key(), http_options=http_options)
+    parts = ((candidates[0].get('content') or {}).get('parts') or [])
+    text_parts = [str(part.get('text', '')) for part in parts if isinstance(part, dict) and part.get('text')]
+    text = '\n'.join(text_parts).strip()
+    if not text:
+        finish_reason = candidates[0].get('finishReason')
+        raise RuntimeError(f'O Gemini retornou uma resposta sem texto{f" ({finish_reason})" if finish_reason else ""}.')
+    return text
 
 
 def call_gemini(*, user_id, feature, model, system, messages, timeout=20, metadata=None, max_tokens=1200, response_mime_type=None):
-    """Faz uma única operação centralizada com Gemini, com retry de erros transitórios.
+    """Faz uma chamada Gemini via REST v1 com resposta normalizada para todas as features.
 
-    Nenhuma exceção da SDK atravessa este limite: a rota recebe sempre
-    {ok, text, error}.
+    O Portal usa uma única porta de entrada para Tutor, feedback, resumo e geração
+    de questões. Assim, uma mudança no SDK não quebra cada recurso separadamente.
+    A chave nunca é incluída em logs ou respostas do navegador.
     """
     started = time.monotonic()
     key = _api_key()
+    model_id = _model_name(model)
     if not key:
-        error = 'Gemini indisponível.'
-        _log_call(user_id, feature, model, started, False, error=error, metadata=metadata)
+        error = 'Gemini indisponível: configure GEMINI_API_KEY no Render.'
+        _log_call(user_id, feature, model_id, started, False, error=error, metadata=metadata)
         return {'ok': False, 'text': '', 'error': error}
 
-    # O Gemini recebe a instrução de sistema separadamente e o histórico
-    # no formato de texto para preservar o contrato existente das features.
     prompt_parts = []
     for item in messages or []:
         role = item.get('role', 'user')
@@ -119,57 +131,79 @@ def call_gemini(*, user_id, feature, model, system, messages, timeout=20, metada
         if content:
             label = 'Aluno' if role == 'user' else 'Tutor'
             prompt_parts.append(f'{label}:\n{content}')
-    prompt = '\n\n'.join(prompt_parts)
+    prompt = '\n\n'.join(prompt_parts).strip()
 
-    last_error = None
+    payload = {
+        'systemInstruction': {'parts': [{'text': str(system or '')}]},
+        'contents': [{'role': 'user', 'parts': [{'text': prompt}]}],
+        'generationConfig': {
+            'maxOutputTokens': int(max_tokens),
+        },
+    }
+    if response_mime_type:
+        payload['generationConfig']['responseMimeType'] = response_mime_type
+
+    url = f'https://generativelanguage.googleapis.com/v1/models/{model_id}:generateContent'
     try:
-        config_kwargs = {
-            'system_instruction': system,
-            'max_output_tokens': max_tokens,
-        }
-        if response_mime_type:
-            config_kwargs['response_mime_type'] = response_mime_type
-
-        # Use the typed SDK config and the stable v1 API. This avoids subtle
-        # incompatibilities between google-genai releases and the old beta
-        # endpoint while keeping the request fully server-side.
-        from google.genai import types
-        config = types.GenerateContentConfig(**config_kwargs)
-        response = _client(timeout).models.generate_content(
-            model=model,
-            contents=prompt,
-            config=config,
+        response = requests.post(
+            url,
+            headers={'x-goog-api-key': key, 'Content-Type': 'application/json'},
+            json=payload,
+            timeout=max(5, int(timeout)),
         )
-        raw_text = getattr(response, 'text', '') or ''
+        try:
+            data = response.json()
+        except ValueError:
+            data = {}
+
+        if not response.ok:
+            error_info = data.get('error') if isinstance(data, dict) else None
+            code = response.status_code
+            message = error_info.get('message') if isinstance(error_info, dict) else response.text[:1000]
+            exc = RuntimeError(f'Gemini HTTP {code}: {message}')
+            setattr(exc, 'code', code)
+            raise exc
+
+        raw_text = _extract_response_text(data)
         text = sanitize_output(raw_text)
         if not text.strip():
             raise RuntimeError('O Gemini retornou uma resposta vazia.')
-        usage = getattr(response, 'usage_metadata', None)
+
+        usage = data.get('usageMetadata') if isinstance(data, dict) else {}
         _log_call(
-            user_id, feature, model, started, True,
-            input_tokens=getattr(usage, 'prompt_token_count', 0),
-            output_tokens=getattr(usage, 'candidates_token_count', 0),
+            user_id, feature, model_id, started, True,
+            input_tokens=(usage or {}).get('promptTokenCount', 0),
+            output_tokens=(usage or {}).get('candidatesTokenCount', 0),
             metadata=metadata,
         )
         return {'ok': True, 'text': text, 'error': None}
-    except Exception as exc:
-        last_error = exc
-
-    status = getattr(last_error, 'code', None) or getattr(last_error, 'status_code', None)
-    message = str(last_error or '').lower()
-    if status in (401, 403) or 'api key' in message or 'permission' in message:
-        safe_error = 'A chave do Gemini não foi aceita. Verifique GEMINI_API_KEY no Render.'
-    elif status == 404 or 'not found' in message or 'not_found' in message:
-        safe_error = 'O modelo do Gemini não está disponível para esta chave. Tente novamente após atualizar o deploy.'
-    elif status == 429 or 'resource exhausted' in message or 'rate limit' in message:
-        safe_error = 'O limite do Gemini foi atingido. Aguarde um pouco e tente novamente.'
-    elif 'timeout' in message or 'timed out' in message or 'deadline' in message:
+    except requests.Timeout as exc:
         safe_error = 'O Gemini demorou demais para responder. Tente novamente.'
-    else:
-        safe_error = 'IA indisponível no momento, tente novamente em instantes.'
-    logger.warning('Falha na chamada Gemini (%s/%s): %s', feature, model, last_error)
-    _log_call(user_id, feature, model, started, False, error=str(last_error), metadata=metadata)
-    return {'ok': False, 'text': '', 'error': safe_error}
+        logger.warning('Timeout Gemini (%s/%s): %s', feature, model_id, exc)
+        _log_call(user_id, feature, model_id, started, False, error=str(exc), metadata=metadata)
+        return {'ok': False, 'text': '', 'error': safe_error}
+    except requests.RequestException as exc:
+        logger.warning('Falha de rede Gemini (%s/%s): %s', feature, model_id, exc)
+        _log_call(user_id, feature, model_id, started, False, error=str(exc), metadata=metadata)
+        return {'ok': False, 'text': '', 'error': 'Não foi possível conectar ao Gemini. Tente novamente em instantes.'}
+    except Exception as exc:
+        status = getattr(exc, 'code', None) or getattr(exc, 'status_code', None)
+        message = str(exc).lower()
+        if status in (401, 403) or 'api key' in message or 'permission' in message:
+            safe_error = 'A chave do Gemini não foi aceita. Verifique GEMINI_API_KEY no Render.'
+        elif status == 400 or 'invalid argument' in message:
+            safe_error = 'O Gemini rejeitou a solicitação. Verifique o modelo e tente novamente.'
+        elif status == 404 or 'not found' in message or 'not_found' in message:
+            safe_error = f'O modelo Gemini configurado ({model_id}) não está disponível para esta chave.'
+        elif status == 429 or 'resource exhausted' in message or 'rate limit' in message:
+            safe_error = 'O limite do Gemini foi atingido. Aguarde um pouco e tente novamente.'
+        elif 'blocked' in message:
+            safe_error = 'O Gemini bloqueou esta solicitação. Tente reformular o pedido ou o conteúdo.'
+        else:
+            safe_error = 'IA indisponível no momento, tente novamente em instantes.'
+        logger.warning('Falha na chamada Gemini (%s/%s): %s', feature, model_id, exc)
+        _log_call(user_id, feature, model_id, started, False, error=str(exc), metadata=metadata)
+        return {'ok': False, 'text': '', 'error': safe_error}
 
 def tutor_rate_limit():
     return max(1, get_int('ai_tutor_rate_limit', 10))

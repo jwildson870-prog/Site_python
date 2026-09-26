@@ -16,4 +16,3 @@ openpyxl>=3.1,<4
 
 PyMuPDF>=1.24,<2
 
-google-genai>=1.0,<2.0
