@@ -13,7 +13,7 @@ from .models import AICallLog
 logger = logging.getLogger(__name__)
 
 # Stable model suitable for production; the preview endpoint is avoided to reduce model-availability surprises.
-TUTOR_MODEL = 'gemini-3.8-flash'
+TUTOR_MODEL = os.getenv('GEMINI_MODEL', 'gemini-3.8-flash').strip() or 'gemini-3.8-flash'
 SONNET_MODEL = TUTOR_MODEL
 TUTOR_TIMEOUT_SECONDS = 20
 LONG_TIMEOUT_SECONDS = 45
@@ -90,6 +90,7 @@ def _client(timeout):
     # network attempt here so a single request cannot outlive the web request
     # and leave the browser in an apparently endless loading state.
     http_options = types.HttpOptions(
+        api_version='v1',
         timeout=int(timeout * 1000),
         retry_options=types.HttpRetryOptions(attempts=1),
     )
@@ -122,13 +123,18 @@ def call_gemini(*, user_id, feature, model, system, messages, timeout=20, metada
 
     last_error = None
     try:
-        config = {
+        config_kwargs = {
             'system_instruction': system,
             'max_output_tokens': max_tokens,
         }
         if response_mime_type:
-            config['response_mime_type'] = response_mime_type
+            config_kwargs['response_mime_type'] = response_mime_type
 
+        # Use the typed SDK config and the stable v1 API. This avoids subtle
+        # incompatibilities between google-genai releases and the old beta
+        # endpoint while keeping the request fully server-side.
+        from google.genai import types
+        config = types.GenerateContentConfig(**config_kwargs)
         response = _client(timeout).models.generate_content(
             model=model,
             contents=prompt,

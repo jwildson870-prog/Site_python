@@ -76,10 +76,15 @@
         body: JSON.stringify({ question: text })
       })
         .then(function (response) {
-          return response.json().catch(function () { return {}; }).then(function (data) {
+          return response.text().then(function (raw) {
+            var data = {};
+            try { data = raw ? JSON.parse(raw) : {}; } catch (_) {}
             if (!response.ok) {
-              var err = data.error || 'Tutor indisponível no momento, tente novamente em instantes.';
+              var err = data.error || ('Erro ' + response.status + ' ao falar com o Tutor.');
               throw new Error(err);
+            }
+            if (!data.ok || !data.text) {
+              throw new Error(data.error || 'O Tutor não retornou uma resposta.');
             }
             return data;
           });
